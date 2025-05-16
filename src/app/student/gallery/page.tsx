@@ -1,37 +1,113 @@
-"use client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Image as ImageIcon } from "lucide-react";
-import NextImage from "next/image"; // Renamed to avoid conflict with Lucide icon
 
-// Mock data - replace with actual data fetching
-const mockGalleryEvents = [
-  { 
-    id: "1", 
-    title: "Annual Day Celebration 2023", 
-    date: "2023-12-15",
-    description: "A glimpse of the vibrant performances and joyful moments from our Annual Day.",
-    images: Array(8).fill(null).map((_, i) => ({ url: `https://placehold.co/600x400.png?id=annual${i}`, alt: `Annual Day photo ${i+1}` })),
-    dataAiHint: "school event"
-  },
-  { 
-    id: "2", 
-    title: "Science Exhibition", 
-    date: "2024-02-10",
-    description: "Students showcasing their innovative science projects and experiments.",
-    images: Array(6).fill(null).map((_, i) => ({ url: `https://placehold.co/600x400.png?id=sci${i}`, alt: `Science Exhibition photo ${i+1}`})),
-    dataAiHint: "science fair"
-  },
-   { 
-    id: "3", 
-    title: "Sports Meet Highlights", 
-    date: "2024-03-05",
-    description: "Action-packed moments from the inter-house sports competition.",
-    images: Array(10).fill(null).map((_, i) => ({ url: `https://placehold.co/600x400.png?id=sports${i}`, alt: `Sports Meet photo ${i+1}`})),
-    dataAiHint: "school sports"
-  },
-];
+"use client";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Image as ImageIcon, Loader2 } from "lucide-react";
+import NextImage from "next/image";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
+import type { PhotoGalleryAlbum } from "@/types";
 
 export default function StudentGalleryPage() {
+  const [galleryEvents, setGalleryEvents] = useState<PhotoGalleryAlbum[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGalleryAlbums = async () => {
+      setLoading(true);
+      setError(null);
+      console.log("[StudentGalleryPage] Attempting to fetch gallery albums from Firestore...");
+      try {
+        const albumsCollectionRef = collection(db, "galleryAlbums");
+        const q = query(albumsCollectionRef, orderBy("timestamp", "desc"));
+        console.log("[StudentGalleryPage] Executing Firestore query for gallery albums:", q);
+        const querySnapshot = await getDocs(q);
+
+        console.log(`[StudentGalleryPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
+        if (querySnapshot.empty) {
+          console.warn("[StudentGalleryPage] No gallery albums found in the 'galleryAlbums' collection.");
+        }
+
+        const fetchedAlbums: PhotoGalleryAlbum[] = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log(`[StudentGalleryPage] Mapping document ${doc.id}:`, data);
+          
+          // Validate essential fields
+          if (!data.title || !Array.isArray(data.images)) {
+            console.warn(`[StudentGalleryPage] Document ${doc.id} is missing title or images and will be skipped.`, data);
+            return null;
+          }
+
+          return {
+            id: doc.id,
+            title: data.title,
+            description: data.description || "",
+            images: data.images.map((img: any) => ({ // Ensure img has url and alt
+              url: img.url || "https://placehold.co/600x400.png?text=Invalid+Image",
+              alt: img.alt || data.title,
+            })),
+            postedByUid: data.postedByUid,
+            postedByName: data.postedByName,
+            eventDate: data.eventDate || undefined,
+            timestamp: data.timestamp as Timestamp,
+          };
+        }).filter(Boolean) as PhotoGalleryAlbum[]; // Filter out nulls
+
+        setGalleryEvents(fetchedAlbums);
+        console.log(`[StudentGalleryPage] Successfully mapped ${fetchedAlbums.length} gallery albums to state:`, fetchedAlbums);
+
+      } catch (err: any) {
+        console.error("[StudentGalleryPage] Error fetching gallery albums from Firestore:", err);
+        setError(`Failed to load gallery albums: ${err.message}. Please check the console for more details.`);
+        setGalleryEvents([]);
+      } finally {
+        setLoading(false);
+        console.log("[StudentGalleryPage] Finished fetching gallery albums. Loading set to false.");
+      }
+    };
+
+    fetchGalleryAlbums();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[300px]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading gallery...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+          <ImageIcon className="h-8 w-8" />
+          Photo Gallery
+        </h1>
+        <Card className="shadow-lg border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error Loading Gallery</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{error}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Please check your internet connection or Firestore security rules.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
+  // Generate data-ai-hint from album title
+  const generateAiHint = (title: string): string => {
+    if (!title) return "gallery image";
+    const words = title.toLowerCase().split(/\s+/).slice(0, 2); // Max 2 words
+    return words.join(" ");
+  };
+
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
@@ -39,36 +115,36 @@ export default function StudentGalleryPage() {
         Photo Gallery
       </h1>
       
-      {mockGalleryEvents.map(event => (
-        <Card key={event.id} className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl">{event.title}</CardTitle>
-            <CardDescription>
-              Event Date: {event.date} <br/>
-              {event.description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {event.images.map((img, idx) => (
-                <div key={idx} className="aspect-square overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                  <NextImage 
-                    src={img.url} 
-                    alt={img.alt || event.title} 
-                    width={300} 
-                    height={300} 
-                    className="w-full h-full object-cover"
-                    data-ai-hint={event.dataAiHint} 
-                  />
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-
-      {mockGalleryEvents.length === 0 && (
+      {galleryEvents.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">No photos available in the gallery at the moment.</p>
+      ) : (
+        galleryEvents.map(event => (
+          <Card key={event.id} className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-2xl">{event.title}</CardTitle>
+              <CardDescription>
+                {event.eventDate && `Event Date: ${new Date(event.eventDate + 'T00:00:00').toLocaleDateString()}`} <br/>
+                {event.description}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                {event.images.map((img, idx) => (
+                  <div key={idx} className="aspect-square overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                    <NextImage 
+                      src={img.url} 
+                      alt={img.alt || event.title} 
+                      width={300} 
+                      height={300} 
+                      className="w-full h-full object-cover"
+                      data-ai-hint={generateAiHint(event.title)} 
+                    />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ))
       )}
     </div>
   );
