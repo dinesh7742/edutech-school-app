@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { ReactNode } from "react";
@@ -25,6 +26,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      console.log('[AuthContext] Auth state changed. Firebase user UID:', firebaseUser?.uid || 'No user');
       if (firebaseUser) {
         const userDocRef = doc(db, "users", firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
@@ -39,15 +41,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           };
           setUser(appUser);
           setRole(userData.role);
+          console.log('[AuthContext] User data loaded from Firestore:', appUser);
         } else {
           // Handle case where user exists in Auth but not in Firestore (e.g., incomplete signup)
            const basicAppUser: AppUser = { ...firebaseUser, displayName: firebaseUser.displayName };
            setUser(basicAppUser);
-           // Role might not be set yet if signup process wasn't completed with Firestore write
+           setRole(null); // Explicitly set role to null if Firestore data is missing
+           console.warn('[AuthContext] User document not found in Firestore for UID:', firebaseUser.uid, '. Role not set.');
         }
       } else {
         setUser(null);
         setRole(null);
+        console.log('[AuthContext] User signed out or not authenticated.');
       }
       setLoading(false);
     });

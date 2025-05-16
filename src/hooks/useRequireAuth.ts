@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -18,12 +19,14 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
+        console.log('[useRequireAuth] No user found. Redirecting to:', redirectPath);
         router.replace(redirectPath);
       } else if (requiredRole && role !== requiredRole) {
-        // If role is required and doesn't match, redirect to a generic dashboard or login
-        // This prevents students from accessing teacher pages and vice-versa
-        // A more sophisticated app might redirect to an "access denied" page or the user's own dashboard
-        router.replace(user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard');
+        const targetDashboard = user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard';
+        console.log(`[useRequireAuth] Role mismatch. User role: '${role}', Required role: '${requiredRole}'. Redirecting to user's dashboard: ${targetDashboard}`);
+        router.replace(targetDashboard);
+      } else {
+        // console.log('[useRequireAuth] Auth check passed. User is authorized.');
       }
     }
   }, [user, loading, role, requiredRole, router, redirectPath]);
