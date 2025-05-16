@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, Timestamp } from "firebase/firestore"; // Removed orderBy for now
+import { collection, query, getDocs, Timestamp, orderBy } from "firebase/firestore";
 import type { Textbook } from "@/types";
 
 export default function StudentTextbooksPage() {
@@ -18,12 +18,12 @@ export default function StudentTextbooksPage() {
     const fetchTextbooks = async () => {
       setLoading(true);
       setError(null); // Reset error on new fetch
-      console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
+      console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore with orderBy...");
       try {
         const textbooksCollectionRef = collection(db, "textbooks");
-        // Temporarily remove orderBy to check for indexing issues.
-        // Original query: const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title"));
-        const q = query(textbooksCollectionRef); // Simplified query
+        // Re-adding orderBy. A composite index will be required in Firestore.
+        // Firestore will usually provide a link in the console error to create this index.
+        const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title"));
         console.log("[StudentTextbooksPage] Executing Firestore query for textbooks:", q);
         const querySnapshot = await getDocs(q);
         
@@ -36,10 +36,9 @@ export default function StudentTextbooksPage() {
         const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
           console.log(`[StudentTextbooksPage] Mapping document ${doc.id}:`, data);
-          // Basic validation for critical fields before mapping
           if (!data.title || !data.subject || !data.grade) {
             console.warn(`[StudentTextbooksPage] Document ${doc.id} is missing critical fields (title, subject, or grade) and will be skipped.`, data);
-            return null; // Skip this document
+            return null; 
           }
           return {
             id: doc.id,
@@ -50,17 +49,17 @@ export default function StudentTextbooksPage() {
             fileName: data.fileName || "",
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
-            timestamp: data.timestamp as Timestamp, // Assuming it's stored as Firestore Timestamp
+            timestamp: data.timestamp as Timestamp,
             grade: data.grade,
           };
-        }).filter(Boolean) as Textbook[]; // Filter out any nulls from skipped documents
+        }).filter(Boolean) as Textbook[]; 
         
         setTextbooksList(fetchedTextbooks);
         console.log(`[StudentTextbooksPage] Successfully mapped ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
 
       } catch (err: any) {
         console.error("[StudentTextbooksPage] Error fetching textbooks from Firestore:", err);
-        setError(`Failed to load textbooks: ${err.message}.`);
+        setError(`Failed to load textbooks: ${err.message}. If this message mentions a missing index, please check the browser's developer console for a link to create it in Firebase.`);
         setTextbooksList([]); 
       } finally {
         setLoading(false);
@@ -95,6 +94,7 @@ export default function StudentTextbooksPage() {
             <p>{error}</p>
             <p className="mt-2 text-sm text-muted-foreground">
               Please check your internet connection. If the issue persists, look at the browser's developer console for more detailed Firestore error messages (e.g., permission denied, missing indexes).
+              If you see an error about a missing index, Firestore usually provides a direct link in the console error message to create it.
             </p>
           </CardContent>
         </Card>
@@ -150,3 +150,4 @@ export default function StudentTextbooksPage() {
     </div>
   );
 }
+
