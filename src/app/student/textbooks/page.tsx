@@ -1,54 +1,111 @@
+
 "use client";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Download } from "lucide-react";
+import { BookOpen, Download, Loader2 } from "lucide-react";
 import Image from "next/image";
-
-// Mock data - replace with actual data fetching
-const mockTextbooks = [
-  { id: "1", title: "Mathematics Grade 5", subject: "Mathematics", fileUrl: "https://placehold.co/200x280.pdf/E8EAF6/3F51B5?text=Math+G5", coverImageUrl: "https://placehold.co/200x280.png/E8EAF6/3F51B5?text=Math+G5", dataAiHint: "textbook math" },
-  { id: "2", title: "Science Explorer Grade 5", subject: "Science", fileUrl: "https://placehold.co/200x280.pdf/E8EAF6/3F51B5?text=Science+G5", coverImageUrl: "https://placehold.co/200x280.png/E8EAF6/3F51B5?text=Science+G5", dataAiHint: "textbook science" },
-  { id: "3", title: "English Grammar & Composition", subject: "English", fileUrl: "https://placehold.co/200x280.pdf/E8EAF6/3F51B5?text=English+G5", coverImageUrl: "https://placehold.co/200x280.png/E8EAF6/3F51B5?text=English+G5", dataAiHint: "textbook english" },
-  { id: "4", title: "Social Studies Our Past", subject: "Social Studies", fileUrl: "https://placehold.co/200x280.pdf/E8EAF6/3F51B5?text=SST+G5", coverImageUrl: "https://placehold.co/200x280.png/E8EAF6/3F51B5?text=SST+G5", dataAiHint: "textbook history" },
-];
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
+import type { Textbook } from "@/types";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StudentTextbooksPage() {
+  const [textbooksList, setTextbooksList] = useState<Textbook[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth(); // For potential future filtering by grade
+
+  useEffect(() => {
+    const fetchTextbooks = async () => {
+      setLoading(true);
+      try {
+        const textbooksCollection = collection(db, "textbooks");
+        // TODO: Filter by user.grade if user and user.grade are available
+        const q = query(textbooksCollection, orderBy("grade"), orderBy("title")); // Order by grade, then title
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            subject: data.subject,
+            fileUrl: data.fileUrl,
+            coverImageUrl: data.coverImageUrl,
+            fileName: data.fileName,
+            postedByUid: data.postedByUid,
+            postedByName: data.postedByName,
+            timestamp: data.timestamp as Timestamp, // Assuming it's stored as Firestore Timestamp
+            grade: data.grade,
+          } as Textbook;
+        });
+        setTextbooksList(fetchedTextbooks);
+      } catch (error) {
+        console.error("Error fetching textbooks:", error);
+        // Handle error display if needed
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTextbooks();
+  }, [user]); // Rerun if user context changes (for future filtering)
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[300px]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading textbooks...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <BookOpen className="h-8 w-8" />
         Textbooks
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {mockTextbooks.map(book => (
-          <Card key={book.id} className="shadow-lg flex flex-col">
-            <CardHeader className="p-0">
-              <Image 
-                src={book.coverImageUrl} 
-                alt={book.title} 
-                width={200} 
-                height={280} 
-                className="w-full h-auto object-cover rounded-t-lg aspect-[5/7]"
-                data-ai-hint={book.dataAiHint}
-              />
-            </CardHeader>
-            <CardContent className="p-4 flex flex-col flex-grow">
-              <CardTitle className="text-lg mb-1">{book.title}</CardTitle>
-              <CardDescription className="text-sm mb-3">Subject: {book.subject}</CardDescription>
-              <div className="mt-auto">
-                <Button asChild variant="outline" className="w-full">
-                  <a href={book.fileUrl} target="_blank" rel="noopener noreferrer">
-                    <Download className="mr-2 h-4 w-4" /> Download PDF
-                  </a>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      {mockTextbooks.length === 0 && (
+      {textbooksList.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">No textbooks available at the moment.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {textbooksList.map(book => (
+            <Card key={book.id} className="shadow-lg flex flex-col">
+              <CardHeader className="p-0">
+                <Image 
+                  src={book.coverImageUrl || `https://placehold.co/200x280.png/E8EAF6/3F51B5?text=${encodeURIComponent(book.subject)}`} 
+                  alt={book.title} 
+                  width={200} 
+                  height={280} 
+                  className="w-full h-auto object-cover rounded-t-lg aspect-[5/7]"
+                  data-ai-hint={`textbook ${book.subject.toLowerCase()}`}
+                />
+              </CardHeader>
+              <CardContent className="p-4 flex flex-col flex-grow">
+                <CardTitle className="text-lg mb-1">{book.title}</CardTitle>
+                <CardDescription className="text-sm mb-1">Subject: {book.subject}</CardDescription>
+                <CardDescription className="text-sm mb-3">Grade: {book.grade}</CardDescription>
+                <div className="mt-auto">
+                  {book.fileUrl ? (
+                    <Button asChild variant="outline" className="w-full">
+                      <a href={book.fileUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="mr-2 h-4 w-4" /> 
+                        {book.fileName || 'Download PDF'}
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button variant="outline" className="w-full" disabled>
+                      No PDF
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
     </div>
   );
 }
+
