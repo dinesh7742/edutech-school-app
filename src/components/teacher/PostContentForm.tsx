@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -10,19 +11,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector"; // Assuming this can be reused
+import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud } from "lucide-react";
-// import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-// import { db, storage } from "@/lib/firebase";
-// import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Loader2 } from "lucide-react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import type { Notice, Homework, Circular, Textbook, PhotoGalleryAlbum } from "@/types";
 
 // Schemas for different content types
 const noticeSchema = z.object({
   title: z.string().min(3, "Title is required"),
   content: z.string().min(10, "Content is required"),
-  // targetAll: z.boolean().default(false),
   grade: z.string().optional(),
   division: z.string().optional(),
 });
@@ -31,24 +31,30 @@ type NoticeFormValues = z.infer<typeof noticeSchema>;
 const fileUploadSchema = z.object({
   title: z.string().min(3, "Title is required"),
   description: z.string().optional(),
-  fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")), // Placeholder for actual file upload
-  fileName: z.string().optional(), // To store original file name
+  fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")).optional(),
+  fileName: z.string().optional(), 
   grade: z.string().min(1, "Grade is required"),
   division: z.string().min(1, "Division is required"),
+  // Specific fields for homework
+  subject: z.string().optional(),
+  dueDate: z.string().optional(),
 });
-type FileUploadFormValues = z.infer<typeof fileUploadSchema>; // For Homework, Circulars
+type FileUploadFormValues = z.infer<typeof fileUploadSchema>; 
 
 const textbookSchema = z.object({
   title: z.string().min(3, "Title is required"),
   subject: z.string().min(2, "Subject is required"),
-  fileUrl: z.string().url("Please provide a valid URL for the PDF.").or(z.literal("")),
+  fileUrl: z.string().url("Please provide a valid URL for the PDF.").or(z.literal("")).optional(),
+  coverImageUrl: z.string().url("Please provide a valid URL for the cover image.").or(z.literal("")).optional(),
   fileName: z.string().optional(),
   grade: z.string().min(1, "Grade is required"),
 });
 type TextbookFormValues = z.infer<typeof textbookSchema>;
 
 const photoGallerySchema = z.object({
-  title: z.string().min(3, "Title is required"),
+  title: z.string().min(3, "Event/Album title is required"),
+  description: z.string().optional(),
+  eventDate: z.string().optional(),
   imageUrls: z.array(z.string().url("Each URL must be valid.")).min(1, "At least one image URL is required").max(10, "Maximum 10 images"),
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
@@ -60,11 +66,9 @@ export function PostContentForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("notice");
   
-  // Separate form instances for each tab might be cleaner
-  // Or reset form on tab change if using one. For now, one form with conditional fields
   const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} });
   const formHomework = useForm<FileUploadFormValues>({ resolver: zodResolver(fileUploadSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} });
-  const formCircular = useForm<FileUploadFormValues>({ resolver: zodResolver(fileUploadSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} }); // Similar to homework, can simplify
+  const formCircular = useForm<FileUploadFormValues>({ resolver: zodResolver(fileUploadSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} });
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
   const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageUrls: [""]}});
 
@@ -75,41 +79,67 @@ export function PostContentForm() {
       return;
     }
     setIsLoading(true);
-    console.log(`Submitting ${type}:`, data); // Placeholder for actual submission logic
 
-    // Example Firestore submission (needs to be adapted for each type)
-    // try {
-    //   await addDoc(collection(db, type), {
-    //     ...data,
-    //     postedByUid: user.uid,
-    //     postedByName: user.displayName,
-    //     timestamp: serverTimestamp(),
-    //   });
-    //   toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Posted Successfully` });
-    //   // Reset form based on type
-    //   if (type === 'notices') formNotice.reset();
-    //   // ... reset other forms
-    // } catch (e) {
-    //   toast({ title: "Error", description: `Failed to post ${type}.`, variant: "destructive" });
-    // }
+    try {
+      let collectionName = "";
+      let documentData: any = {
+        ...data,
+        postedByUid: user.uid,
+        postedByName: user.displayName || user.email || "Teacher",
+        timestamp: serverTimestamp(),
+      };
 
-    // Mock submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast({
-      title: `${type.charAt(0).toUpperCase() + type.slice(1)} Submission`,
-      description: `Data for ${type} received. Actual posting to Firebase is not yet implemented.`,
-    });
-    // Reset specific form
-    if (type === 'notice') formNotice.reset({ grade: user?.grade || "1", division: user?.division || "A"});
-    if (type === 'homework') formHomework.reset({ grade: user?.grade || "1", division: user?.division || "A", fileUrl: "", fileName: ""});
-    if (type === 'circular') formCircular.reset({ grade: user?.grade || "1", division: user?.division || "A", fileUrl: "", fileName: ""});
-    if (type === 'textbook') formTextbook.reset({ grade: user?.grade || "1", fileUrl: "", fileName: ""});
-    if (type === 'gallery') formGallery.reset({imageUrls: [""]});
+      switch (type) {
+        case "notice":
+          collectionName = "notices";
+          documentData.grade = data.grade || null; // Store as null if empty
+          documentData.division = data.division || null; // Store as null if empty
+          break;
+        case "homework":
+          collectionName = "homework";
+          // Ensure required fields for homework are present
+          documentData.subject = data.subject || "";
+          documentData.dueDate = data.dueDate || "";
+          break;
+        case "circular":
+          collectionName = "circulars";
+          documentData.grade = data.grade || null;
+          documentData.division = data.division || null;
+          break;
+        case "textbook":
+          collectionName = "textbooks";
+          break;
+        case "gallery":
+          collectionName = "galleryAlbums";
+          documentData.images = data.imageUrls.map((url: string) => ({ url, alt: data.title }));
+          delete documentData.imageUrls; // remove original array
+          break;
+        default:
+          toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
+          setIsLoading(false);
+          return;
+      }
 
-    setIsLoading(false);
+      await addDoc(collection(db, collectionName), documentData);
+      
+      toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Posted Successfully` });
+
+      // Reset specific form
+      if (type === 'notice') formNotice.reset({ title: "", content: "", grade: user?.grade || "1", division: user?.division || "A"});
+      if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: user?.grade || "1", division: user?.division || "A", subject: "", dueDate: ""});
+      if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: user?.grade || "1", division: user?.division || "A"});
+      if (type === 'textbook') formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1"});
+      if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageUrls: [""]});
+
+    } catch (e: any) {
+      console.error(`Error posting ${type}:`, e);
+      toast({ title: "Error", description: `Failed to post ${type}. ${e.message}`, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const renderFileUploadFields = (formInstance: any) => ( // Quick hack for multiple forms. Better to have specific components.
+  const renderFileUploadFields = (formInstance: any, type: 'homework' | 'circular') => (
     <>
        <div>
         <Label htmlFor={`${activeTab}Title`}>Title *</Label>
@@ -121,15 +151,29 @@ export function PostContentForm() {
         <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
       </div>
        <div>
-        <Label htmlFor={`${activeTab}FileUrl`}>File URL * (Direct link to the file)</Label>
+        <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
         <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
         {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.fileUrl.message}</p>}
-        <p className="text-xs text-muted-foreground mt-1">Actual file upload feature will be added later. For now, please provide a public URL.</p>
+        <p className="text-xs text-muted-foreground mt-1">Actual file upload feature will be added later. For now, please provide a public URL if applicable.</p>
       </div>
       <div>
         <Label htmlFor={`${activeTab}FileName`}>File Name (Optional, e.g., chapter5.pdf)</Label>
         <Input id={`${activeTab}FileName`} {...formInstance.register("fileName")} />
       </div>
+      {type === 'homework' && (
+        <>
+          <div>
+            <Label htmlFor="homeworkSubject">Subject *</Label>
+            <Input id="homeworkSubject" {...formInstance.register("subject")} />
+            {formInstance.formState.errors.subject && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.subject.message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="homeworkDueDate">Due Date *</Label>
+            <Input id="homeworkDueDate" type="date" {...formInstance.register("dueDate")} />
+            {formInstance.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.dueDate.message}</p>}
+          </div>
+        </>
+      )}
       <GradeDivisionSelector
         grade={formInstance.watch("grade")}
         onGradeChange={(value) => formInstance.setValue("grade", value)}
@@ -170,13 +214,25 @@ export function PostContentForm() {
                 <Textarea id="noticeContent" {...formNotice.register("content")} rows={5} />
                 {formNotice.formState.errors.content && <p className="text-sm text-destructive mt-1">{formNotice.formState.errors.content.message}</p>}
               </div>
-               <GradeDivisionSelector
-                  grade={formNotice.watch("grade") || ""}
-                  onGradeChange={(value) => formNotice.setValue("grade", value)}
-                  division={formNotice.watch("division") || ""}
-                  onDivisionChange={(value) => formNotice.setValue("division", value)}
+               <Controller
+                  name="grade"
+                  control={formNotice.control}
+                  render={({ field }) => (
+                    <Controller
+                      name="division"
+                      control={formNotice.control}
+                      render={({ field: divisionField }) => (
+                        <GradeDivisionSelector
+                          grade={field.value || ""}
+                          onGradeChange={field.onChange}
+                          division={divisionField.value || ""}
+                          onDivisionChange={divisionField.onChange}
+                        />
+                      )}
+                    />
+                  )}
                 />
-                <p className="text-xs text-muted-foreground">Select grade and division if this notice is specific, or leave for all (future feature).</p>
+                <p className="text-xs text-muted-foreground">Select grade and division to target specific students. Leave default (Grade 1, Div A) or clear for wider reach (targeting logic to be refined).</p>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Notice
               </Button>
@@ -185,7 +241,7 @@ export function PostContentForm() {
 
           <TabsContent value="homework">
              <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
-              {renderFileUploadFields(formHomework)}
+              {renderFileUploadFields(formHomework, "homework")}
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Homework
               </Button>
@@ -194,7 +250,7 @@ export function PostContentForm() {
 
           <TabsContent value="circular">
             <form onSubmit={formCircular.handleSubmit(data => handleFormSubmit(data, "circular"))} className="space-y-4">
-              {renderFileUploadFields(formCircular)} {/* Assuming circulars also target specific grades/divisions */}
+              {renderFileUploadFields(formCircular, "circular")}
                <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Circular
               </Button>
@@ -214,10 +270,15 @@ export function PostContentForm() {
                 {formTextbook.formState.errors.subject && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.subject.message}</p>}
               </div>
               <div>
-                <Label htmlFor="textbookFileUrl">PDF URL *</Label>
+                <Label htmlFor="textbookFileUrl">PDF URL (Optional)</Label>
                 <Input id="textbookFileUrl" {...formTextbook.register("fileUrl")} placeholder="https://example.com/textbook.pdf"/>
                 {formTextbook.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.fileUrl.message}</p>}
-                 <p className="text-xs text-muted-foreground mt-1">Provide a direct link to the PDF.</p>
+                 <p className="text-xs text-muted-foreground mt-1">Provide a direct link to the PDF if available.</p>
+              </div>
+               <div>
+                <Label htmlFor="textbookCoverImageUrl">Cover Image URL (Optional)</Label>
+                <Input id="textbookCoverImageUrl" {...formTextbook.register("coverImageUrl")} placeholder="https://example.com/cover.png"/>
+                {formTextbook.formState.errors.coverImageUrl && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.coverImageUrl.message}</p>}
               </div>
               <div>
                 <Label htmlFor="textbookFileName">File Name (Optional, e.g., math_grade5.pdf)</Label>
@@ -229,19 +290,15 @@ export function PostContentForm() {
                     name="grade"
                     control={formTextbook.control}
                     render={({ field }) => (
-                      <GradeDivisionSelector
-                        grade={field.value || ""}
+                      // Using only grade part of GradeDivisionSelector
+                       <GradeDivisionSelector
+                        grade={field.value || "1"}
                         onGradeChange={field.onChange}
-                        division="" // Division not typically needed for textbook, hide or make optional
+                        division="" // Division not used for textbook selection
                         onDivisionChange={() => {}} // No-op
-                      />
+                        />
                     )}
                   />
-                  {/* Simplified Grade selector for textbooks */}
-                  {/* <Select onValueChange={(value) => formTextbook.setValue("grade", value)} value={formTextbook.watch("grade")}>
-                    <SelectTrigger id="textbookGrade"><SelectValue placeholder="Select grade" /></SelectTrigger>
-                    <SelectContent>{Array.from({length:8}, (_,i) => (i+1).toString()).map(g => <SelectItem key={g} value={g}>Grade {g}</SelectItem>)}</SelectContent>
-                  </Select> */}
                 {formTextbook.formState.errors.grade && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.grade.message}</p>}
               </div>
                <Button type="submit" disabled={isLoading}>
@@ -256,6 +313,14 @@ export function PostContentForm() {
                 <Label htmlFor="galleryTitle">Gallery Title / Event Name *</Label>
                 <Input id="galleryTitle" {...formGallery.register("title")} />
                 {formGallery.formState.errors.title && <p className="text-sm text-destructive mt-1">{formGallery.formState.errors.title.message}</p>}
+              </div>
+              <div>
+                <Label htmlFor="galleryDescription">Description (Optional)</Label>
+                <Textarea id="galleryDescription" {...formGallery.register("description")} />
+              </div>
+              <div>
+                <Label htmlFor="galleryEventDate">Event Date (Optional)</Label>
+                <Input id="galleryEventDate" type="date" {...formGallery.register("eventDate")} />
               </div>
               <div className="space-y-2">
                 <Label>Image URLs (at least 1, max 10) *</Label>

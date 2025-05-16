@@ -1,4 +1,6 @@
+
 import type { User as FirebaseUser } from "firebase/auth";
+import type { Timestamp, FieldValue } from "firebase/firestore";
 
 export type UserRole = "student" | "teacher";
 
@@ -10,13 +12,15 @@ export interface AppUser extends FirebaseUser {
 }
 
 export interface Notice {
-  id: string;
+  id: string; // Document ID from Firestore
   title: string;
   content: string;
-  postedBy: string; // Teacher's name or ID
-  timestamp: Date;
-  grade?: string; // Target grade
-  division?: string; // Target division
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue; // Firestore Timestamp on read, FieldValue on write
+  displayDate?: string; // For client-side display after conversion
+  grade?: string | null; // Target grade
+  division?: string | null; // Target division
 }
 
 export interface Homework {
@@ -25,8 +29,12 @@ export interface Homework {
   description?: string;
   fileUrl?: string; // URL to the attached file
   fileName?: string;
-  postedBy: string;
-  timestamp: Date;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue;
+  displayDate?: string;
+  dueDate?: string; // Keep dueDate if it's part of homework logic
+  subject?: string; // Keep subject if it's part of homework logic
   grade: string;
   division: string;
 }
@@ -34,10 +42,15 @@ export interface Homework {
 export interface Circular {
   id: string;
   title: string;
+  description?: string;
   fileUrl?: string;
   fileName?: string;
-  postedBy: string;
-  timestamp: Date;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue;
+  displayDate?: string;
+  grade?: string | null;
+  division?: string | null;
 }
 
 export interface Textbook {
@@ -45,17 +58,23 @@ export interface Textbook {
   title: string;
   subject: string;
   fileUrl: string; // URL to PDF
+  coverImageUrl?: string;
   fileName?: string;
-  postedBy: string;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue; // Added for sorting or tracking
   grade: string;
 }
 
-export interface PhotoGallery {
+export interface PhotoGalleryAlbum { // Renamed for clarity
   id: string;
   title: string;
+  description?: string;
   images: { url: string; alt?: string }[];
-  postedBy: string;
-  timestamp: Date;
+  postedByUid: string;
+  postedByName: string;
+  eventDate?: string; // Keep eventDate
+  timestamp: Timestamp | FieldValue; // Added for sorting or tracking
 }
 
 export interface StudentProfile {
