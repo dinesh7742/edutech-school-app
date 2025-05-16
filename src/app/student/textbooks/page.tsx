@@ -6,60 +6,98 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
+import { collection, query, getDocs, Timestamp } from "firebase/firestore"; // Removed orderBy for now
 import type { Textbook } from "@/types";
-// Removed useAuth as user is not directly used for fetching all textbooks in this version
-// import { useAuth } from "@/context/AuthContext";
 
 export default function StudentTextbooksPage() {
   const [textbooksList, setTextbooksList] = useState<Textbook[]>([]);
   const [loading, setLoading] = useState(true);
-  // const { user } = useAuth(); // User context not strictly needed if fetching all textbooks
+  const [error, setError] = useState<string | null>(null); // For displaying errors
 
   useEffect(() => {
     const fetchTextbooks = async () => {
       setLoading(true);
+      setError(null); // Reset error on new fetch
+      console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
       try {
         const textbooksCollectionRef = collection(db, "textbooks");
-        // Fetching all textbooks, ordered by grade then title.
-        // User-specific filtering (e.g., by user.grade) can be added later.
-        const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title"));
+        // Temporarily remove orderBy to check for indexing issues.
+        // Original query: const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title"));
+        const q = query(textbooksCollectionRef); // Simplified query
+        console.log("[StudentTextbooksPage] Executing Firestore query for textbooks:", q);
         const querySnapshot = await getDocs(q);
         
+        console.log(`[StudentTextbooksPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
+        
+        if (querySnapshot.empty) {
+          console.warn("[StudentTextbooksPage] No textbooks found in the 'textbooks' collection after query execution.");
+        }
+
         const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
+          console.log(`[StudentTextbooksPage] Mapping document ${doc.id}:`, data);
+          // Basic validation for critical fields before mapping
+          if (!data.title || !data.subject || !data.grade) {
+            console.warn(`[StudentTextbooksPage] Document ${doc.id} is missing critical fields (title, subject, or grade) and will be skipped.`, data);
+            return null; // Skip this document
+          }
           return {
             id: doc.id,
             title: data.title,
             subject: data.subject,
-            fileUrl: data.fileUrl || "", // Ensure fileUrl is a string, defaults to empty if not present
-            coverImageUrl: data.coverImageUrl || undefined, // Ensure coverImageUrl is string or undefined
-            fileName: data.fileName || "", // Default to empty string if not present
+            fileUrl: data.fileUrl || "",
+            coverImageUrl: data.coverImageUrl || undefined,
+            fileName: data.fileName || "",
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
             timestamp: data.timestamp as Timestamp, // Assuming it's stored as Firestore Timestamp
             grade: data.grade,
           };
-        });
+        }).filter(Boolean) as Textbook[]; // Filter out any nulls from skipped documents
         
-        console.log(`Fetched ${fetchedTextbooks.length} textbooks:`, fetchedTextbooks);
         setTextbooksList(fetchedTextbooks);
-      } catch (error) {
-        console.error("Error fetching textbooks:", error);
-        setTextbooksList([]); // Clear list on error
+        console.log(`[StudentTextbooksPage] Successfully mapped ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
+
+      } catch (err: any) {
+        console.error("[StudentTextbooksPage] Error fetching textbooks from Firestore:", err);
+        setError(`Failed to load textbooks: ${err.message}.`);
+        setTextbooksList([]); 
       } finally {
         setLoading(false);
+        console.log("[StudentTextbooksPage] Finished fetching textbooks. Loading set to false.");
       }
     };
 
     fetchTextbooks();
-  }, []); // Empty dependency array: fetch once on component mount.
+  }, []); 
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
         <p className="ml-4 text-lg">Loading textbooks...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+          <BookOpen className="h-8 w-8" />
+          Textbooks
+        </h1>
+        <Card className="shadow-lg border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Error Loading Textbooks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>{error}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Please check your internet connection. If the issue persists, look at the browser's developer console for more detailed Firestore error messages (e.g., permission denied, missing indexes).
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
