@@ -23,23 +23,36 @@ import type { Notice, Homework, Circular, Textbook, PhotoGalleryAlbum } from "@/
 const noticeSchema = z.object({
   title: z.string().min(3, "Title is required"),
   content: z.string().min(10, "Content is required"),
-  grade: z.string().optional(),
-  division: z.string().optional(),
+  grade: z.string().optional(), // Optional: for school-wide notices or if targeting logic is handled differently
+  division: z.string().optional(), // Optional
 });
 type NoticeFormValues = z.infer<typeof noticeSchema>;
 
-const fileUploadSchema = z.object({
+const homeworkSchema = z.object({
   title: z.string().min(3, "Title is required"),
   description: z.string().optional(),
   fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")).optional(),
-  fileName: z.string().optional(), 
+  fileName: z.string().optional(),
   grade: z.string().min(1, "Grade is required"),
   division: z.string().min(1, "Division is required"),
-  // Specific fields for homework
-  subject: z.string().optional(),
-  dueDate: z.string().optional(),
+  subject: z.string().min(1, "Subject is required"),
+  dueDate: z.string().refine((val) => {
+    if (!val) return false; // Must not be empty
+    const date = new Date(val);
+    return !isNaN(date.getTime()); // Must be a valid date
+  }, "Due date is required and must be a valid date"),
 });
-type FileUploadFormValues = z.infer<typeof fileUploadSchema>; 
+type HomeworkFormValues = z.infer<typeof homeworkSchema>;
+
+const circularSchema = z.object({
+  title: z.string().min(3, "Title is required"),
+  description: z.string().optional(),
+  fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")).optional(),
+  fileName: z.string().optional(),
+  grade: z.string().optional(), // Optional: for school-wide circulars
+  division: z.string().optional(), // Optional
+});
+type CircularFormValues = z.infer<typeof circularSchema>;
 
 const textbookSchema = z.object({
   title: z.string().min(3, "Title is required"),
@@ -66,9 +79,11 @@ export function PostContentForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("notice");
   
-  const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} });
-  const formHomework = useForm<FileUploadFormValues>({ resolver: zodResolver(fileUploadSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} });
-  const formCircular = useForm<FileUploadFormValues>({ resolver: zodResolver(fileUploadSchema), defaultValues: { grade: user?.grade || "1", division: user?.division || "A"} });
+  const defaultGradeDivision = { grade: user?.grade || "1", division: user?.division || "A"};
+
+  const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division} });
+  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
+  const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
   const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageUrls: [""]}});
 
@@ -92,14 +107,12 @@ export function PostContentForm() {
       switch (type) {
         case "notice":
           collectionName = "notices";
-          documentData.grade = data.grade || null; // Store as null if empty
-          documentData.division = data.division || null; // Store as null if empty
+          documentData.grade = data.grade || null; 
+          documentData.division = data.division || null; 
           break;
         case "homework":
           collectionName = "homework";
-          // Ensure required fields for homework are present
-          documentData.subject = data.subject || "";
-          documentData.dueDate = data.dueDate || "";
+          // subject and dueDate are now required by homeworkSchema
           break;
         case "circular":
           collectionName = "circulars";
@@ -112,7 +125,7 @@ export function PostContentForm() {
         case "gallery":
           collectionName = "galleryAlbums";
           documentData.images = data.imageUrls.map((url: string) => ({ url, alt: data.title }));
-          delete documentData.imageUrls; // remove original array
+          delete documentData.imageUrls; 
           break;
         default:
           toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
@@ -125,9 +138,9 @@ export function PostContentForm() {
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Posted Successfully` });
 
       // Reset specific form
-      if (type === 'notice') formNotice.reset({ title: "", content: "", grade: user?.grade || "1", division: user?.division || "A"});
-      if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: user?.grade || "1", division: user?.division || "A", subject: "", dueDate: ""});
-      if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: user?.grade || "1", division: user?.division || "A"});
+      if (type === 'notice') formNotice.reset({ title: "", content: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
+      if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: ""});
+      if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
       if (type === 'textbook') formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1"});
       if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageUrls: [""]});
 
@@ -138,13 +151,15 @@ export function PostContentForm() {
       setIsLoading(false);
     }
   };
-
-  const renderFileUploadFields = (formInstance: any, type: 'homework' | 'circular') => (
+  
+  // formInstance is 'any' here because it can be one of several useForm return types.
+  // The specific schema validation is handled by the resolver in each useForm hook.
+  const renderSharedFields = (formInstance: any, type: 'homework' | 'circular') => (
     <>
        <div>
         <Label htmlFor={`${activeTab}Title`}>Title *</Label>
         <Input id={`${activeTab}Title`} {...formInstance.register("title")} />
-        {formInstance.formState.errors.title && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.title.message}</p>}
+        {formInstance.formState.errors.title && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.title as any).message}</p>}
       </div>
       <div>
         <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
@@ -153,7 +168,7 @@ export function PostContentForm() {
        <div>
         <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
         <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
-        {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.fileUrl.message}</p>}
+        {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.fileUrl as any).message}</p>}
         <p className="text-xs text-muted-foreground mt-1">Actual file upload feature will be added later. For now, please provide a public URL if applicable.</p>
       </div>
       <div>
@@ -165,23 +180,36 @@ export function PostContentForm() {
           <div>
             <Label htmlFor="homeworkSubject">Subject *</Label>
             <Input id="homeworkSubject" {...formInstance.register("subject")} />
-            {formInstance.formState.errors.subject && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.subject.message}</p>}
+            {formInstance.formState.errors.subject && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.subject as any).message}</p>}
           </div>
           <div>
             <Label htmlFor="homeworkDueDate">Due Date *</Label>
             <Input id="homeworkDueDate" type="date" {...formInstance.register("dueDate")} />
-            {formInstance.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.dueDate.message}</p>}
+            {formInstance.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.dueDate as any).message}</p>}
           </div>
         </>
       )}
-      <GradeDivisionSelector
-        grade={formInstance.watch("grade")}
-        onGradeChange={(value) => formInstance.setValue("grade", value)}
-        division={formInstance.watch("division")}
-        onDivisionChange={(value) => formInstance.setValue("division", value)}
+      <Controller
+        name="grade"
+        control={formInstance.control}
+        render={({ field: gradeField }) => (
+          <Controller
+            name="division"
+            control={formInstance.control}
+            render={({ field: divisionField }) => (
+              <GradeDivisionSelector
+                grade={gradeField.value || ""}
+                onGradeChange={gradeField.onChange}
+                division={divisionField.value || ""}
+                onDivisionChange={divisionField.onChange}
+              />
+            )}
+          />
+        )}
       />
-      {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.grade.message}</p>}
-      {formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.division.message}</p>}
+      {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.grade as any).message}</p>}
+      {formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
+       { (type === 'circular' || type === 'notice') && <p className="text-xs text-muted-foreground mt-1">Select grade and division to target specific students. Clear selections or implement an 'All' option for wider reach (current default may not target 'All').</p>}
     </>
   );
 
@@ -232,7 +260,7 @@ export function PostContentForm() {
                     />
                   )}
                 />
-                <p className="text-xs text-muted-foreground">Select grade and division to target specific students. Leave default (Grade 1, Div A) or clear for wider reach (targeting logic to be refined).</p>
+                <p className="text-xs text-muted-foreground">Select grade and division to target specific students. Leave empty or clear if not targeting specific class (current default grade 1A will be used if not changed).</p>
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Notice
               </Button>
@@ -241,7 +269,7 @@ export function PostContentForm() {
 
           <TabsContent value="homework">
              <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
-              {renderFileUploadFields(formHomework, "homework")}
+              {renderSharedFields(formHomework, "homework")}
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Homework
               </Button>
@@ -250,7 +278,7 @@ export function PostContentForm() {
 
           <TabsContent value="circular">
             <form onSubmit={formCircular.handleSubmit(data => handleFormSubmit(data, "circular"))} className="space-y-4">
-              {renderFileUploadFields(formCircular, "circular")}
+              {renderSharedFields(formCircular, "circular")}
                <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Circular
               </Button>
@@ -290,13 +318,13 @@ export function PostContentForm() {
                     name="grade"
                     control={formTextbook.control}
                     render={({ field }) => (
-                      // Using only grade part of GradeDivisionSelector
                        <GradeDivisionSelector
                         grade={field.value || "1"}
                         onGradeChange={field.onChange}
                         division="" // Division not used for textbook selection
-                        onDivisionChange={() => {}} // No-op
+                        onDivisionChange={() => {}} // No-op, but hide selector for division
                         />
+                        // TODO: GradeDivisionSelector needs an option to hide division
                     )}
                   />
                 {formTextbook.formState.errors.grade && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.grade.message}</p>}
@@ -364,3 +392,5 @@ export function PostContentForm() {
     </Card>
   );
 }
+
+    
