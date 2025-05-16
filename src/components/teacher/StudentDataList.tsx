@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,20 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Eye, UserCircle, Filter } from "lucide-react";
+import { Eye, UserCircle, Filter, Loader2 } from "lucide-react";
 import type { StudentProfile } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
-
-// Mock data - replace with actual data fetching from Firestore
-const MOCK_STUDENTS: StudentProfile[] = [
-  { uid: "student1", firstName: "Aarav", lastName: "Sharma", grade: "5", division: "A", email: "aarav.s@example.com", photoUrl: "https://placehold.co/40x40.png?text=AS", contactNumber: "9876543210" },
-  { uid: "student2", firstName: "Priya", lastName: "Patel", grade: "5", division: "B", email: "priya.p@example.com", photoUrl: "https://placehold.co/40x40.png?text=PP", contactNumber: "9876543211" },
-  { uid: "student3", firstName: "Rohan", lastName: "Singh", grade: "6", division: "A", email: "rohan.s@example.com", photoUrl: "https://placehold.co/40x40.png?text=RS", contactNumber: "9876543212" },
-  { uid: "student4", firstName: "Sneha", lastName: "Verma", grade: "5", division: "A", email: "sneha.v@example.com", photoUrl: "https://placehold.co/40x40.png?text=SV", contactNumber: "9876543213" },
-  { uid: "student5", firstName: "Vikram", lastName: "Kumar", grade: "6", division: "B", email: "vikram.k@example.com", photoUrl: "https://placehold.co/40x40.png?text=VK", contactNumber: "9876543214" },
-];
-
+import { db } from "@/lib/firebase";
+import { collection, query, getDocs, orderBy } from "firebase/firestore";
 
 export function StudentDataList() {
   const { user: teacherUser } = useAuth(); // Teacher's context
@@ -28,39 +21,69 @@ export function StudentDataList() {
   const [filteredStudents, setFilteredStudents] = useState<StudentProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // In a real app, fetch students based on teacher's assigned classes/grades
-    // For now, use mock data and filter if teacher has grade/division info
-    setLoading(true);
-    // Simulating API call
-    setTimeout(() => {
-      let initialStudents = MOCK_STUDENTS;
-      if (teacherUser?.grade && teacherUser?.division) {
-        // This is a simplification. Teachers might teach multiple grades/divisions.
-        // A real app would have a more complex mapping.
-        // initialStudents = MOCK_STUDENTS.filter(s => s.grade === teacherUser.grade && s.division === teacherUser.division);
-      } else if (teacherUser?.grade) {
-        // initialStudents = MOCK_STUDENTS.filter(s => s.grade === teacherUser.grade);
+    const fetchStudentProfiles = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const profilesCollectionRef = collection(db, "studentProfiles");
+        // TODO: Implement filtering based on teacher's assigned classes/grades in a real scenario.
+        // For now, fetching all profiles and ordering by grade, then division, then firstName.
+        const q = query(profilesCollectionRef, orderBy("grade"), orderBy("division"), orderBy("firstName"));
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedProfiles: StudentProfile[] = querySnapshot.docs.map(doc => {
+          return {
+            uid: doc.id, // Use doc.id as uid for the profile
+            ...doc.data()
+          } as StudentProfile;
+        });
+        
+        setStudents(fetchedProfiles);
+        setFilteredStudents(fetchedProfiles);
+      } catch (err: any) {
+        console.error("Error fetching student profiles:", err);
+        setError("Failed to load student data. Please try again later.");
+      } finally {
+        setLoading(false);
       }
-      setStudents(initialStudents);
-      setFilteredStudents(initialStudents);
-      setLoading(false);
-    }, 1000);
-  }, [teacherUser]);
+    };
+
+    // Only fetch if teacherUser is loaded (though we don't use teacherUser for filtering yet)
+    if (teacherUser) {
+      fetchStudentProfiles();
+    } else {
+      // If teacherUser is not yet available (e.g. initial load), wait for AuthContext.
+      // This prevents fetching before auth state is clear.
+      // Alternatively, if teacherUser might be null for an extended period, handle accordingly.
+      // For now, assuming teacherUser will be available once auth is settled.
+      // setLoading(false); // Or keep loading until teacherUser is confirmed.
+    }
+  }, [teacherUser]); // Re-fetch if teacherUser changes (e.g. for future filtering logic)
 
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase();
     const filteredData = students.filter(item => {
+      const fullName = `${item.firstName.toLowerCase()} ${item.lastName ? item.lastName.toLowerCase() : ''}`;
       return (
+        fullName.includes(lowercasedFilter) ||
         item.firstName.toLowerCase().includes(lowercasedFilter) ||
-        item.lastName.toLowerCase().includes(lowercasedFilter) ||
+        (item.lastName && item.lastName.toLowerCase().includes(lowercasedFilter)) ||
         item.email?.toLowerCase().includes(lowercasedFilter) ||
         `${item.grade}${item.division}`.toLowerCase().includes(lowercasedFilter)
       );
     });
     setFilteredStudents(filteredData);
   }, [searchTerm, students]);
+
+  const getInitials = (firstName?: string, lastName?: string) => {
+    const firstInitial = firstName ? firstName[0] : "";
+    const lastInitial = lastName ? lastName[0] : "";
+    return `${firstInitial}${lastInitial}`.toUpperCase() || "??";
+  };
+  
 
   if (loading) {
     return (
@@ -74,6 +97,23 @@ export function StudentDataList() {
           <div className="space-y-2">
             {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="shadow-xl border-destructive">
+        <CardHeader>
+          <CardTitle className="text-destructive">Error Loading Student Data</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>{error}</p>
+           <p className="mt-2 text-sm text-muted-foreground">
+              Please check your internet connection or Firestore security rules.
+              The console might have more details (e.g. missing Firestore indexes for sorting).
+            </p>
         </CardContent>
       </Card>
     );
@@ -93,15 +133,16 @@ export function StudentDataList() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter Options</Button> {/* Placeholder for advanced filters */}
+          {/* Placeholder for advanced filters - can be implemented later */}
+          {/* <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter Options</Button>  */}
         </div>
 
-        {filteredStudents.length === 0 && !loading ? (
+        {filteredStudents.length === 0 ? (
           <div className="text-center py-10">
             <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-lg font-medium">No Students Found</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {searchTerm ? "Try adjusting your search or filter criteria." : "There are no students matching your current view."}
+              {searchTerm ? "Try adjusting your search or filter criteria." : "No student profiles available, or none match your current view."}
             </p>
           </div>
         ) : (
@@ -122,14 +163,14 @@ export function StudentDataList() {
                 <TableRow key={student.uid} className="hover:bg-muted/50">
                   <TableCell>
                     <Avatar>
-                      <AvatarImage src={student.photoUrl || `https://placehold.co/40x40.png?text=${student.firstName[0]}${student.lastName[0]}`} alt={`${student.firstName} ${student.lastName}`} data-ai-hint="profile avatar" />
-                      <AvatarFallback>{student.firstName[0]}{student.lastName[0]}</AvatarFallback>
+                      <AvatarImage src={student.photoUrl || `https://placehold.co/40x40.png?text=${getInitials(student.firstName, student.lastName)}`} alt={`${student.firstName} ${student.lastName || ''}`} data-ai-hint="profile avatar" />
+                      <AvatarFallback>{getInitials(student.firstName, student.lastName)}</AvatarFallback>
                     </Avatar>
                   </TableCell>
-                  <TableCell className="font-medium">{student.firstName} {student.lastName}</TableCell>
+                  <TableCell className="font-medium">{student.firstName} {student.lastName || ''}</TableCell>
                   <TableCell>{student.grade}</TableCell>
                   <TableCell>{student.division}</TableCell>
-                  <TableCell>{student.email}</TableCell>
+                  <TableCell>{student.email || 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/teacher/student-data/${student.uid}`}>
