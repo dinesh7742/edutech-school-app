@@ -1,3 +1,4 @@
+
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ interface GradeDivisionSelectorProps {
   onGradeChange: (value: string) => void;
   division: string;
   onDivisionChange: (value: string) => void;
+  showDivision?: boolean; // New optional prop
 }
 
 const grades = Array.from({ length: 8 }, (_, i) => (i + 1).toString());
@@ -22,9 +24,10 @@ export function GradeDivisionSelector({
   onGradeChange,
   division,
   onDivisionChange,
+  showDivision = true, // Default to true
 }: GradeDivisionSelectorProps) {
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div className={`grid ${showDivision ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
       <div>
         <Label htmlFor="grade">Grade</Label>
         <Select value={grade} onValueChange={onGradeChange}>
@@ -40,21 +43,23 @@ export function GradeDivisionSelector({
           </SelectContent>
         </Select>
       </div>
-      <div>
-        <Label htmlFor="division">Division</Label>
-        <Select value={division} onValueChange={onDivisionChange}>
-          <SelectTrigger id="division">
-            <SelectValue placeholder="Select division" />
-          </SelectTrigger>
-          <SelectContent>
-            {divisions.map((d) => (
-              <SelectItem key={d} value={d}>
-                Division {d}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {showDivision && (
+        <div>
+          <Label htmlFor="division">Division</Label>
+          <Select value={division} onValueChange={onDivisionChange}>
+            <SelectTrigger id="division">
+              <SelectValue placeholder="Select division" />
+            </SelectTrigger>
+            <SelectContent>
+              {divisions.map((d) => (
+                <SelectItem key={d} value={d}>
+                  Division {d}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 }

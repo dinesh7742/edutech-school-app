@@ -23,8 +23,8 @@ import type { Notice, Homework, Circular, Textbook, PhotoGalleryAlbum } from "@/
 const noticeSchema = z.object({
   title: z.string().min(3, "Title is required"),
   content: z.string().min(10, "Content is required"),
-  grade: z.string().optional(), // Optional: for school-wide notices or if targeting logic is handled differently
-  division: z.string().optional(), // Optional
+  grade: z.string().optional(), 
+  division: z.string().optional(),
 });
 type NoticeFormValues = z.infer<typeof noticeSchema>;
 
@@ -37,9 +37,9 @@ const homeworkSchema = z.object({
   division: z.string().min(1, "Division is required"),
   subject: z.string().min(1, "Subject is required"),
   dueDate: z.string().refine((val) => {
-    if (!val) return false; // Must not be empty
+    if (!val) return false; 
     const date = new Date(val);
-    return !isNaN(date.getTime()); // Must be a valid date
+    return !isNaN(date.getTime()); 
   }, "Due date is required and must be a valid date"),
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
@@ -49,8 +49,8 @@ const circularSchema = z.object({
   description: z.string().optional(),
   fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")).optional(),
   fileName: z.string().optional(),
-  grade: z.string().optional(), // Optional: for school-wide circulars
-  division: z.string().optional(), // Optional
+  grade: z.string().optional(), 
+  division: z.string().optional(), 
 });
 type CircularFormValues = z.infer<typeof circularSchema>;
 
@@ -112,7 +112,6 @@ export function PostContentForm() {
           break;
         case "homework":
           collectionName = "homework";
-          // subject and dueDate are now required by homeworkSchema
           break;
         case "circular":
           collectionName = "circulars";
@@ -121,6 +120,7 @@ export function PostContentForm() {
           break;
         case "textbook":
           collectionName = "textbooks";
+          // Division is not part of textbook schema, so it won't be saved.
           break;
         case "gallery":
           collectionName = "galleryAlbums";
@@ -152,29 +152,42 @@ export function PostContentForm() {
     }
   };
   
-  // formInstance is 'any' here because it can be one of several useForm return types.
-  // The specific schema validation is handled by the resolver in each useForm hook.
-  const renderSharedFields = (formInstance: any, type: 'homework' | 'circular') => (
+  const renderSharedFields = (formInstance: any, type: 'homework' | 'circular' | 'notice') => (
     <>
        <div>
         <Label htmlFor={`${activeTab}Title`}>Title *</Label>
         <Input id={`${activeTab}Title`} {...formInstance.register("title")} />
         {formInstance.formState.errors.title && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.title as any).message}</p>}
       </div>
-      <div>
-        <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
-        <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
-      </div>
-       <div>
-        <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
-        <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
-        {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.fileUrl as any).message}</p>}
-        <p className="text-xs text-muted-foreground mt-1">Actual file upload feature will be added later. For now, please provide a public URL if applicable.</p>
-      </div>
-      <div>
-        <Label htmlFor={`${activeTab}FileName`}>File Name (Optional, e.g., chapter5.pdf)</Label>
-        <Input id={`${activeTab}FileName`} {...formInstance.register("fileName")} />
-      </div>
+      
+      {type === 'notice' ? (
+        <div>
+            <Label htmlFor="noticeContent">Content *</Label>
+            <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
+            {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
+        </div>
+      ) : (
+        <div>
+            <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
+            <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
+        </div>
+      )}
+
+      {type !== 'notice' && ( // File URL and Name not for notices
+        <>
+            <div>
+                <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
+                <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
+                {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.fileUrl as any).message}</p>}
+                <p className="text-xs text-muted-foreground mt-1">Actual file upload feature will be added later. For now, please provide a public URL if applicable.</p>
+            </div>
+            <div>
+                <Label htmlFor={`${activeTab}FileName`}>File Name (Optional, e.g., chapter5.pdf)</Label>
+                <Input id={`${activeTab}FileName`} {...formInstance.register("fileName")} />
+            </div>
+        </>
+      )}
+
       {type === 'homework' && (
         <>
           <div>
@@ -196,20 +209,23 @@ export function PostContentForm() {
           <Controller
             name="division"
             control={formInstance.control}
-            render={({ field: divisionField }) => (
+            render={({ field: divisionField }) => ( // This controller for division is used even if not in schema, RHF allows it
               <GradeDivisionSelector
                 grade={gradeField.value || ""}
                 onGradeChange={gradeField.onChange}
-                division={divisionField.value || ""}
-                onDivisionChange={divisionField.onChange}
+                division={divisionField.value || ""} // Will be empty string for textbook, not in schema
+                onDivisionChange={divisionField.onChange} // Will allow changes if showDivision is true
+                showDivision={type !== 'textbook'} // Only show division for non-textbooks
               />
             )}
           />
         )}
       />
       {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.grade as any).message}</p>}
-      {formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
-       { (type === 'circular' || type === 'notice') && <p className="text-xs text-muted-foreground mt-1">Select grade and division to target specific students. Clear selections or implement an 'All' option for wider reach (current default may not target 'All').</p>}
+      {/* Only show division errors if division is expected (i.e., for homework) */}
+      {type === 'homework' && formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
+      
+      {(type === 'circular' || type === 'notice') && <p className="text-xs text-muted-foreground mt-1">Optionally select grade and division to target specific students. Leave empty for school-wide content.</p>}
     </>
   );
 
@@ -232,35 +248,7 @@ export function PostContentForm() {
 
           <TabsContent value="notice">
             <form onSubmit={formNotice.handleSubmit(data => handleFormSubmit(data, "notice"))} className="space-y-4">
-              <div>
-                <Label htmlFor="noticeTitle">Title *</Label>
-                <Input id="noticeTitle" {...formNotice.register("title")} />
-                {formNotice.formState.errors.title && <p className="text-sm text-destructive mt-1">{formNotice.formState.errors.title.message}</p>}
-              </div>
-              <div>
-                <Label htmlFor="noticeContent">Content *</Label>
-                <Textarea id="noticeContent" {...formNotice.register("content")} rows={5} />
-                {formNotice.formState.errors.content && <p className="text-sm text-destructive mt-1">{formNotice.formState.errors.content.message}</p>}
-              </div>
-               <Controller
-                  name="grade"
-                  control={formNotice.control}
-                  render={({ field }) => (
-                    <Controller
-                      name="division"
-                      control={formNotice.control}
-                      render={({ field: divisionField }) => (
-                        <GradeDivisionSelector
-                          grade={field.value || ""}
-                          onGradeChange={field.onChange}
-                          division={divisionField.value || ""}
-                          onDivisionChange={divisionField.onChange}
-                        />
-                      )}
-                    />
-                  )}
-                />
-                <p className="text-xs text-muted-foreground">Select grade and division to target specific students. Leave empty or clear if not targeting specific class (current default grade 1A will be used if not changed).</p>
+              {renderSharedFields(formNotice, "notice")}
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Notice
               </Button>
@@ -315,16 +303,16 @@ export function PostContentForm() {
               <div>
                 <Label htmlFor="textbookGrade">Grade *</Label>
                  <Controller
-                    name="grade"
+                    name="grade" // This name must match a field in textbookSchema
                     control={formTextbook.control}
                     render={({ field }) => (
                        <GradeDivisionSelector
-                        grade={field.value || "1"}
-                        onGradeChange={field.onChange}
-                        division="" // Division not used for textbook selection
-                        onDivisionChange={() => {}} // No-op, but hide selector for division
+                        grade={field.value || ""} // Use field.value
+                        onGradeChange={field.onChange} // Use field.onChange
+                        division="" // Division not used for textbook logic
+                        onDivisionChange={() => {}} // No-op for division
+                        showDivision={false} // Explicitly hide division selector
                         />
-                        // TODO: GradeDivisionSelector needs an option to hide division
                     )}
                   />
                 {formTextbook.formState.errors.grade && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.grade.message}</p>}
@@ -392,5 +380,3 @@ export function PostContentForm() {
     </Card>
   );
 }
-
-    
