@@ -8,20 +8,22 @@ import Image from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Textbook } from "@/types";
-import { useAuth } from "@/context/AuthContext";
+// Removed useAuth as user is not directly used for fetching all textbooks in this version
+// import { useAuth } from "@/context/AuthContext";
 
 export default function StudentTextbooksPage() {
   const [textbooksList, setTextbooksList] = useState<Textbook[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // For potential future filtering by grade
+  // const { user } = useAuth(); // User context not strictly needed if fetching all textbooks
 
   useEffect(() => {
     const fetchTextbooks = async () => {
       setLoading(true);
       try {
-        const textbooksCollection = collection(db, "textbooks");
-        // TODO: Filter by user.grade if user and user.grade are available
-        const q = query(textbooksCollection, orderBy("grade"), orderBy("title")); // Order by grade, then title
+        const textbooksCollectionRef = collection(db, "textbooks");
+        // Fetching all textbooks, ordered by grade then title.
+        // User-specific filtering (e.g., by user.grade) can be added later.
+        const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title"));
         const querySnapshot = await getDocs(q);
         
         const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
@@ -30,26 +32,28 @@ export default function StudentTextbooksPage() {
             id: doc.id,
             title: data.title,
             subject: data.subject,
-            fileUrl: data.fileUrl,
-            coverImageUrl: data.coverImageUrl,
-            fileName: data.fileName,
+            fileUrl: data.fileUrl || "", // Ensure fileUrl is a string, defaults to empty if not present
+            coverImageUrl: data.coverImageUrl || undefined, // Ensure coverImageUrl is string or undefined
+            fileName: data.fileName || "", // Default to empty string if not present
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
             timestamp: data.timestamp as Timestamp, // Assuming it's stored as Firestore Timestamp
             grade: data.grade,
-          } as Textbook;
+          };
         });
+        
+        console.log(`Fetched ${fetchedTextbooks.length} textbooks:`, fetchedTextbooks);
         setTextbooksList(fetchedTextbooks);
       } catch (error) {
         console.error("Error fetching textbooks:", error);
-        // Handle error display if needed
+        setTextbooksList([]); // Clear list on error
       } finally {
         setLoading(false);
       }
     };
 
     fetchTextbooks();
-  }, [user]); // Rerun if user context changes (for future filtering)
+  }, []); // Empty dependency array: fetch once on component mount.
 
   if (loading) {
     return (
@@ -108,4 +112,3 @@ export default function StudentTextbooksPage() {
     </div>
   );
 }
-
