@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, Timestamp, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, Timestamp } from "firebase/firestore"; // Removed orderBy for now
 import type { Textbook } from "@/types";
 
 export default function StudentTextbooksPage() {
@@ -18,13 +18,12 @@ export default function StudentTextbooksPage() {
     const fetchTextbooks = async () => {
       setLoading(true);
       setError(null); // Reset error on new fetch
-      console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore with orderBy...");
+      console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
       try {
         const textbooksCollectionRef = collection(db, "textbooks");
-        // Re-adding orderBy. A composite index will be required in Firestore.
-        // Firestore will usually provide a link in the console error to create this index.
-        const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title"));
-        console.log("[StudentTextbooksPage] Executing Firestore query for textbooks:", q);
+        // Simplified query: removed orderBy to see if data loads
+        const q = query(textbooksCollectionRef); 
+        console.log("[StudentTextbooksPage] Executing Firestore query for textbooks (simplified):", q);
         const querySnapshot = await getDocs(q);
         
         console.log(`[StudentTextbooksPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
@@ -36,31 +35,32 @@ export default function StudentTextbooksPage() {
         const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
           console.log(`[StudentTextbooksPage] Mapping document ${doc.id}:`, data);
+          // Basic validation for essential fields before mapping
           if (!data.title || !data.subject || !data.grade) {
             console.warn(`[StudentTextbooksPage] Document ${doc.id} is missing critical fields (title, subject, or grade) and will be skipped.`, data);
-            return null; 
+            return null; // Skip this document
           }
           return {
             id: doc.id,
             title: data.title,
             subject: data.subject,
-            fileUrl: data.fileUrl || "",
-            coverImageUrl: data.coverImageUrl || undefined,
-            fileName: data.fileName || "",
+            fileUrl: data.fileUrl || "", // Default to empty string if undefined
+            coverImageUrl: data.coverImageUrl || undefined, // Default to undefined if missing
+            fileName: data.fileName || "", // Default to empty string
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
-            timestamp: data.timestamp as Timestamp,
+            timestamp: data.timestamp as Timestamp, // Assume timestamp exists
             grade: data.grade,
           };
-        }).filter(Boolean) as Textbook[]; 
+        }).filter(Boolean) as Textbook[]; // Filter out any nulls from skipped documents
         
         setTextbooksList(fetchedTextbooks);
         console.log(`[StudentTextbooksPage] Successfully mapped ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
 
       } catch (err: any) {
         console.error("[StudentTextbooksPage] Error fetching textbooks from Firestore:", err);
-        setError(`Failed to load textbooks: ${err.message}. If this message mentions a missing index, please check the browser's developer console for a link to create it in Firebase.`);
-        setTextbooksList([]); 
+        setError(`Failed to load textbooks: ${err.message}. Please check the browser console for more details, especially for Firestore permission errors or missing index warnings (if orderBy is used).`);
+        setTextbooksList([]); // Clear list on error
       } finally {
         setLoading(false);
         console.log("[StudentTextbooksPage] Finished fetching textbooks. Loading set to false.");
@@ -68,7 +68,7 @@ export default function StudentTextbooksPage() {
     };
 
     fetchTextbooks();
-  }, []); 
+  }, []); // Fetch once on component mount
 
   if (loading) {
     return (
@@ -93,8 +93,7 @@ export default function StudentTextbooksPage() {
           <CardContent>
             <p>{error}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Please check your internet connection. If the issue persists, look at the browser's developer console for more detailed Firestore error messages (e.g., permission denied, missing indexes).
-              If you see an error about a missing index, Firestore usually provides a direct link in the console error message to create it.
+              Please check your internet connection. If the issue persists, the browser's developer console might have more specific Firestore error messages (e.g., permission denied).
             </p>
           </CardContent>
         </Card>
@@ -150,4 +149,3 @@ export default function StudentTextbooksPage() {
     </div>
   );
 }
-
