@@ -9,40 +9,40 @@ body {
 
 @layer base {
   :root {
-    --background: 220 30% 98%; /* Very Light Cool Grey/Off-White */
-    --foreground: 220 15% 25%; /* Dark Cool Grey/Almost Black */
+    --background: 0 0% 100%; /* White */
+    --foreground: 220 15% 20%; /* Very Dark Grey/Almost Black for text */
 
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 220 15% 25%; /* Dark Cool Grey/Almost Black on Cards */
+    --card: 228 57% 96%; /* Very Light Blue-Gray, derived from #E8EAF6 */
+    --card-foreground: 220 15% 20%; /* Dark text on cards */
 
-    --popover: 0 0% 100%; /* White */
-    --popover-foreground: 220 15% 25%; /* Dark Cool Grey/Almost Black on Popovers */
+    --popover: 228 57% 96%; /* Very Light Blue-Gray for popovers */
+    --popover-foreground: 220 15% 20%; /* Dark text on popovers */
 
-    --primary: 210 70% 50%; /* Vibrant Blue for links and primary actions */
+    --primary: 231 48% 48%; /* Deep Blue #3F51B5 */
     --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 220 20% 90%; /* Light Grey-Blue */
-    --secondary-foreground: 210 70% 40%; /* Darker Vibrant Blue text on secondary */
+    --secondary: 220 25% 90%; /* Lighter Grey-Blue for secondary elements */
+    --secondary-foreground: 231 48% 38%; /* Darker Deep Blue text on secondary */
 
-    --muted: 220 20% 94%; /* Slightly darker Light Grey-Blue for muted elements */
-    --muted-foreground: 220 15% 45%; /* Muted Cool Grey text */
+    --muted: 228 50% 92%; /* Slightly darker Light Blue-Gray for muted elements */
+    --muted-foreground: 220 15% 40%; /* Muted Cool Grey text */
 
-    --accent: 210 70% 90%; /* Light version of vibrant blue for hover/accent */
-    --accent-foreground: 210 70% 30%; /* Darker blue text on accent */
+    --accent: 230 45% 62%; /* Indigo #5C6BC0 for accents and link hover */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
 
-    --destructive: 0 70% 50%; /* Standard Red for destructive actions */
+    --destructive: 0 70% 50%; /* Standard Red */
     --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
-    --border: 220 20% 85%; /* Defined Grey-Blue border */
+    --border: 220 20% 88%; /* Defined Grey-Blue border */
     --input: 0 0% 100%; /* White input background */
-    --ring: 210 70% 60%; /* Brighter Vibrant Blue for rings (focus) */
+    --ring: 231 48% 58%; /* Brighter Deep Blue for rings (focus) */
     --radius: 0.5rem;
 
-    --chart-1: 210 70% 50%;
-    --chart-2: 190 65% 50%;
-    --chart-3: 230 60% 60%;
-    --chart-4: 200 70% 55%;
-    --chart-5: 220 60% 50%;
+    --chart-1: 231 48% 48%;
+    --chart-2: 230 45% 62%;
+    --chart-3: 231 40% 55%;
+    --chart-4: 230 35% 70%;
+    --chart-5: 220 40% 60%;
   }
 
   .dark {
@@ -55,30 +55,30 @@ body {
     --popover: 220 15% 15%; /* Darkest Blue-Grey for popovers */
     --popover-foreground: 220 20% 90%; /* Light Grey-Blue text on popovers */
 
-    --primary: 210 80% 65%; /* Brighter Vibrant Blue for dark mode */
-    --primary-foreground: 220 10% 10%; /* Very Dark text on primary for dark mode */
+    --primary: 231 48% 65%; /* Brighter Deep Blue for dark mode */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
     --secondary: 220 15% 25%; /* Medium Dark Blue-Grey */
-    --secondary-foreground: 210 80% 70%; /* Lighter Vibrant Blue text on secondary */
+    --secondary-foreground: 231 48% 75%; /* Lighter Deep Blue text on secondary */
 
     --muted: 220 15% 22%; /* Slightly lighter Dark Blue-Grey for muted */
     --muted-foreground: 220 20% 70%; /* Muted Light Grey-Blue text */
 
-    --accent: 210 50% 35%; /* Darker accent vibrant blue */
-    --accent-foreground: 210 80% 95%; /* Very light text on accent */
+    --accent: 230 45% 75%; /* Brighter Indigo for dark mode accents/hovers */
+    --accent-foreground: 220 10% 10%; /* Dark text on accent */
 
     --destructive: 0 60% 55%; /* Slightly brighter red for dark mode */
     --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
     --border: 220 15% 30%; /* Defined Dark Blue-Grey border */
     --input: 220 15% 20%; /* Dark Blue-Grey input background */
-    --ring: 210 80% 75%; /* Lighter Vibrant Blue for rings in dark mode */
+    --ring: 231 48% 70%; /* Lighter Deep Blue for rings in dark mode */
 
-    --chart-1: 210 70% 70%;
-    --chart-2: 190 70% 70%;
-    --chart-3: 230 60% 75%;
-    --chart-4: 200 75% 70%;
-    --chart-5: 220 65% 70%;
+    --chart-1: 231 48% 65%;
+    --chart-2: 230 45% 75%;
+    --chart-3: 231 40% 70%;
+    --chart-4: 230 35% 80%;
+    --chart-5: 220 40% 75%;
   }
 }
 
@@ -96,7 +96,6 @@ body {
     flex-grow: 1;
   }
   a {
-    @apply text-primary underline hover:text-accent-foreground;
+    @apply text-primary underline hover:text-accent;
   }
 }
-
