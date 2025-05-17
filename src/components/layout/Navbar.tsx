@@ -121,10 +121,10 @@ export function Navbar() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container flex h-auto py-3 items-start justify-between"> {/* Changed h-20 to h-auto py-3, items-center to items-start */}
         <Link href="/" className="flex items-start gap-3"> {/* Changed gap-2 to gap-3 */}
-          <School className="h-8 w-8 text-primary mt-1 flex-shrink-0" />
+          <School className="h-10 w-10 text-primary mt-1 flex-shrink-0" /> {/* Adjusted size to match example image */}
           <div>
             <span className="block font-semibold text-xl whitespace-nowrap" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">
               {schoolName}
@@ -188,7 +188,7 @@ export function Navbar() {
             <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <div className="p-4">
                 <Link href="/" className="flex items-start gap-2 mb-3" onClick={() => setMobileMenuOpen(false)}> {/* Changed mb-4 to mb-3 */}
-                  <School className="h-7 w-7 text-primary mt-0.5 flex-shrink-0" />
+                  <School className="h-8 w-8 text-primary mt-0.5 flex-shrink-0" /> {/* Adjusted size for mobile */}
                   <div>
                     <span className="block font-semibold text-lg">{schoolName}</span>
                      <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
@@ -217,3 +217,4 @@ export function Navbar() {
     </header>
   );
 }
+
