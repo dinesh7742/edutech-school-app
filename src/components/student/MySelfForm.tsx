@@ -19,6 +19,7 @@ import { db } from "@/lib/firebase";
 import type { StudentProfile } from "@/types";
 import { Loader2, UploadCloud } from "lucide-react";
 import Image from "next/image";
+import { Skeleton } from "@/components/ui/skeleton"; // Added Skeleton import
 
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
 const genderOptions = ["Male", "Female", "Other", "Prefer not to say"];
@@ -66,15 +67,15 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
 
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { // Static default values
+    defaultValues: { 
         firstName: "",
         middleName: "",
         lastName: "",
         motherName: "",
         dateOfBirth: "",
         gender: "",
-        grade: "1", 
-        division: "A", 
+        grade: "", 
+        division: "", 
         contactNumber: "",
         aadharCardNumber: "",
         penNumber: "",
@@ -82,7 +83,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         religion: "",
         caste: "",
         fullAddress: "",
-        photoUrl: "", // Initialize as empty, useEffect will set specific placeholder
+        photoUrl: "",
     }
   });
 
@@ -148,9 +149,11 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         setIsFetchingProfile(false);
       };
       fetchProfile();
-    } else if (!isTeacherEditing) {
-        setIsFetchingProfile(false);
-        toast({title: "Error", description: "Could not load user information.", variant: "destructive"});
+    } else if (!isTeacherEditing) { // Only show toast if student is viewing their own profile and UID is missing
+        setIsFetchingProfile(false); // Stop fetching state
+        toast({title: "Error", description: "Could not load user information. Please ensure you are logged in.", variant: "destructive"});
+    } else {
+       setIsFetchingProfile(false); // Stop fetching if it's teacher editing but no studentIdForEdit
     }
   }, [studentIdForEdit, loggedInUser?.uid, loggedInUser?.displayName, loggedInUser?.grade, loggedInUser?.division, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
 
@@ -165,7 +168,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     setIsLoading(true);
 
     let studentEmail = "";
-    if (isTeacherEditing || !loggedInUser?.email) {
+    if (isTeacherEditing || !loggedInUser?.email) { // Fetch email if teacher is editing OR if student's own email isn't in context (unlikely)
         const userDocRef = doc(db, "users", profileUidToSave);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -219,9 +222,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   }, [watchedPhotoUrl, defaultPhotoPlaceholder, isFetchingProfile]);
 
 
-  if (isFetchingProfile && !studentIdForEdit && !loggedInUser?.uid) { 
-      // Special case for initial load if loggedInUser is somehow not yet available
-      // This prevents rendering the form until essential auth context is ready
+  if (isFetchingProfile && !studentIdForEdit && !loggedInUser?.uid && !isTeacherEditing) { 
       return (
          <Card className="w-full max-w-2xl mx-auto shadow-xl">
             <CardHeader>
@@ -320,8 +321,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
               <Input 
                 id="photoUrl" 
                 {...register("photoUrl")} 
-                placeholder={defaultPhotoPlaceholder} // Show dynamic placeholder in input field
-                // onChange is handled by react-hook-form, watcher updates preview
+                placeholder={defaultPhotoPlaceholder}
               />
                {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
               {photoPreview ? (
@@ -424,5 +424,3 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     </Card>
   );
 }
-
-    
