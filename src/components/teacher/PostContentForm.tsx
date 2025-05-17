@@ -16,9 +16,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-// Remove unused types if they are fully replaced or handled by schema inference
-// import type { Notice, Homework, Circular, Textbook, PhotoGalleryAlbum } from "@/types";
+import { db, storage } from "@/lib/firebase"; // Import storage
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Import storage functions
 
 // Schemas for different content types
 const noticeSchema = z.object({
@@ -56,7 +55,7 @@ const circularSchema = z.object({
 type CircularFormValues = z.infer<typeof circularSchema>;
 
 const textbookSchema = z.object({
-  title: z.string().min(3, "Title is required"),
+  title: z.string().min(3, "Textbook Title is required"),
   subject: z.string().min(2, "Subject is required"),
   fileUrl: z.string().url("Please provide a valid URL for the PDF.").or(z.literal("")).optional(),
   coverImageUrl: z.string().url("Please provide a valid URL for the cover image.").or(z.literal("")).optional(),
@@ -69,17 +68,17 @@ const photoGallerySchema = z.object({
   title: z.string().min(3, "Event/Album title is required"),
   description: z.string().optional(),
   eventDate: z.string().optional(),
-  // Changed from imageUrls to imageFiles to handle FileList object from file input
   imageFiles: z.custom<FileList>()
     .refine((files) => files && files.length > 0, "At least one image is required.")
     .refine((files) => files && files.length <= 10, "Maximum 10 images allowed.")
     .refine((files) => {
-      if (!files) return true; // Allow if no files selected yet, first refine handles empty on submit
+      if (!files || files.length === 0) return true;
       for (let i = 0; i < files.length; i++) {
         if (!files[i].type.startsWith("image/")) return false;
       }
       return true;
-    }, "Only image files (e.g., JPG, PNG, GIF) are allowed."),
+    }, "Only image files (e.g., JPG, PNG, GIF) are allowed.")
+    .optional(), // Make it optional if no files are selected initially
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
 
@@ -96,7 +95,6 @@ export function PostContentForm() {
   const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
-  // Initialize imageFiles as null or undefined for controlled component if necessary
   const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageFiles: undefined }});
 
 
@@ -110,7 +108,7 @@ export function PostContentForm() {
     try {
       let collectionName = "";
       let documentData: any = {
-        ...data,
+        ...data, // Spread initial form data
         postedByUid: user.uid,
         postedByName: user.displayName || user.email || "Teacher",
         timestamp: serverTimestamp(),
@@ -135,35 +133,28 @@ export function PostContentForm() {
           break;
         case "gallery":
           collectionName = "galleryAlbums";
-          // START OF MODIFIED SECTION FOR GALLERY FILE UPLOAD
-          // The 'data.imageFiles' (FileList) needs to be uploaded to Firebase Storage.
-          // After uploading, you'll get download URLs for each image.
-          // These download URLs should then be stored in the 'images' array.
-          //
-          // Example (conceptual - actual implementation needed):
-          // const uploadedImageUrls = [];
-          // if (data.imageFiles) {
-          //   for (const file of Array.from(data.imageFiles as FileList)) {
-          //     // const storageRef = ref(storage, `galleryImages/${albumId}/${file.name}`);
-          //     // await uploadBytes(storageRef, file);
-          //     // const downloadURL = await getDownloadURL(storageRef);
-          //     // uploadedImageUrls.push(downloadURL);
-          //   }
-          // }
-          // documentData.images = uploadedImageUrls.map((url: string) => ({ url, alt: data.title }));
-          //
-          // For now, since direct Firebase Storage upload is not implemented here,
-          // we'll save an empty array for images and show a message.
-          // TODO: Implement actual Firebase Storage upload logic and then populate documentData.images.
-          documentData.images = []; 
-          toast({
-            title: "Gallery Album Info Saved (Images Pending)",
-            description: "Album details saved. File upload to Firebase Storage needs to be implemented to save the actual images.",
-            variant: "default", // "default" or "warning" like
-            duration: 9000, 
-          });
+          if (data.imageFiles && data.imageFiles.length > 0) {
+            toast({ title: "Uploading Images...", description: `Starting upload of ${data.imageFiles.length} image(s). This may take a moment.` });
+            const uploadedImageObjects = await Promise.all(
+              Array.from(data.imageFiles as FileList).map(async (file, index) => {
+                const fileExtension = file.name.split('.').pop();
+                const randomFileNamePart = Math.random().toString(36).substring(2, 15);
+                const storagePath = `galleryImages/${user.uid}/${Date.now()}-${randomFileNamePart}.${fileExtension}`;
+                const storageRef = ref(storage, storagePath);
+                
+                // console.log(`Uploading ${file.name} to ${storagePath}`);
+                const uploadTaskSnapshot = await uploadBytesResumable(storageRef, file);
+                const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+                // console.log(`${file.name} uploaded. URL: ${downloadURL}`);
+                return { url: downloadURL, alt: `${data.title || 'Gallery Image'} ${index + 1}` };
+              })
+            );
+            documentData.images = uploadedImageObjects;
+            toast({ title: "Image Upload Complete", description: `${uploadedImageObjects.length} image(s) uploaded successfully.` });
+          } else {
+            documentData.images = []; // Ensure images is an empty array if no files
+          }
           delete documentData.imageFiles; // Remove FileList before saving to Firestore
-          // END OF MODIFIED SECTION FOR GALLERY FILE UPLOAD
           break;
         default:
           toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
@@ -184,7 +175,7 @@ export function PostContentForm() {
 
     } catch (e: any) {
       console.error(`Error posting ${type}:`, e);
-      toast({ title: "Error", description: `Failed to post ${type}. ${e.message}`, variant: "destructive" });
+      toast({ title: "Error", description: `Failed to post ${type}. ${e.message || 'An unknown error occurred.'}`, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -346,8 +337,8 @@ export function PostContentForm() {
                        <GradeDivisionSelector
                         grade={field.value || ""} 
                         onGradeChange={field.onChange} 
-                        division="" 
-                        onDivisionChange={() => {}} 
+                        division="" // Not used for textbooks
+                        onDivisionChange={() => {}} // No-op
                         showDivision={false} 
                         />
                     )}
@@ -385,7 +376,7 @@ export function PostContentForm() {
                   {...formGallery.register("imageFiles")}
                 />
                 {formGallery.formState.errors.imageFiles && <p className="text-sm text-destructive mt-1">{(formGallery.formState.errors.imageFiles as any)?.message}</p>}
-                 <p className="text-xs text-muted-foreground mt-1">Select one or more image files. Max 10 images. Actual upload to storage needs to be implemented.</p>
+                 <p className="text-xs text-muted-foreground mt-1">Select one or more image files. Max 10 images.</p>
               </div>
                <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Gallery
@@ -399,4 +390,3 @@ export function PostContentForm() {
   );
 }
 
-    
