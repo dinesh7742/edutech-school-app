@@ -3,6 +3,7 @@
 
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIcon, UserCircle, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -46,20 +47,22 @@ export function StudentDashboardClient() {
         <Card className="col-span-1 md:col-span-2 lg:col-span-1 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Notice Board</CardTitle>
-            <Bell className="h-6 w-6 text-foreground" /> {/* Icon color changed to foreground */}
+            <Bell className="h-6 w-6 text-foreground" />
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[250px] pr-4">
               <ul className="space-y-3">
                 {mockNotices.map(notice => (
-                  <li key={notice.id} className="p-3 bg-background/70 rounded-md border border-border"> {/* Adjusted background and border */}
+                  <li key={notice.id} className="p-3 bg-background/70 rounded-md border border-primary">
                     <h4 className="font-medium text-sm">{notice.title}</h4>
                     <p className="text-xs text-muted-foreground line-clamp-2">{notice.content}</p>
                   </li>
                 ))}
               </ul>
             </ScrollArea>
-             <Link href="/student/notices" className="text-sm text-primary hover:underline mt-4 block text-right">View All Notices</Link>
+             <Button asChild className="mt-4 w-full">
+                <Link href="/student/notices">View All Notices</Link>
+             </Button>
           </CardContent>
         </Card>
 
@@ -67,13 +70,13 @@ export function StudentDashboardClient() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Homework</CardTitle>
-            <ClipboardList className="h-6 w-6 text-foreground" /> {/* Icon color changed to foreground */}
+            <ClipboardList className="h-6 w-6 text-foreground" />
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[250px] pr-4">
             <ul className="space-y-3">
               {mockHomework.map(hw => (
-                <li key={hw.id} className="p-3 bg-background/70 rounded-md border border-border"> {/* Adjusted background and border */}
+                <li key={hw.id} className="p-3 bg-background/70 rounded-md border border-primary">
                   <h4 className="font-medium text-sm">{hw.title}</h4>
                   <p className="text-xs text-muted-foreground">Subject: {hw.subject} | Due: {hw.dueDate}</p>
                   {hw.fileUrl && <a href={hw.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={hw.dataAiHint}>View Attachment <ExternalLink size={12}/></a>}
@@ -81,7 +84,9 @@ export function StudentDashboardClient() {
               ))}
             </ul>
             </ScrollArea>
-             <Link href="/student/homework" className="text-sm text-primary hover:underline mt-4 block text-right">View All Homework</Link>
+             <Button asChild className="mt-4 w-full">
+                <Link href="/student/homework">View All Homework</Link>
+             </Button>
           </CardContent>
         </Card>
 
@@ -89,13 +94,13 @@ export function StudentDashboardClient() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Circulars</CardTitle>
-            <FileText className="h-6 w-6 text-foreground" /> {/* Icon color changed to foreground */}
+            <FileText className="h-6 w-6 text-foreground" />
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[250px] pr-4">
             <ul className="space-y-3">
               {mockCirculars.map(circ => (
-                <li key={circ.id} className="p-3 bg-background/70 rounded-md border border-border"> {/* Adjusted background and border */}
+                <li key={circ.id} className="p-3 bg-background/70 rounded-md border border-primary">
                   <h4 className="font-medium text-sm">{circ.title}</h4>
                   <p className="text-xs text-muted-foreground">Date: {circ.date}</p>
                    {circ.fileUrl && <a href={circ.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={circ.dataAiHint}>View Circular <ExternalLink size={12}/></a>}
@@ -103,7 +108,9 @@ export function StudentDashboardClient() {
               ))}
             </ul>
             </ScrollArea>
-             <Link href="/student/circulars" className="text-sm text-primary hover:underline mt-4 block text-right">View All Circulars</Link>
+             <Button asChild className="mt-4 w-full">
+                <Link href="/student/circulars">View All Circulars</Link>
+             </Button>
           </CardContent>
         </Card>
 
@@ -111,13 +118,13 @@ export function StudentDashboardClient() {
         <Card className="md:col-span-2 lg:col-span-1 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Textbooks</CardTitle>
-            <BookOpen className="h-6 w-6 text-foreground" /> {/* Icon color changed to foreground */}
+            <BookOpen className="h-6 w-6 text-foreground" />
           </CardHeader>
           <CardContent>
              <ScrollArea className="h-[250px] pr-4">
             <ul className="space-y-3">
               {mockTextbooks.map(book => (
-                <li key={book.id} className="p-3 bg-background/70 rounded-md border border-border"> {/* Adjusted background and border */}
+                <li key={book.id} className="p-3 bg-background/70 rounded-md border border-primary">
                   <h4 className="font-medium text-sm">{book.title}</h4>
                   <p className="text-xs text-muted-foreground">Subject: {book.subject}</p>
                   <a href={book.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={book.dataAiHint}>Download PDF <ExternalLink size={12}/></a>
@@ -125,7 +132,9 @@ export function StudentDashboardClient() {
               ))}
             </ul>
             </ScrollArea>
-             <Link href="/student/textbooks" className="text-sm text-primary hover:underline mt-4 block text-right">View All Textbooks</Link>
+             <Button asChild className="mt-4 w-full">
+                <Link href="/student/textbooks">View All Textbooks</Link>
+             </Button>
           </CardContent>
         </Card>
 
@@ -133,7 +142,7 @@ export function StudentDashboardClient() {
         <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Photo Gallery</CardTitle>
-            <ImageIcon className="h-6 w-6 text-foreground" /> {/* Icon color changed to foreground */}
+            <ImageIcon className="h-6 w-6 text-foreground" />
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[250px] pr-4">
@@ -150,7 +159,9 @@ export function StudentDashboardClient() {
                 ))}
               </div>
             </ScrollArea>
-            <Link href="/student/gallery" className="text-sm text-primary hover:underline mt-4 block text-right">View Full Gallery</Link>
+            <Button asChild className="mt-4 w-full">
+                <Link href="/student/gallery">View Full Gallery</Link>
+            </Button>
           </CardContent>
         </Card>
         
@@ -158,13 +169,13 @@ export function StudentDashboardClient() {
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
-            <UserCircle className="h-6 w-6 text-foreground" /> {/* Icon color changed to foreground */}
+            <UserCircle className="h-6 w-6 text-foreground" />
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">View and update your personal information.</p>
-            <Link href="/student/profile" className="text-primary font-medium hover:underline">
-              Go to My Profile
-            </Link>
+            <Button asChild className="w-full">
+                <Link href="/student/profile">Go to My Profile</Link>
+            </Button>
           </CardContent>
         </Card>
 
