@@ -43,7 +43,7 @@ export function StudentAttendanceSummary() {
 
         querySnapshot.forEach((doc) => {
           const log = doc.data() as DailyAttendanceLog;
-          const studentStatus = log.studentRecords[user.uid!];
+          const studentStatus = log.studentRecords[user.uid!]; // Student's status for THIS specific day
           if (studentStatus) { // Check if the student was marked on this day
             totalMarkedDays++;
             if (studentStatus === "Present") {
@@ -53,13 +53,16 @@ export function StudentAttendanceSummary() {
         });
 
         if (totalMarkedDays > 0) {
-          setAttendancePercentage(Math.round((presentDays / totalMarkedDays) * 100));
+          const percentage = Math.round((presentDays / totalMarkedDays) * 100);
+          setAttendancePercentage(percentage);
+          console.log(`[StudentAttendanceSummary] Attendance for ${user.displayName} (${user.uid}): ${percentage}%, based on ${presentDays} present days out of ${totalMarkedDays} marked daily logs.`);
         } else {
-          setAttendancePercentage(null); // Or 100 if no marked days means perfect attendance? For now, null.
+          setAttendancePercentage(null); 
+          console.log(`[StudentAttendanceSummary] No attendance marked for ${user.displayName} (${user.uid}) in class ${user.grade}${user.division}.`);
         }
       } catch (err: any) {
-        console.error("Error fetching attendance data:", err);
-        setError("Could not load attendance data. " + (err.message || ""));
+        console.error("Error fetching attendance data for summary:", err);
+        setError("Could not load attendance summary. " + (err.message || ""));
         if (err.code === 'failed-precondition') {
           setError("A Firestore index might be required for fetching attendance. Please check the console for a link to create it.");
         }
@@ -126,23 +129,8 @@ export function StudentAttendanceSummary() {
            {!isLoading && !error && attendancePercentage === null && (
              <p className="mt-3 text-sm text-muted-foreground">Attendance data not yet available.</p>
            )}
-
-          {/* QR Code and Barcode Removed */}
-          {/* 
-          <div className="mt-4 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4">
-            <div className="text-center">
-               <Image src="https://placehold.co/80x80.png?text=QR" alt="QR Code Placeholder" width={80} height={80} data-ai-hint="QR code student" />
-               <p className="text-xs text-muted-foreground mt-1">Student ID QR</p>
-            </div>
-            <div className="text-center">
-              <Image src="https://placehold.co/150x60.png?text=Barcode" alt="Barcode Placeholder" width={150} height={60} data-ai-hint="barcode identifier" />
-              <p className="text-xs text-muted-foreground mt-1">{user.grNumber || user.uid.substring(0,6) || "ID12345"}</p>
-            </div>
-          </div>
-          */}
         </div>
       </CardContent>
     </Card>
   );
 }
-
