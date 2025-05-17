@@ -33,26 +33,27 @@ export default function StudentGalleryPage() {
           const data = doc.data();
           console.log(`[StudentGalleryPage] Mapping document ${doc.id}:`, data);
           
-          // Validate essential fields
           if (!data.title || !Array.isArray(data.images)) {
             console.warn(`[StudentGalleryPage] Document ${doc.id} is missing title or images and will be skipped.`, data);
             return null;
           }
 
+          const albumTitleForPlaceholders = (data.title || "Photo").toLowerCase().split(/\s+/).slice(0, 2).join(" ") || "Photo";
+
           return {
             id: doc.id,
             title: data.title,
             description: data.description || "",
-            images: data.images.map((img: any) => ({ // Ensure img has url and alt
-              url: img.url || "https://placehold.co/600x400.png?text=Invalid+Image",
-              alt: img.alt || data.title,
+            images: data.images.map((img: any, idx: number) => ({
+              url: img.url || `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`,
+              alt: img.alt || `${data.title || 'Gallery Image'} - Image ${idx + 1}`,
             })),
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
             eventDate: data.eventDate || undefined,
             timestamp: data.timestamp as Timestamp,
           };
-        }).filter(Boolean) as PhotoGalleryAlbum[]; // Filter out nulls
+        }).filter(Boolean) as PhotoGalleryAlbum[]; 
 
         setGalleryEvents(fetchedAlbums);
         console.log(`[StudentGalleryPage] Successfully mapped ${fetchedAlbums.length} gallery albums to state:`, fetchedAlbums);
@@ -101,10 +102,9 @@ export default function StudentGalleryPage() {
     );
   }
   
-  // Generate data-ai-hint from album title
   const generateAiHint = (title: string): string => {
     if (!title) return "gallery image";
-    const words = title.toLowerCase().split(/\s+/).slice(0, 2); // Max 2 words
+    const words = title.toLowerCase().split(/\s+/).slice(0, 2); 
     return words.join(" ");
   };
 
