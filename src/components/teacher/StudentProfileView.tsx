@@ -45,11 +45,11 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       console.log("[StudentProfileView] Attempting to fetch profile for studentId:", studentId);
       try {
         const profileDocRef = doc(db, "studentProfiles", studentId);
-        const profileDocSnap = await getDoc(profileDocRef); // Corrected from getDocs to getDoc
+        const profileDocSnap = await getDoc(profileDocRef);
         
         if (profileDocSnap.exists()) {
           const fetchedData = profileDocSnap.data();
-          console.log("[StudentProfileView] Fetched data from Firestore for studentId " + studentId + ":", fetchedData); // Diagnostic log
+          console.log("[StudentProfileView] Fetched data from Firestore for studentId " + studentId + ":", fetchedData); 
           setProfile({ uid: profileDocSnap.id, ...fetchedData } as StudentProfile);
         } else {
           console.warn("[StudentProfileView] No document found for studentId:", studentId);
@@ -114,10 +114,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     );
   }
 
-  // Diagnostic log for the specific field before rendering DetailItem
-  if (profile) {
-    console.log("[StudentProfileView] Value for aadharCardNumber before DetailItem:", profile.aadharCardNumber);
-  }
+  console.log("[StudentProfileView] Value for aadharCardNumber before DetailItem:", profile.aadharCardNumber);
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl overflow-hidden">
@@ -144,7 +141,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         <DetailItem icon={Award} label="Grade & Division" value={`Grade ${profile.grade} - ${profile.division}`} />
         <DetailItem icon={CalendarDays} label="Religion" value={profile.religion} />
         <DetailItem icon={UserCircle} label="Caste" value={profile.caste} />
-        <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile.aadharCardNumber} />
+        <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile.aadharCardNumber || "Not Provided"} />
         <DetailItem icon={BookUser} label="PEN Number" value={profile.penNumber} />
         <DetailItem icon={Hash} label="G.R. Number" value={profile.grNumber} />
         <DetailItem icon={MapPin} label="Full Address" value={profile.fullAddress} />
@@ -152,4 +149,3 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     </Card>
   );
 }
-
