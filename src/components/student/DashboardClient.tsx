@@ -148,12 +148,12 @@ export function StudentDashboardClient() {
       renderContent: (data: Notice | null) => data ? (
         <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
-          <p className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
             {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
-          </p>
+          </div>
           <p className="text-sm line-clamp-4 whitespace-pre-wrap">{data.content}</p>
         </div>
       ) : null,
@@ -171,11 +171,11 @@ export function StudentDashboardClient() {
       renderContent: (data: Homework | null) => data ? (
         <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
-          <p className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
             Posted: {data.displayDate} by {data.postedByName}
             {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
-          </p>
+          </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
             <Button asChild variant="outline" size="sm" className="mt-2">
@@ -200,12 +200,12 @@ export function StudentDashboardClient() {
       renderContent: (data: Circular | null) => data ? (
          <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
-          <p className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
              {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
-          </p>
+          </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
             <Button asChild variant="outline" size="sm" className="mt-2">
@@ -230,12 +230,12 @@ export function StudentDashboardClient() {
       renderContent: (data: LiveClass | null) => data ? (
         <div className="text-left w-full space-y-2 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.subject}</h3>
-          <p className="text-xs text-muted-foreground">
+          <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
             {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
-          </p>
+          </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
             <a href={data.meetingLink} target="_blank" rel="noopener noreferrer">
@@ -280,7 +280,7 @@ export function StudentDashboardClient() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
-          <Card key={card.id} className="shadow-lg rounded-lg flex flex-col bg-card text-card-foreground text-center">
+          <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
             <CardHeader>
               <div className="flex items-center justify-center mb-2">
                 <card.icon className="h-12 w-12 text-primary" data-ai-hint={card.dataAiHint} />
@@ -315,7 +315,7 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
-         <Card className="shadow-lg rounded-lg text-center flex flex-col bg-card text-card-foreground">
+         <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader>
                 <div className="flex items-center justify-center mb-2">
                     <ListChecks className="h-12 w-12 text-primary" data-ai-hint="attendance list" />
@@ -330,7 +330,7 @@ export function StudentDashboardClient() {
               </Button>
             </CardContent>
           </Card>
-        <Card className="shadow-lg rounded-lg text-center flex flex-col bg-card text-card-foreground">
+        <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader>
                 <div className="flex items-center justify-center mb-2">
                     <UserCircle className="h-12 w-12 text-primary" data-ai-hint="user profile" />
