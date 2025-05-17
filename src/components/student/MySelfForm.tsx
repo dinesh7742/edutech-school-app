@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,7 @@ export function MySelfForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const defaultPhotoPlaceholder = "https://placehold.co/128x128.png?text=Student+Photo";
 
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -61,7 +62,7 @@ export function MySelfForm() {
         setIsFetchingProfile(true);
         const profileDocRef = doc(db, "studentProfiles", user.uid);
         const profileDoc = await getDoc(profileDocRef);
-        const defaultPhotoPlaceholder = "https://placehold.co/128x128.png?text=Student+Photo";
+        
 
         if (profileDoc.exists()) {
           const data = profileDoc.data() as StudentProfile;
@@ -106,7 +107,7 @@ export function MySelfForm() {
       };
       fetchProfile();
     }
-  }, [user, reset]);
+  }, [user, reset, defaultPhotoPlaceholder]);
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     if (!user) {
@@ -122,7 +123,7 @@ export function MySelfForm() {
         grade: user.grade || "", 
         division: user.division || "", 
         ...data,
-        photoUrl: data.photoUrl === "https://placehold.co/128x128.png?text=Student+Photo" ? "" : data.photoUrl || "",
+        photoUrl: data.photoUrl === defaultPhotoPlaceholder ? "" : data.photoUrl || "",
       };
 
       await setDoc(doc(db, "studentProfiles", user.uid), profileData, { merge: true });
@@ -148,9 +149,9 @@ export function MySelfForm() {
     if (watchedPhotoUrl && watchedPhotoUrl.startsWith('http')) {
       setPhotoPreview(watchedPhotoUrl);
     } else if (!watchedPhotoUrl) {
-      setPhotoPreview("https://placehold.co/128x128.png?text=Student+Photo");
+      setPhotoPreview(defaultPhotoPlaceholder);
     }
-  }, [watchedPhotoUrl]);
+  }, [watchedPhotoUrl, defaultPhotoPlaceholder]);
 
 
   if (isFetchingProfile && !user) { 
@@ -233,13 +234,13 @@ export function MySelfForm() {
               <Input 
                 id="photoUrl" 
                 {...register("photoUrl")} 
-                placeholder="https://example.com/your-photo.jpg"
+                placeholder={defaultPhotoPlaceholder}
                 onChange={(e) => {
                   setValue("photoUrl", e.target.value);
                   if (e.target.value && e.target.value.startsWith('http')) {
                     setPhotoPreview(e.target.value);
                   } else {
-                     setPhotoPreview("https://placehold.co/128x128.png?text=Student+Photo"); 
+                     setPhotoPreview(defaultPhotoPlaceholder); 
                   }
                 }}
               />
