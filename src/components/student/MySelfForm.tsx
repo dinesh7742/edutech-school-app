@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase"; // Assuming you have storage configured in firebase.ts
 import type { StudentProfile } from "@/types";
-import { Loader2, UploadCloud, UserCircle2 } from "lucide-react";
+import { Loader2, UploadCloud, UserCircle2, CalendarDays } from "lucide-react";
 import Image from "next/image";
 
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
@@ -27,6 +27,11 @@ const profileSchema = z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
   motherName: z.string().optional(),
+  dateOfBirth: z.string().optional().refine((val) => {
+    if (!val) return true; // Optional field
+    // Basic YYYY-MM-DD format check, can be more robust if needed
+    return /^\d{4}-\d{2}-\d{2}$/.test(val);
+  }, "Invalid date format. Use YYYY-MM-DD"),
   gender: z.string().optional(),
   contactNumber: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), "Must be 10 digits"),
   aadharCardNumber: z.string().optional().refine(val => !val || /^\d{12}$/.test(val), "Must be 12 digits"),
@@ -64,6 +69,7 @@ export function MySelfForm() {
             middleName: data.middleName || "",
             lastName: data.lastName || "",
             motherName: data.motherName || "",
+            dateOfBirth: data.dateOfBirth || "",
             gender: data.gender || "",
             contactNumber: data.contactNumber || "",
             aadharCardNumber: data.aadharCardNumber || "",
@@ -81,8 +87,8 @@ export function MySelfForm() {
           reset({
             firstName: nameParts[0] || "",
             lastName: nameParts.length > 1 ? nameParts[nameParts.length -1] : "",
-            // Initialize other fields as empty or default
             motherName: "",
+            dateOfBirth: "",
             gender: "",
             contactNumber: "",
             aadharCardNumber: "",
@@ -194,6 +200,13 @@ export function MySelfForm() {
               <Input id="motherName" {...register("motherName")} />
               {errors.motherName && <p className="text-sm text-destructive mt-1">{errors.motherName.message}</p>}
             </div>
+            <div>
+              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+              <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
+              {errors.dateOfBirth && <p className="text-sm text-destructive mt-1">{errors.dateOfBirth.message}</p>}
+            </div>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
               <Label htmlFor="gender">Gender</Label>
               <Select onValueChange={(value) => setValue("gender", value)} value={watch("gender")}>
@@ -208,7 +221,33 @@ export function MySelfForm() {
               </Select>
               {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender.message}</p>}
             </div>
+             <div>
+              <Label htmlFor="photoUrl">Photo URL</Label>
+              <Input 
+                id="photoUrl" 
+                {...register("photoUrl")} 
+                placeholder="https://example.com/your-photo.jpg"
+                onChange={(e) => {
+                  setValue("photoUrl", e.target.value);
+                  if (e.target.value && e.target.value.startsWith('http')) {
+                    setPhotoPreview(e.target.value);
+                  } else {
+                    setPhotoPreview(null); 
+                  }
+                }}
+              />
+               {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
+              {photoPreview ? (
+                  <Image src={photoPreview} alt="Profile Preview" width={128} height={128} className="mt-2 rounded-md object-cover h-32 w-32 border" data-ai-hint="profile photo"/>
+              ) : (
+                <div className="mt-2 flex items-center justify-center h-32 w-32 rounded-md border border-dashed bg-muted/50">
+                  <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">Enter a direct URL to your photo. Actual file upload will be supported later.</p>
+            </div>
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -221,33 +260,6 @@ export function MySelfForm() {
             </div>
           </div>
           
-          <div>
-            <Label htmlFor="photoUrl">Photo URL</Label>
-            <Input 
-              id="photoUrl" 
-              {...register("photoUrl")} 
-              placeholder="https://example.com/your-photo.jpg"
-              onChange={(e) => {
-                setValue("photoUrl", e.target.value);
-                if (e.target.value && e.target.value.startsWith('http')) {
-                  setPhotoPreview(e.target.value);
-                } else {
-                  setPhotoPreview(null); 
-                }
-              }}
-            />
-             {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
-            {photoPreview ? (
-                <Image src={photoPreview} alt="Profile Preview" width={128} height={128} className="mt-2 rounded-md object-cover h-32 w-32 border" data-ai-hint="profile photo"/>
-            ) : (
-              <div className="mt-2 flex items-center justify-center h-32 w-32 rounded-md border border-dashed bg-muted/50">
-                <UploadCloud className="h-12 w-12 text-muted-foreground" />
-              </div>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">Enter a direct URL to your photo. Actual file upload will be supported later.</p>
-          </div>
-
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="contactNumber">Contact Number</Label>

@@ -82,7 +82,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
            <Skeleton className="h-4 w-1/4 mt-2" />
         </CardHeader>
         <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            {[...Array(9)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
         </CardContent>
       </Card>
     );
@@ -117,6 +117,18 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   console.log("[StudentProfileView] Fetched profile data:", profile);
   console.log("[StudentProfileView] Value for aadharCardNumber before DetailItem:", profile.aadharCardNumber);
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Not Provided";
+    try {
+      // Assuming dateString is in YYYY-MM-DD format from <input type="date">
+      const date = new Date(dateString + 'T00:00:00'); // Ensure parsing in local timezone
+      if (isNaN(date.getTime())) return "Invalid Date";
+      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl overflow-hidden">
       <CardHeader className="items-center text-center pb-6">
@@ -138,6 +150,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <DetailItem icon={User} label="Full Name" value={`${profile.firstName} ${profile.middleName || ''} ${profile.lastName || ''}`} />
         <DetailItem icon={User} label="Mother's Name" value={profile.motherName || "Not Provided"} />
+        <DetailItem icon={CalendarDays} label="Date of Birth" value={formatDate(profile.dateOfBirth)} />
         <DetailItem icon={Users} label="Gender" value={profile.gender || "Not Provided"} /> 
         <DetailItem icon={Mail} label="Email" value={profile.email} />
         <DetailItem icon={Phone} label="Contact Number" value={profile.contactNumber} />

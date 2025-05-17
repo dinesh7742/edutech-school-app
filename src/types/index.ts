@@ -83,6 +83,7 @@ export interface StudentProfile {
   middleName?: string;
   lastName: string;
   motherName?: string;
+  dateOfBirth?: string; // Added Date of Birth
   gender?: string; // Added Gender
   grade: string;
   division: string;
