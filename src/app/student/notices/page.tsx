@@ -9,16 +9,15 @@ import type { Notice } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 export default function StudentNoticesPage() {
-  const [notices, setNotices] = useState<Notice[]>([]);
+  const [allNotices, setAllNotices] = useState<Notice[]>([]);
+  const [filteredNotices, setFilteredNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // To potentially filter by grade/division later
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchNotices = async () => {
       setLoading(true);
       try {
-        // For now, fetching all notices. 
-        // TODO: Implement filtering based on user.grade and user.division
         const noticesCollection = collection(db, "notices");
         const q = query(noticesCollection, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
@@ -38,7 +37,7 @@ export default function StudentNoticesPage() {
             division: data.division,
           } as Notice;
         });
-        setNotices(fetchedNotices);
+        setAllNotices(fetchedNotices);
       } catch (error) {
         console.error("Error fetching notices:", error);
         // Handle error display if needed
@@ -48,7 +47,56 @@ export default function StudentNoticesPage() {
     };
 
     fetchNotices();
-  }, [user]); // Rerun if user context changes, for future filtering logic
+  }, []);
+
+  useEffect(() => {
+    if (!user || !user.grade || !user.division || allNotices.length === 0) {
+      // If user details are not available or no notices, show all notices (or none if empty)
+      // This also covers cases where filtering might not be applicable yet
+      setFilteredNotices(allNotices.filter(notice => {
+        // School-wide notices
+        if (!notice.grade && !notice.division) return true;
+        return false; // Default to not showing if user context isn't fully ready for filtering
+      }));
+      if (user && user.grade && user.division && allNotices.length > 0) {
+        // Proceed with filtering if user context is available
+         const relevantNotices = allNotices.filter(notice => {
+          const isSchoolWide = !notice.grade || notice.grade === "";
+          const isGradeMatch = notice.grade === user.grade;
+          const isDivisionMatch = notice.division === user.division;
+          const isGradeWideForUser = isGradeMatch && (!notice.division || notice.division === "");
+
+          return isSchoolWide || (isGradeMatch && isDivisionMatch) || isGradeWideForUser;
+        });
+        setFilteredNotices(relevantNotices);
+      } else {
+         // Fallback if user info isn't fully loaded or no notices
+        setFilteredNotices(allNotices.filter(n => (!n.grade && !n.division)));
+      }
+      return;
+    }
+
+    const relevantNotices = allNotices.filter(notice => {
+      // Condition 1: School-wide (no grade specified for the notice)
+      if (!notice.grade || notice.grade === "") {
+        return true;
+      }
+      // Condition 2: Matches student's grade
+      if (notice.grade === user.grade) {
+        // Condition 2a: Grade-wide (no division specified for the notice)
+        if (!notice.division || notice.division === "") {
+          return true;
+        }
+        // Condition 2b: Matches student's specific division
+        if (notice.division === user.division) {
+          return true;
+        }
+      }
+      return false;
+    });
+    setFilteredNotices(relevantNotices);
+
+  }, [user, allNotices]);
 
   if (loading) {
     return (
@@ -63,19 +111,20 @@ export default function StudentNoticesPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <Bell className="h-8 w-8" />
-        All Notices
+        Notices for You
       </h1>
-      {notices.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">No notices available at the moment.</p>
+      {filteredNotices.length === 0 ? (
+        <p className="text-muted-foreground text-center py-8">No relevant notices available at the moment.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {notices.map(notice => (
+          {filteredNotices.map(notice => (
             <Card key={notice.id} className="shadow-lg">
               <CardHeader>
                 <CardTitle>{notice.title}</CardTitle>
                 <p className="text-xs text-muted-foreground">
                   Posted by: {notice.postedByName} on {notice.displayDate}
-                  {notice.grade && ` | For Grade: ${notice.grade}${notice.division ? notice.division : ''}`}
+                  {notice.grade && ` | For Grade: ${notice.grade}${notice.division ? ` Div: ${notice.division}` : ' (All Divisions)'}`}
+                  {!notice.grade && ' | School Wide'}
                 </p>
               </CardHeader>
               <CardContent>
@@ -88,3 +137,4 @@ export default function StudentNoticesPage() {
     </div>
   );
 }
+

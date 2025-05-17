@@ -7,20 +7,19 @@ import { ClipboardList, Download, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Homework } from "@/types";
-import { useAuth } from "@/context/AuthContext"; // To potentially filter by grade/division later
+import { useAuth } from "@/context/AuthContext";
 
 export default function StudentHomeworkPage() {
-  const [homeworkList, setHomeworkList] = useState<Homework[]>([]);
+  const [allHomework, setAllHomework] = useState<Homework[]>([]);
+  const [filteredHomework, setFilteredHomework] = useState<Homework[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // For future filtering
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchHomework = async () => {
       setLoading(true);
       try {
         const homeworkCollection = collection(db, "homework");
-        // TODO: Filter by user.grade and user.division
-        // For now, fetching all homework and ordering by timestamp
         const q = query(homeworkCollection, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
         
@@ -37,13 +36,13 @@ export default function StudentHomeworkPage() {
             postedByName: data.postedByName,
             timestamp: timestamp,
             displayDate: timestamp ? new Date(timestamp.seconds * 1000).toLocaleDateString() : 'N/A',
-            dueDate: data.dueDate ? new Date(data.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', // Ensure date is parsed correctly for display
+            dueDate: data.dueDate ? new Date(data.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
             subject: data.subject,
             grade: data.grade,
             division: data.division,
           } as Homework;
         });
-        setHomeworkList(fetchedHomework);
+        setAllHomework(fetchedHomework);
       } catch (error) {
         console.error("Error fetching homework:", error);
         // Handle error display if needed
@@ -53,7 +52,24 @@ export default function StudentHomeworkPage() {
     };
 
     fetchHomework();
-  }, [user]); // Rerun if user context changes for future filtering
+  }, []);
+
+  useEffect(() => {
+    if (!user || !user.grade || !user.division || allHomework.length === 0) {
+       // Homework is typically very specific, so if user details are missing, show nothing
+       // or only school-wide if that concept existed for homework (it doesn't typically)
+      setFilteredHomework(allHomework.filter(hw => hw.grade === user?.grade && hw.division === user?.division));
+      return;
+    }
+
+    const relevantHomework = allHomework.filter(hw => {
+      // Homework must match grade and division
+      return hw.grade === user.grade && hw.division === user.division;
+    });
+    setFilteredHomework(relevantHomework);
+
+  }, [user, allHomework]);
+
 
   if (loading) {
     return (
@@ -68,13 +84,13 @@ export default function StudentHomeworkPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <ClipboardList className="h-8 w-8" />
-        All Homework
+        Homework for Grade {user?.grade}{user?.division}
       </h1>
-      {homeworkList.length === 0 ? (
-         <p className="text-muted-foreground text-center py-8">No homework assigned at the moment.</p>
+      {filteredHomework.length === 0 ? (
+         <p className="text-muted-foreground text-center py-8">No homework assigned to your class at the moment.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {homeworkList.map(hw => (
+          {filteredHomework.map(hw => (
             <Card key={hw.id} className="shadow-lg">
               <CardHeader>
                 <CardTitle>{hw.title}</CardTitle>
@@ -84,7 +100,7 @@ export default function StudentHomeworkPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm mb-3 whitespace-pre-wrap">{hw.description}</p>
+                {hw.description && <p className="text-sm mb-3 whitespace-pre-wrap">{hw.description}</p>}
                 {hw.fileUrl && (
                   <Button asChild variant="outline">
                     <a href={hw.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document sheet">
@@ -101,5 +117,3 @@ export default function StudentHomeworkPage() {
     </div>
   );
 }
-
-    

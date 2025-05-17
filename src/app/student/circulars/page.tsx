@@ -7,19 +7,19 @@ import { FileText, Download, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Circular } from "@/types";
-import { useAuth } from "@/context/AuthContext"; // For potential future filtering
+import { useAuth } from "@/context/AuthContext";
 
 export default function StudentCircularsPage() {
-  const [circularsList, setCircularsList] = useState<Circular[]>([]);
+  const [allCirculars, setAllCirculars] = useState<Circular[]>([]);
+  const [filteredCirculars, setFilteredCirculars] = useState<Circular[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth(); // For future filtering by grade/division
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchCirculars = async () => {
       setLoading(true);
       try {
         const circularsCollection = collection(db, "circulars");
-        // TODO: Implement filtering based on user.grade and user.division or school-wide circulars
         const q = query(circularsCollection, orderBy("timestamp", "desc"));
         const querySnapshot = await getDocs(q);
         
@@ -40,7 +40,7 @@ export default function StudentCircularsPage() {
             division: data.division,
           } as Circular;
         });
-        setCircularsList(fetchedCirculars);
+        setAllCirculars(fetchedCirculars);
       } catch (error) {
         console.error("Error fetching circulars:", error);
         // Handle error display if needed
@@ -50,7 +50,52 @@ export default function StudentCircularsPage() {
     };
 
     fetchCirculars();
-  }, [user]); // Rerun if user context changes for future filtering
+  }, []);
+
+  useEffect(() => {
+    if (!user || !user.grade || !user.division || allCirculars.length === 0) {
+      setFilteredCirculars(allCirculars.filter(circ => {
+        // School-wide circulars
+        if (!circ.grade && !circ.division) return true;
+        return false; 
+      }));
+       if (user && user.grade && user.division && allCirculars.length > 0) {
+         const relevantCirculars = allCirculars.filter(circ => {
+          const isSchoolWide = !circ.grade || circ.grade === "";
+          const isGradeMatch = circ.grade === user.grade;
+          const isDivisionMatch = circ.division === user.division;
+          const isGradeWideForUser = isGradeMatch && (!circ.division || circ.division === "");
+
+          return isSchoolWide || (isGradeMatch && isDivisionMatch) || isGradeWideForUser;
+        });
+        setFilteredCirculars(relevantCirculars);
+      } else {
+        setFilteredCirculars(allCirculars.filter(c => (!c.grade && !c.division)));
+      }
+      return;
+    }
+
+    const relevantCirculars = allCirculars.filter(circ => {
+      // Condition 1: School-wide (no grade specified for the circ)
+      if (!circ.grade || circ.grade === "") {
+        return true;
+      }
+      // Condition 2: Matches student's grade
+      if (circ.grade === user.grade) {
+        // Condition 2a: Grade-wide (no division specified for the circ)
+        if (!circ.division || circ.division === "") {
+          return true;
+        }
+        // Condition 2b: Matches student's specific division
+        if (circ.division === user.division) {
+          return true;
+        }
+      }
+      return false;
+    });
+    setFilteredCirculars(relevantCirculars);
+
+  }, [user, allCirculars]);
 
   if (loading) {
     return (
@@ -65,19 +110,20 @@ export default function StudentCircularsPage() {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <FileText className="h-8 w-8" />
-        All Circulars
+        Circulars for You
       </h1>
-      {circularsList.length === 0 ? (
-         <p className="text-muted-foreground text-center py-8">No circulars available at the moment.</p>
+      {filteredCirculars.length === 0 ? (
+         <p className="text-muted-foreground text-center py-8">No relevant circulars available at the moment.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {circularsList.map(circ => (
+          {filteredCirculars.map(circ => (
             <Card key={circ.id} className="shadow-lg">
               <CardHeader>
                 <CardTitle>{circ.title}</CardTitle>
                 <CardDescription>
                   Posted on: {circ.displayDate} by {circ.postedByName}
-                  {circ.grade && ` | For Grade: ${circ.grade}${circ.division ? circ.division : ''}`}
+                  {circ.grade && ` | For Grade: ${circ.grade}${circ.division ? ` Div: ${circ.division}` : ' (All Divisions)'}`}
+                  {!circ.grade && ' | School Wide'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
