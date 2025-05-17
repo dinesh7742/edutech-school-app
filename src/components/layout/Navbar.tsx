@@ -3,8 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School } from "lucide-react"; // Added School icon
-// Removed Image from next/image as it's no longer used for the logo
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Hash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,6 +19,9 @@ import { signOut } from "firebase/auth";
 import { useState } from "react";
 
 const schoolName = "PM SHRI MPS VARSHA NAGAR";
+const contactNumber = "022-XXXX-XXXX"; // Replace with actual number
+const emailAddress = "varsha.nagarmps@gmail.com";
+const udiseNumber = "27220600119";
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -92,7 +94,7 @@ export function Navbar() {
   );
 
   const mobileNavLinks = (
-    <div className="flex flex-col space-y-2 pt-4">
+    <div className="flex flex-col space-y-2 pt-2"> {/* Reduced pt from 4 to 2 */}
       {user ? (
         <>
           <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
@@ -120,14 +122,32 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-20 items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <School className="h-8 w-8 text-primary" /> {/* Reverted to School icon, adjusted size */}
-          <span className="font-semibold text-xl whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span>
+      <div className="container flex h-auto py-3 items-start justify-between"> {/* Changed h-20 to h-auto py-3, items-center to items-start */}
+        <Link href="/" className="flex items-start gap-3"> {/* Changed gap-2 to gap-3 */}
+          <School className="h-8 w-8 text-primary mt-1 flex-shrink-0" />
+          <div>
+            <span className="block font-semibold text-xl whitespace-nowrap" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">
+              {schoolName}
+            </span>
+            <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
+              <div className="flex items-center gap-1.5">
+                <Phone size={12} className="flex-shrink-0" />
+                <span>{contactNumber}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Mail size={12} className="flex-shrink-0" />
+                <span>{emailAddress}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Hash size={12} className="flex-shrink-0" />
+                <span>UDISE: {udiseNumber}</span>
+              </div>
+            </div>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-2">
+        <nav className="hidden md:flex items-center space-x-1 mt-1"> {/* Adjusted space-x-2 to space-x-1, added mt-1 */}
           {navLinks}
           {user && (
             <DropdownMenu>
@@ -157,7 +177,7 @@ export function Navbar() {
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden">
+        <div className="md:hidden mt-1"> {/* Added mt-1 */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -167,10 +187,27 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <div className="p-4">
-                <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setMobileMenuOpen(false)}>
-                  <School className="h-7 w-7 text-primary" /> {/* Reverted to School icon for mobile, adjusted size */}
-                  <span className="font-semibold text-lg">{schoolName}</span>
+                <Link href="/" className="flex items-start gap-2 mb-3" onClick={() => setMobileMenuOpen(false)}> {/* Changed mb-4 to mb-3 */}
+                  <School className="h-7 w-7 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <span className="block font-semibold text-lg">{schoolName}</span>
+                     <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                            <Phone size={12} className="flex-shrink-0" />
+                            <span>{contactNumber}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Mail size={12} className="flex-shrink-0" />
+                            <span>{emailAddress}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <Hash size={12} className="flex-shrink-0" />
+                            <span>UDISE: {udiseNumber}</span>
+                        </div>
+                    </div>
+                  </div>
                 </Link>
+                <hr className="my-3"/> {/* Added separator */}
                 {mobileNavLinks}
               </div>
             </SheetContent>
