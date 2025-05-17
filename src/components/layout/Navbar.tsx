@@ -58,23 +58,23 @@ export function Navbar() {
 
   const navLinks = user ? (
     <>
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="text-base">
         <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'}>Dashboard</Link>
       </Button>
       {role === 'student' && (
-        <Button variant="ghost" asChild>
+        <Button variant="ghost" asChild className="text-base">
           <Link href="/student/profile">My Profile</Link>
         </Button>
       )}
        {role === 'teacher' && (
          <>
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" asChild className="text-base">
             <Link href="/teacher/post-content">Post Content</Link>
           </Button>
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" asChild className="text-base">
             <Link href="/teacher/student-data">Student Data</Link>
           </Button>
-          <Button variant="ghost" asChild>
+          <Button variant="ghost" asChild className="text-base">
             <Link href="/teacher/profile">My Profile</Link>
           </Button>
          </>
@@ -82,10 +82,10 @@ export function Navbar() {
     </>
   ) : (
     <>
-      <Button variant="ghost" asChild>
+      <Button variant="ghost" asChild className="text-base">
         <Link href="/login">Login</Link>
       </Button>
-      <Button asChild>
+      <Button asChild className="text-base">
         <Link href="/signup">Sign Up</Link>
       </Button>
     </>
@@ -95,23 +95,23 @@ export function Navbar() {
     <div className="flex flex-col space-y-2 pt-4">
       {user ? (
         <>
-          <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
-          {role === 'student' && <Link href="/student/profile" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>}
+          <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+          {role === 'student' && <Link href="/student/profile" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>}
           {role === 'teacher' && (
             <>
-              <Link href="/teacher/post-content" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Post Content</Link>
-              <Link href="/teacher/student-data" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Student Data</Link>
-              <Link href="/teacher/profile" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
+              <Link href="/teacher/post-content" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Post Content</Link>
+              <Link href="/teacher/student-data" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Student Data</Link>
+              <Link href="/teacher/profile" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
             </>
           )}
-          <Button variant="ghost" onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full justify-start px-4 py-2 text-sm">
+          <Button variant="ghost" onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full justify-start px-4 py-2 text-base">
             <LogOut className="mr-2 h-4 w-4" /> Logout
           </Button>
         </>
       ) : (
         <>
-          <Link href="/login" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Login</Link>
-          <Link href="/signup" className="block px-4 py-2 text-sm hover:bg-accent rounded-md bg-primary text-primary-foreground" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+          <Link href="/login" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Login</Link>
+          <Link href="/signup" className="block px-4 py-2 text-base hover:bg-accent rounded-md bg-primary text-primary-foreground" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
         </>
       )}
     </div>
@@ -120,7 +120,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-20 items-center justify-between"> {/* Increased height to h-20 */}
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="https://placehold.co/100x40.png"
@@ -130,7 +130,7 @@ export function Navbar() {
             className="block h-10 object-contain" 
             data-ai-hint="school logo"
           />
-          <span className="font-semibold text-lg whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span>
+          <span className="font-semibold text-xl whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span> {/* Increased font size to text-xl */}
         </Link>
 
         {/* Desktop Navigation */}
@@ -139,7 +139,7 @@ export function Navbar() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
+                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10"> {/* Ensured icon button size */}
                   <User className="h-5 w-5" />
                   <span className="sr-only">User menu</span>
                 </Button>
@@ -168,7 +168,7 @@ export function Navbar() {
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
-                <MenuIcon className="h-6 w-6" />
+                <MenuIcon className="h-7 w-7" /> {/* Slightly larger menu icon */}
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
@@ -176,14 +176,14 @@ export function Navbar() {
               <div className="p-4">
                 <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setMobileMenuOpen(false)}>
                   <Image
-                    src="https://placehold.co/80x32.png"
+                    src="https://placehold.co/80x32.png" 
                     alt="PM SHRI School Logo"
                     width={80}
                     height={32}
                     className="block h-8 object-contain"
                     data-ai-hint="school logo"
                   />
-                  <span className="font-semibold text-md">{schoolName}</span>
+                  <span className="font-semibold text-lg">{schoolName}</span> {/* Increased font size */}
                 </Link>
                 {mobileNavLinks}
               </div>
