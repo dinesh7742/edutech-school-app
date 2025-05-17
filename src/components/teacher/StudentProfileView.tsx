@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X } from "lucide-react"; 
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X, UserCircle } from "lucide-react"; 
 import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -147,23 +147,26 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
   if (isEditing) {
     return (
-      <MySelfForm 
-        studentIdForEdit={studentId} 
-        onSaveSuccess={handleSaveSuccess}
-        isTeacherEditing={true}
-      />
-      // Optionally add a cancel button here outside the form, or MySelfForm could have its own.
-      // For simplicity, relying on MySelfForm's structure for now.
-      // We can add a cancel button here:
-      // <Button variant="outline" onClick={() => setIsEditing(false)} className="mt-4">Cancel</Button>
+      <>
+        <MySelfForm 
+          studentIdForEdit={studentId} 
+          onSaveSuccess={handleSaveSuccess}
+          isTeacherEditing={true}
+        />
+        <div className="max-w-2xl mx-auto mt-4 flex justify-end">
+            <Button variant="outline" onClick={() => setIsEditing(false)}>
+                <X className="mr-2 h-4 w-4" /> Cancel Edit
+            </Button>
+        </div>
+      </>
     );
   }
 
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl overflow-hidden">
-      <CardHeader className="items-center text-center pb-6">
-        <div className="flex justify-end w-full px-4 pt-2"> {/* Edit button top right */}
+      <CardHeader className="items-center text-center pb-6 relative">
+        <div className="absolute top-4 right-4"> {/* Edit button top right */}
           <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
             <Edit className="mr-2 h-4 w-4" /> Edit Profile
           </Button>
@@ -198,13 +201,6 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         <DetailItem icon={Hash} label="G.R. Number" value={profile?.grNumber || "Not Provided"} />
         <DetailItem icon={MapPin} label="Full Address" value={profile?.fullAddress || "Not Provided"} />
       </CardContent>
-       {isEditing && ( // Also show cancel button if StudentProfileView manages the toggle
-        <div className="p-6 flex justify-end">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
-                <X className="mr-2 h-4 w-4" /> Cancel
-            </Button>
-        </div>
-      )}
     </Card>
   );
 }
