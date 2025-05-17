@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
-import { GeistSans } from 'geist/font/sans';
-// import { GeistMono } from 'geist/font/mono'; // Removed
+// import { GeistSans } from 'geist/font/sans'; // Removed GeistSans
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = GeistSans;
-// const geistMono = GeistMono; // Removed
+// const geistSans = GeistSans; // Removed GeistSans initialization
 
 export const metadata: Metadata = {
   title: 'CampusConnect - PM SHRI MPS Varsha Nagar',
@@ -20,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} font-sans antialiased`}> {/* Removed geistMono.variable */}
+      <body className={`font-sans antialiased`}> {/* Removed geistSans.variable */}
         <AuthProvider>
           {children}
           <Toaster />

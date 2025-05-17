@@ -4,38 +4,38 @@
 @tailwind utilities;
 
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @layer base {
   :root {
     --background: 0 0% 100%; /* White */
-    --foreground: 220 10% 25%; /* Dark Gray/Blue for text - e.g., #3A3F4B */
+    --foreground: 240 10% 3.9%; /* Almost Black */
 
-    --card: 227 60% 98%; /* Very Light Blue/Almost White for cards - e.g., #F5F7FB */
-    --card-foreground: 220 10% 20%; /* Darker Gray/Blue for text on cards */
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 240 10% 3.9%; /* Almost Black */
 
-    --popover: 227 60% 98%; /* Very Light Blue/Almost White for popovers */
-    --popover-foreground: 220 10% 20%; /* Darker Gray/Blue for text on popovers */
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 240 10% 3.9%; /* Almost Black */
 
-    --primary: 229 50% 54%; /* Deep Blue - #3F51B5 (from PRD) */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary: 222.2 47.4% 11.2%; /* Dark Blue */
+    --primary-foreground: 210 40% 98%; /* Very Light Blue/Almost White text on primary */
 
-    --secondary: 227 40% 80%; /* Lighter, softer blue for secondary elements - e.g., #BCC8E5 */
-    --secondary-foreground: 229 50% 30%; /* Darker blue text on secondary */
+    --secondary: 210 40% 96.1%; /* Very Light Grey/Blue */
+    --secondary-foreground: 222.2 47.4% 11.2%; /* Dark Blue text on secondary */
 
-    --muted: 227 60% 95%; /* Light Blue for muted backgrounds (TabList, etc.) - #E8EAF6 (from PRD) */
-    --muted-foreground: 220 10% 45%; /* Softer muted text - e.g., #686D76 */
+    --muted: 210 40% 96.1%; /* Very Light Grey/Blue */
+    --muted-foreground: 215.4 16.3% 46.9%; /* Muted Grey text */
 
-    --accent: 233 48% 68%; /* Indigo for interactive elements/highlights - #5C6BC0 (from PRD) */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --accent: 210 40% 96.1%; /* Very Light Grey/Blue for hover */
+    --accent-foreground: 222.2 47.4% 11.2%; /* Dark Blue text on accent */
 
-    --destructive: 0 72% 51%; /* Standard Red - e.g., #DB2727 */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --destructive: 0 84.2% 60.2%; /* Standard Red */
+    --destructive-foreground: 0 0% 98%; /* Light text on destructive */
 
-    --border: 227 30% 88%; /* Light Blue-Gray border - e.g., #D3D8E1 */
-    --input: 227 50% 96%; /* Very Light Blue for input backgrounds - e.g., #ECF0F9 */
-    --ring: 229 50% 54%; /* Primary color for rings */
+    --border: 214.3 31.8% 91.4%; /* Light Grey border */
+    --input: 214.3 31.8% 91.4%; /* Light Grey input background */
+    --ring: 222.2 47.4% 11.2%; /* Dark Blue for rings */
     --radius: 0.5rem;
 
     --chart-1: 12 76% 61%;
@@ -46,36 +46,33 @@ body {
   }
 
   .dark {
-    /* Dark mode maintains a white background as per user preference,
-       adjusting other elements for consistency or slight variation if needed. */
-    --background: 0 0% 100%;
-    --foreground: 220 10% 25%;
+    --background: 240 10% 3.9%; /* Almost Black */
+    --foreground: 0 0% 98%; /* Almost White */
 
-    --card: 227 60% 98%;
-    --card-foreground: 220 10% 20%;
+    --card: 240 10% 3.9%; /* Almost Black */
+    --card-foreground: 0 0% 98%; /* Almost White */
 
-    --popover: 227 60% 98%;
-    --popover-foreground: 220 10% 20%;
+    --popover: 240 10% 3.9%; /* Almost Black */
+    --popover-foreground: 0 0% 98%; /* Almost White */
 
-    /* Primary in dark mode could be slightly adjusted if needed, but PRD color is strong */
-    --primary: 229 50% 54%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 40% 98%; /* Almost White */
+    --primary-foreground: 222.2 47.4% 11.2%; /* Dark Blue text on primary */
 
-    --secondary: 227 40% 80%;
-    --secondary-foreground: 229 50% 30%;
+    --secondary: 240 3.7% 15.9%; /* Dark Grey */
+    --secondary-foreground: 0 0% 98%; /* Almost White text on secondary */
 
-    --muted: 227 60% 95%;
-    --muted-foreground: 220 10% 45%;
-    
-    --accent: 233 48% 68%;
-    --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --muted: 240 3.7% 15.9%; /* Dark Grey */
+    --muted-foreground: 240 5% 64.9%; /* Lighter Grey text */
 
-    --border: 227 30% 88%;
-    --input: 227 50% 96%;
-    --ring: 229 50% 54%;
+    --accent: 240 3.7% 15.9%; /* Dark Grey for hover */
+    --accent-foreground: 0 0% 98%; /* Almost White text on accent */
+
+    --destructive: 0 62.8% 30.6%; /* Darker Red */
+    --destructive-foreground: 0 0% 98%; /* Light text on destructive */
+
+    --border: 240 3.7% 15.9%; /* Dark Grey border */
+    --input: 240 3.7% 15.9%; /* Dark Grey input background */
+    --ring: 210 40% 98%; /* Almost White for rings */
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
