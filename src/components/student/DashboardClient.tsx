@@ -6,14 +6,14 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, Tv2 } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, Tv2, ListChecks, CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
-import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary"; // Added import
+import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary"; 
 
 interface LatestContent<T> {
   item: T | null;
@@ -46,14 +46,15 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
-        const q = query(ref, orderBy("timestamp", "desc"), limit(5)); // Fetch 5 most recent for client-side filtering
+        // Fetch 5 most recent for client-side filtering for notices, circulars, live classes
+        // This ensures we find a relevant item even if the absolute latest isn't for this student
+        const q = query(ref, orderBy("timestamp", "desc"), limit(5)); 
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
-        // Client-side filtering for relevance
         const relevantItem = allRecentItems.find(item => {
-          if (!user.grade || !user.division) { // If student has no grade/division, only show school-wide
-             return !item.grade && !item.division;
+          if (!user.grade || !user.division) { 
+             return !item.grade && !item.division; // Only school-wide if student has no grade/division
           }
           const isSchoolWide = !item.grade || item.grade === "";
           const isGradeMatch = item.grade === user.grade;
@@ -87,7 +88,7 @@ export function StudentDashboardClient() {
     } as LiveClass));
 
 
-    // Fetch Latest Homework (specific query)
+    // Fetch Latest Homework (specific query for student's class)
     const fetchLatestHomework = async () => {
       if (!user.grade || !user.division) {
         setLatestHomework({ item: null, loading: false });
@@ -113,16 +114,21 @@ export function StudentDashboardClient() {
               ...hwData,
               timestamp: hwData.timestamp as Timestamp,
               displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-              dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', // Ensure dueDate is also handled
+              dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
             } as Homework,
             loading: false,
           });
         } else {
           setLatestHomework({ item: null, loading: false });
         }
-      } catch (error) {
+      } catch (error)
+      {
         console.error("Error fetching latest homework:", error);
         setLatestHomework({ item: null, loading: false });
+         if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
+             console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
+            // Optionally, you could use toast here to inform the admin/user if this is critical
+        }
       }
     };
     fetchLatestHomework();
@@ -139,17 +145,18 @@ export function StudentDashboardClient() {
       dataAiHint: "notification bell",
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
-      renderContent: (data: Notice | null) => data && (
-        <div className="text-left w-full space-y-1">
+      renderContent: (data: Notice | null) => data ? (
+        <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <p className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
+            {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
           </p>
           <p className="text-sm line-clamp-4 whitespace-pre-wrap">{data.content}</p>
         </div>
-      ),
+      ) : null,
       emptyMessage: "No new notices relevant to you."
     },
     {
@@ -161,12 +168,13 @@ export function StudentDashboardClient() {
       dataAiHint: "clipboard list",
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
-      renderContent: (data: Homework | null) => data && (
-        <div className="text-left w-full space-y-1">
+      renderContent: (data: Homework | null) => data ? (
+        <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <p className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
             Posted: {data.displayDate} by {data.postedByName}
+            {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
           </p>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
@@ -177,7 +185,7 @@ export function StudentDashboardClient() {
             </Button>
           )}
         </div>
-      ),
+      ) : null,
       emptyMessage: "No new homework for your class."
     },
     {
@@ -189,13 +197,14 @@ export function StudentDashboardClient() {
       dataAiHint: "document file",
       description: "Important circulars and official communications.",
       contentData: latestCircular,
-      renderContent: (data: Circular | null) => data && (
-        <div className="text-left w-full space-y-1">
+      renderContent: (data: Circular | null) => data ? (
+         <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <p className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
+             {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
           </p>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
@@ -206,7 +215,7 @@ export function StudentDashboardClient() {
             </Button>
           )}
         </div>
-      ),
+      ) : null,
       emptyMessage: "No new circulars relevant to you."
     },
      {
@@ -218,13 +227,14 @@ export function StudentDashboardClient() {
       dataAiHint: "video conference",
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
-      renderContent: (data: LiveClass | null) => data && (
-        <div className="text-left w-full space-y-2">
+      renderContent: (data: LiveClass | null) => data ? (
+        <div className="text-left w-full space-y-2 p-2 border border-primary/50 rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.subject}</h3>
           <p className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
+            {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
           </p>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
@@ -233,7 +243,7 @@ export function StudentDashboardClient() {
             </a>
           </Button>
         </div>
-      ),
+      ) : null,
       emptyMessage: "No live classes scheduled for you."
     },
     {
@@ -244,7 +254,7 @@ export function StudentDashboardClient() {
       buttonText: "View Textbooks",
       dataAiHint: "book open",
       description: "Access your digital textbooks for all subjects.",
-      contentData: null, // No specific latest item summary for this card, direct link
+      contentData: null, 
       renderContent: null,
       emptyMessage: ""
     },
@@ -256,7 +266,7 @@ export function StudentDashboardClient() {
       buttonText: "View Gallery",
       dataAiHint: "image landscape",
       description: "Explore photos from school events and activities.",
-      contentData: null, // No specific latest item summary for this card, direct link
+      contentData: null,
       renderContent: null,
       emptyMessage: ""
     },
@@ -287,7 +297,7 @@ export function StudentDashboardClient() {
               {card.renderContent && card.contentData?.loading && (
                 <div className="flex flex-col items-center justify-center flex-grow">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground mt-2">Loading latest {card.title.toLowerCase()}...</p>
+                  <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
               )}
               {card.renderContent && !card.contentData?.loading && card.contentData?.item && (
@@ -296,8 +306,8 @@ export function StudentDashboardClient() {
               {card.renderContent && !card.contentData?.loading && !card.contentData?.item && (
                 <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center">{card.emptyMessage}</p>
               )}
-              {!card.renderContent && ( // For cards like Textbooks, Gallery that don't render latest item
-                 <div className="flex-grow"></div> // Pushes button to bottom
+              {!card.renderContent && ( 
+                 <div className="flex-grow"></div> 
               )}
               <Button asChild className="w-full mt-auto">
                 <Link href={card.link}>{card.buttonText}</Link>
@@ -305,7 +315,21 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
-        {/* This card is handled by the existing TeacherProfileForm directly */}
+         <Card className="shadow-lg rounded-lg text-center flex flex-col bg-card text-card-foreground">
+            <CardHeader>
+                <div className="flex items-center justify-center mb-2">
+                    <ListChecks className="h-12 w-12 text-primary" data-ai-hint="attendance list" />
+                </div>
+                <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
+                <CardDescription className="text-xs h-8 line-clamp-2">View your detailed attendance records.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[220px]">
+              <div className="flex-grow"></div>
+              <Button asChild className="w-full mt-auto">
+                <Link href="/student/attendance">View Detailed Attendance</Link>
+              </Button>
+            </CardContent>
+          </Card>
         <Card className="shadow-lg rounded-lg text-center flex flex-col bg-card text-card-foreground">
             <CardHeader>
                 <div className="flex items-center justify-center mb-2">
@@ -325,4 +349,3 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-
