@@ -9,7 +9,7 @@ import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore"; // Ensure getDoc is imported
 
 interface StudentProfileViewProps {
   studentId: string;
@@ -42,19 +42,22 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       }
       setLoading(true);
       setError(null);
+      console.log("[StudentProfileView] Attempting to fetch profile for studentId:", studentId);
       try {
         const profileDocRef = doc(db, "studentProfiles", studentId);
-        const profileDoc = await getDocs(profileDocRef);
-        if (profileDoc.exists()) {
-          const fetchedData = profileDoc.data();
+        const profileDocSnap = await getDoc(profileDocRef); // Corrected from getDocs to getDoc
+        
+        if (profileDocSnap.exists()) {
+          const fetchedData = profileDocSnap.data();
           console.log("[StudentProfileView] Fetched data from Firestore for studentId " + studentId + ":", fetchedData); // Diagnostic log
-          setProfile({ uid: profileDoc.id, ...fetchedData } as StudentProfile);
+          setProfile({ uid: profileDocSnap.id, ...fetchedData } as StudentProfile);
         } else {
+          console.warn("[StudentProfileView] No document found for studentId:", studentId);
           setError("Student profile not found.");
           setProfile(null);
         }
       } catch (err: any) {
-        console.error("Error fetching student profile:", err);
+        console.error("[StudentProfileView] Error fetching student profile for studentId " + studentId + ":", err);
         setError("Failed to load student profile. Please try again later.");
         setProfile(null);
       } finally {
@@ -149,3 +152,4 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     </Card>
   );
 }
+
