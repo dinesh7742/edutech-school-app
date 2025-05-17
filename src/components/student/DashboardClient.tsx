@@ -152,7 +152,7 @@ export function StudentDashboardClient() {
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
-            {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
+            {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
           </div>
           <p className="text-sm line-clamp-4 whitespace-pre-wrap">{data.content}</p>
         </div>
@@ -174,7 +174,7 @@ export function StudentDashboardClient() {
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
             Posted: {data.displayDate} by {data.postedByName}
-            {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
+            {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
@@ -204,7 +204,7 @@ export function StudentDashboardClient() {
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
-             {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
+             {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
@@ -234,7 +234,7 @@ export function StudentDashboardClient() {
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
-            {isNew(data.timestamp) && <Badge variant="destructive" className="ml-2 text-xs">New</Badge>}
+            {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
@@ -282,18 +282,18 @@ export function StudentDashboardClient() {
         {dashboardCards.map((card) => (
           <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
             <CardHeader>
-              <div className="flex items-center justify-center mb-2">
-                <card.icon className="h-12 w-12 text-primary" data-ai-hint={card.dataAiHint} />
+              <div className="flex items-center justify-center mb-3">
+                <card.icon className="h-16 w-16 text-primary" data-ai-hint={card.dataAiHint} />
               </div>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew((card.contentData.item as any).timestamp) && (
-                  <Badge variant="destructive" className="animate-pulse">New</Badge>
+                  <Badge variant="accent" className="animate-pulse">New</Badge>
                 )}
               </CardTitle>
-               <CardDescription className="text-xs h-8 line-clamp-2">{card.description}</CardDescription>
+               <CardDescription className="text-sm h-10 line-clamp-2">{card.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 min-h-[220px]">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[240px]">
               {card.renderContent && card.contentData?.loading && (
                 <div className="flex flex-col items-center justify-center flex-grow">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -307,7 +307,9 @@ export function StudentDashboardClient() {
                 <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center">{card.emptyMessage}</p>
               )}
               {!card.renderContent && ( 
-                 <div className="flex-grow"></div> 
+                 <div className="flex-grow flex items-center justify-center">
+                    {/* Placeholder for cards without dynamic content, ensuring button is at bottom */}
+                 </div> 
               )}
               <Button asChild className="w-full mt-auto">
                 <Link href={card.link}>{card.buttonText}</Link>
@@ -317,13 +319,13 @@ export function StudentDashboardClient() {
         ))}
          <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader>
-                <div className="flex items-center justify-center mb-2">
-                    <ListChecks className="h-12 w-12 text-primary" data-ai-hint="attendance list" />
+                <div className="flex items-center justify-center mb-3">
+                    <ListChecks className="h-16 w-16 text-primary" data-ai-hint="attendance list" />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
-                <CardDescription className="text-xs h-8 line-clamp-2">View your detailed attendance records.</CardDescription>
+                <CardDescription className="text-sm h-10 line-clamp-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[220px]">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[240px]">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/attendance">View Detailed Attendance</Link>
@@ -332,13 +334,13 @@ export function StudentDashboardClient() {
           </Card>
         <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader>
-                <div className="flex items-center justify-center mb-2">
-                    <UserCircle className="h-12 w-12 text-primary" data-ai-hint="user profile" />
+                <div className="flex items-center justify-center mb-3">
+                    <UserCircle className="h-16 w-16 text-primary" data-ai-hint="user profile" />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
-                <CardDescription className="text-xs h-8 line-clamp-2">Manage your personal information and settings.</CardDescription>
+                <CardDescription className="text-sm h-10 line-clamp-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[220px]">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[240px]">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/profile">Go to Profile</Link>

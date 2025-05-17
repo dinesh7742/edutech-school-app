@@ -9,82 +9,79 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* White */
-    --foreground: 220 10% 25%; /* Dark Gray for text */
+    /* Light Mode - Inspired by the NLET image */
+    --background: 220 60% 97%; /* Very Light Blue-Gray for page background */
+    --foreground: 220 15% 25%; /* Dark Slate Blue/Gray for text */
 
-    --card: 220 30% 97%; /* Very Light Gray (e.g., #F8F9FA) */
-    --card-foreground: 220 10% 25%; /* Dark Gray for text on cards */
+    --card: 0 0% 100%; /* White for cards */
+    --card-foreground: 220 15% 25%; /* Dark Slate Blue/Gray for text on cards */
 
-    --popover: 220 30% 97%; /* Very Light Gray */
-    --popover-foreground: 220 10% 25%; /* Dark Gray */
+    --popover: 0 0% 100%; /* White for popovers */
+    --popover-foreground: 220 15% 25%; /* Dark Slate Blue/Gray for text on popovers */
 
-    --primary: 265 60% 55%; /* Purple (from image example) */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 225 70% 45%; /* Strong Dark Blue for primary actions, navbar */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    /* Optional: if you need other button colors from the image */
-    /* --secondary: 335 85% 58%; */ /* Pink/Magenta */
-    /* --secondary-foreground: 0 0% 100%; */
-    /* --accent: 30 100% 55%; */ /* Orange */
-    /* --accent-foreground: 0 0% 100%; */
-    
-    --secondary: 220 15% 80%; /* Lighter gray for secondary elements if needed */
-    --secondary-foreground: 220 10% 25%;
+    --secondary: 220 30% 94%; /* Lighter Gray for secondary elements */
+    --secondary-foreground: 220 15% 25%; /* Dark text on secondary */
 
-    --muted: 220 25% 92%; /* Slightly darker light gray for muted elements */
-    --muted-foreground: 220 10% 45%; /* Medium Gray */
+    --muted: 220 30% 90%; /* Slightly darker light gray for muted elements (e.g., inactive tabs bg) */
+    --muted-foreground: 220 10% 45%; /* Medium Gray for text on muted */
 
-    --accent: 265 60% 50%; /* Slightly darker purple for accent hover etc. */
-    --accent-foreground: 0 0% 100%;
+    --accent: 145 60% 40%; /* Vibrant Green for "New" / "Today" badges */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
 
     --destructive: 0 70% 50%; /* Standard Red */
-    --destructive-foreground: 0 0% 100%;
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
-    --border: 220 15% 88%; /* Light Gray Border */
+    --border: 220 20% 88%; /* Light Gray Border */
     --input: 0 0% 100%; /* White input background */
-    --ring: 265 60% 65%; /* Lighter purple for focus rings */
-    --radius: 0.5rem; /* Standard rounded corners */
+    --ring: 225 70% 55%; /* Lighter/brighter primary blue for focus rings */
+    --radius: 0.75rem; /* Slightly more rounded corners as in image */
 
-    --chart-1: 265 60% 55%;
-    --chart-2: 210 55% 70%;
-    --chart-3: 30 90% 65%;
-    --chart-4: 180 45% 75%;
-    --chart-5: 240 30% 60%;
+    --chart-1: 225 70% 45%; /* Primary Blue */
+    --chart-2: 145 60% 40%; /* Accent Green */
+    --chart-3: 30 90% 60%;  /* Orange - placeholder if needed */
+    --chart-4: 210 55% 70%; /* Light Blue - placeholder */
+    --chart-5: 240 30% 60%; /* Indigo - placeholder */
   }
 
   .dark {
-    --background: 220 10% 15%; /* Dark Background */
-    --foreground: 220 15% 85%; /* Light Gray Text */
+    /* Dark Mode - Corresponding theme */
+    --background: 220 15% 10%; /* Very Dark Blue-Gray */
+    --foreground: 220 20% 90%; /* Light Gray/Off-white text */
 
-    --card: 220 10% 22%; /* Dark Gray Card */
-    --card-foreground: 220 15% 85%; /* Light Gray Text on Card */
+    --card: 220 15% 15%; /* Darker Gray for cards */
+    --card-foreground: 220 20% 90%; /* Light text on cards */
 
-    --popover: 220 10% 20%; 
-    --popover-foreground: 220 15% 85%;
+    --popover: 220 15% 12%; /* Very Dark Gray for popovers */
+    --popover-foreground: 220 20% 90%; /* Light text on popovers */
 
-    --primary: 265 60% 60%; /* Purple */
-    --primary-foreground: 0 0% 100%; 
+    --primary: 225 65% 55%; /* Slightly lighter/brighter Dark Blue for primary actions */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
 
-    --secondary: 220 10% 30%;
-    --secondary-foreground: 220 15% 90%; 
+    --secondary: 220 15% 25%; /* Dark Gray for secondary elements */
+    --secondary-foreground: 220 20% 85%; /* Lighter text on secondary */
 
-    --muted: 220 10% 25%; 
-    --muted-foreground: 220 15% 70%; 
+    --muted: 220 15% 20%; /* Darker Gray for muted elements */
+    --muted-foreground: 220 15% 65%; /* Medium-Light Gray for text on muted */
 
-    --accent: 265 60% 55%; 
-    --accent-foreground: 0 0% 100%; 
+    --accent: 145 55% 50%; /* Vibrant Green for "New" / "Today" badges */
+    --accent-foreground: 0 0% 100%; /* White text on accent */
 
-    --destructive: 0 60% 55%; 
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 60% 55%; /* Red */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
 
-    --border: 220 10% 35%; 
-    --input: 220 10% 20%; 
-    --ring: 265 60% 70%; 
+    --border: 220 15% 30%; /* Darker Gray Border */
+    --input: 220 15% 18%; /* Dark input background */
+    --ring: 225 65% 60%; /* Lighter primary blue for focus rings */
 
-    --chart-1: 265 60% 60%;
-    --chart-2: 210 50% 65%;
-    --chart-3: 30 80% 70%;
-    --chart-4: 180 40% 70%;
-    --chart-5: 240 25% 65%;
+    /* Chart colors for dark mode can be adjusted if needed */
+    --chart-1: 225 65% 55%;
+    --chart-2: 145 55% 50%;
+    --chart-3: 30 80% 65%;
+    --chart-4: 210 50% 60%;
+    --chart-5: 240 25% 55%;
   }
 }
 

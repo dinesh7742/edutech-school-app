@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
+import Image from "next/image";
 
 // School Information
 const schoolName = "PM SHRI MPS VARSHA NAGAR";
@@ -25,6 +26,7 @@ const emailAddress = "varshanagarmps@gmail.com";
 const udiseNumber = "27220600119";
 const wardInfo = "S ward";
 const addressInfo = "Veer savarkar marg,Beside Prabodhankar Thakare Garden,Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
+
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -63,23 +65,23 @@ export function Navbar() {
 
   const navLinks = user ? (
     <>
-      <Button variant="ghost" asChild className="text-base">
+      <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
         <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'}>Dashboard</Link>
       </Button>
       {role === 'student' && (
-        <Button variant="ghost" asChild className="text-base">
+        <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
           <Link href="/student/profile">My Profile</Link>
         </Button>
       )}
        {role === 'teacher' && (
          <>
-          <Button variant="ghost" asChild className="text-base">
+          <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
             <Link href="/teacher/post-content">Post Content</Link>
           </Button>
-          <Button variant="ghost" asChild className="text-base">
+          <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
             <Link href="/teacher/student-data">Student Data</Link>
           </Button>
-          <Button variant="ghost" asChild className="text-base">
+          <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
             <Link href="/teacher/profile">My Profile</Link>
           </Button>
          </>
@@ -87,10 +89,10 @@ export function Navbar() {
     </>
   ) : (
     <>
-      <Button variant="ghost" asChild className="text-base">
+      <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
         <Link href="/login">Login</Link>
       </Button>
-      <Button asChild className="text-base">
+      <Button asChild className="text-base bg-background text-foreground hover:bg-background/90">
         <Link href="/signup">Sign Up</Link>
       </Button>
     </>
@@ -124,13 +126,13 @@ export function Navbar() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container flex h-auto min-h-[80px] py-3 items-start justify-between"> {/* Adjusted for multi-line */}
+    <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground">
+      <div className="container flex h-auto min-h-[80px] py-3 items-start justify-between">
         <Link href="/" className="flex items-start space-x-3">
-          <School className="h-10 w-10 text-primary mt-1" />
+          <School className="h-10 w-10 mt-1 flex-shrink-0" />
           <div className="flex flex-col max-w-md">
-            <span className="text-xl font-bold text-primary">{schoolName}</span>
-            <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+            <span className="text-xl font-bold">{schoolName}</span>
+            <div className="text-xs space-y-0.5 mt-1">
                 <div className="flex items-center gap-1.5">
                     <Phone size={12} /> <span>{contactNumber}</span>
                 </div>
@@ -156,12 +158,12 @@ export function Navbar() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
+                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 text-primary-foreground hover:bg-primary-foreground/10">
                   <User className="h-5 w-5" />
                   <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end"> {/* Dropdown content will use card/popover theme from globals.css */}
                 <DropdownMenuItem disabled>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
@@ -184,15 +186,15 @@ export function Navbar() {
         <div className="md:hidden mt-1">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10">
                 <MenuIcon className="h-7 w-7" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px] overflow-y-auto">
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] overflow-y-auto bg-card text-card-foreground"> {/* Mobile sheet uses card theme */}
               <div className="p-4">
                 <Link href="/" className="flex items-start space-x-2 mb-3" onClick={() => setMobileMenuOpen(false)}>
-                   <School className="h-8 w-8 text-primary mt-1" />
+                   <School className="h-8 w-8 text-primary mt-1 flex-shrink-0" /> {/* Icon uses primary color from card theme */}
                     <div className="flex flex-col max-w-xs">
                         <span className="text-lg font-bold text-primary">{schoolName}</span>
                          <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
