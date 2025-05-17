@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users } from "lucide-react"; // Changed UserCircle to Users
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, UserCircle } from "lucide-react"; 
 import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +76,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   if (loading) {
     return (
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
-        <CardHeader className="items-center text-center border-b pb-6">
+        <CardHeader className="items-center text-center pb-6">
            <Skeleton className="h-32 w-32 rounded-full" />
            <Skeleton className="h-8 w-1/2 mt-4" />
            <Skeleton className="h-4 w-1/4 mt-2" />
@@ -119,7 +119,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl overflow-hidden">
-      <CardHeader className="items-center text-center border-b pb-6 bg-secondary/30">
+      <CardHeader className="items-center text-center pb-6">
         <Avatar className="h-32 w-32 border-4 border-background shadow-md">
           <AvatarImage src={profile.photoUrl || `https://placehold.co/128x128.png?text=${getInitials(profile.firstName, profile.lastName)}`} alt={`${profile.firstName} ${profile.lastName || ''}`} data-ai-hint="profile avatar"/>
           <AvatarFallback className="text-4xl">{getInitials(profile.firstName, profile.lastName)}</AvatarFallback>
@@ -143,7 +143,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         <DetailItem icon={Phone} label="Contact Number" value={profile.contactNumber} />
         <DetailItem icon={Award} label="Grade & Division" value={`Grade ${profile.grade} - ${profile.division}`} />
         <DetailItem icon={CalendarDays} label="Religion" value={profile.religion} />
-        <DetailItem icon={User} label="Caste" value={profile.caste} />
+        <DetailItem icon={UserCircle} label="Caste" value={profile.caste} />
         <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile.aadharCardNumber || "Not Provided"} />
         <DetailItem icon={BookUser} label="PEN Number" value={profile.penNumber} />
         <DetailItem icon={Hash} label="G.R. Number" value={profile.grNumber} />
