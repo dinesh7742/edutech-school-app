@@ -52,7 +52,7 @@ export function StudentDashboardClient() {
             <ScrollArea className="h-[250px] pr-4">
               <ul className="space-y-3">
                 {mockNotices.map(notice => (
-                  <li key={notice.id} className="p-3 bg-secondary/50 rounded-md">
+                  <li key={notice.id} className="p-3 bg-secondary/50 rounded-md border border-primary">
                     <h4 className="font-medium text-sm">{notice.title}</h4>
                     <p className="text-xs text-muted-foreground line-clamp-2">{notice.content}</p>
                   </li>
@@ -73,7 +73,7 @@ export function StudentDashboardClient() {
             <ScrollArea className="h-[250px] pr-4">
             <ul className="space-y-3">
               {mockHomework.map(hw => (
-                <li key={hw.id} className="p-3 bg-secondary/50 rounded-md">
+                <li key={hw.id} className="p-3 bg-secondary/50 rounded-md border border-primary">
                   <h4 className="font-medium text-sm">{hw.title}</h4>
                   <p className="text-xs text-muted-foreground">Subject: {hw.subject} | Due: {hw.dueDate}</p>
                   {hw.fileUrl && <a href={hw.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={hw.dataAiHint}>View Attachment <ExternalLink size={12}/></a>}
@@ -95,7 +95,7 @@ export function StudentDashboardClient() {
             <ScrollArea className="h-[250px] pr-4">
             <ul className="space-y-3">
               {mockCirculars.map(circ => (
-                <li key={circ.id} className="p-3 bg-secondary/50 rounded-md">
+                <li key={circ.id} className="p-3 bg-secondary/50 rounded-md border border-primary">
                   <h4 className="font-medium text-sm">{circ.title}</h4>
                   <p className="text-xs text-muted-foreground">Date: {circ.date}</p>
                    {circ.fileUrl && <a href={circ.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={circ.dataAiHint}>View Circular <ExternalLink size={12}/></a>}
@@ -117,7 +117,7 @@ export function StudentDashboardClient() {
              <ScrollArea className="h-[250px] pr-4">
             <ul className="space-y-3">
               {mockTextbooks.map(book => (
-                <li key={book.id} className="p-3 bg-secondary/50 rounded-md">
+                <li key={book.id} className="p-3 bg-secondary/50 rounded-md border border-primary">
                   <h4 className="font-medium text-sm">{book.title}</h4>
                   <p className="text-xs text-muted-foreground">Subject: {book.subject}</p>
                   <a href={book.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={book.dataAiHint}>Download PDF <ExternalLink size={12}/></a>
@@ -172,3 +172,4 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
