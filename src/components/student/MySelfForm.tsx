@@ -29,7 +29,6 @@ const profileSchema = z.object({
   motherName: z.string().optional(),
   dateOfBirth: z.string().optional().refine((val) => {
     if (!val) return true; // Optional field
-    // Basic YYYY-MM-DD format check, can be more robust if needed
     return /^\d{4}-\d{2}-\d{2}$/.test(val);
   }, "Invalid date format. Use YYYY-MM-DD"),
   gender: z.string().optional(),
@@ -40,7 +39,7 @@ const profileSchema = z.object({
   religion: z.string().optional(),
   caste: z.string().optional(),
   fullAddress: z.string().optional(),
-  photoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")), // For storing photo URL
+  photoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -62,6 +61,8 @@ export function MySelfForm() {
         setIsFetchingProfile(true);
         const profileDocRef = doc(db, "studentProfiles", user.uid);
         const profileDoc = await getDoc(profileDocRef);
+        const defaultPhotoPlaceholder = "https://placehold.co/128x128.png?text=Student+Photo";
+
         if (profileDoc.exists()) {
           const data = profileDoc.data() as StudentProfile;
           reset({ 
@@ -78,9 +79,9 @@ export function MySelfForm() {
             religion: data.religion || "",
             caste: data.caste || "",
             fullAddress: data.fullAddress || "",
-            photoUrl: data.photoUrl || "",
+            photoUrl: data.photoUrl || defaultPhotoPlaceholder, // Use placeholder if photoUrl is empty
           });
-          if (data.photoUrl) setPhotoPreview(data.photoUrl);
+          setPhotoPreview(data.photoUrl || defaultPhotoPlaceholder);
         } else {
           // Pre-fill from auth if profile doesn't exist
           const nameParts = user.displayName?.split(" ") || [];
@@ -97,8 +98,9 @@ export function MySelfForm() {
             religion: "",
             caste: "",
             fullAddress: "",
-            photoUrl: "",
+            photoUrl: defaultPhotoPlaceholder, // Default placeholder for new profiles
           });
+          setPhotoPreview(defaultPhotoPlaceholder);
         }
         setIsFetchingProfile(false);
       };
@@ -117,10 +119,10 @@ export function MySelfForm() {
       const profileData: StudentProfile = {
         uid: user.uid,
         email: user.email || undefined,
-        grade: user.grade || "", // From auth context
-        division: user.division || "", // From auth context
+        grade: user.grade || "", 
+        division: user.division || "", 
         ...data,
-        photoUrl: data.photoUrl || photoPreview || undefined, 
+        photoUrl: data.photoUrl === "https://placehold.co/128x128.png?text=Student+Photo" ? "" : data.photoUrl || "",
       };
 
       await setDoc(doc(db, "studentProfiles", user.uid), profileData, { merge: true });
@@ -145,11 +147,10 @@ export function MySelfForm() {
   useEffect(() => {
     if (watchedPhotoUrl && watchedPhotoUrl.startsWith('http')) {
       setPhotoPreview(watchedPhotoUrl);
-    } else if (!watchedPhotoUrl && photoPreview !== (user?.photoURL || null) ) {
-      // if photoUrl field is cleared by user, and it's not the default photoURL, clear preview
-      // setPhotoPreview(null); // This line might be too aggressive if user clears field temporarily
+    } else if (!watchedPhotoUrl) {
+      setPhotoPreview("https://placehold.co/128x128.png?text=Student+Photo");
     }
-  }, [watchedPhotoUrl, user?.photoURL, photoPreview]);
+  }, [watchedPhotoUrl]);
 
 
   if (isFetchingProfile && !user) { 
@@ -209,16 +210,22 @@ export function MySelfForm() {
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              <div>
               <Label htmlFor="gender">Gender</Label>
-              <Select onValueChange={(value) => setValue("gender", value)} value={watch("gender")}>
-                <SelectTrigger id="gender">
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  {genderOptions.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="gender"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="gender">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {genderOptions.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender.message}</p>}
             </div>
              <div>
@@ -232,7 +239,7 @@ export function MySelfForm() {
                   if (e.target.value && e.target.value.startsWith('http')) {
                     setPhotoPreview(e.target.value);
                   } else {
-                    setPhotoPreview(null); 
+                     setPhotoPreview("https://placehold.co/128x128.png?text=Student+Photo"); 
                   }
                 }}
               />
@@ -287,16 +294,22 @@ export function MySelfForm() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="religion">Religion</Label>
-              <Select onValueChange={(value) => setValue("religion", value)} value={watch("religion")}>
-                <SelectTrigger id="religion">
-                  <SelectValue placeholder="Select religion" />
-                </SelectTrigger>
-                <SelectContent>
-                  {religionOptions.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Controller
+                name="religion"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="religion">
+                      <SelectValue placeholder="Select religion" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {religionOptions.map(option => (
+                        <SelectItem key={option} value={option}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div>
               <Label htmlFor="caste">Caste (if any)</Label>
@@ -318,3 +331,5 @@ export function MySelfForm() {
     </Card>
   );
 }
+
+    
