@@ -3,8 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image"; // Import next/image
-import { LogOut, User, LayoutDashboard, Menu as MenuIcon } from "lucide-react";
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Info, Building, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,7 +18,13 @@ import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 
-const headerImageUrl = "https://placehold.co/1230x220.png"; // Placeholder for your header image
+// School Information
+const schoolName = "PM SHRI MPS VARSHA NAGAR";
+const contactNumber = "+917506137742";
+const emailAddress = "varshanagarmps@gmail.com";
+const udiseNumber = "27220600119";
+const wardInfo = "S ward";
+const addressInfo = "Veer savarkar marg,Beside Prabodhankar Thakare Garden,Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -120,21 +125,33 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between"> {/* Adjusted height and items-center */}
-        <Link href="/" className="flex items-center">
-          <Image
-            src={headerImageUrl}
-            alt="School Header"
-            width={1230} // Original image width
-            height={220} // Original image height
-            className="h-14 md:h-16 w-auto object-contain" // Displayed height, width auto
-            priority // Load this image eagerly as it's LCP
-            data-ai-hint="school banner"
-          />
+      <div className="container flex h-auto min-h-[80px] py-3 items-start justify-between"> {/* Adjusted for multi-line */}
+        <Link href="/" className="flex items-start space-x-3">
+          <School className="h-10 w-10 text-primary mt-1" />
+          <div className="flex flex-col max-w-md">
+            <span className="text-xl font-bold text-primary">{schoolName}</span>
+            <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                <div className="flex items-center gap-1.5">
+                    <Phone size={12} /> <span>{contactNumber}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Mail size={12} /> <span>{emailAddress}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <Info size={12} /> <span>UDISE: {udiseNumber}</span>
+                </div>
+                 <div className="flex items-center gap-1.5">
+                    <Building size={12} /> <span>Ward: {wardInfo}</span>
+                </div>
+                <div className="flex items-start gap-1.5 whitespace-normal">
+                    <MapPin size={12} className="mt-0.5 flex-shrink-0" /> <span>{addressInfo}</span>
+                </div>
+            </div>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-1">
+        <nav className="hidden md:flex items-center space-x-1 mt-1">
           {navLinks}
           {user && (
             <DropdownMenu>
@@ -164,7 +181,7 @@ export function Navbar() {
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden">
+        <div className="md:hidden mt-1">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -174,15 +191,28 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[320px] overflow-y-auto">
               <div className="p-4">
-                <Link href="/" className="flex items-center mb-3" onClick={() => setMobileMenuOpen(false)}>
-                  <Image
-                    src={headerImageUrl}
-                    alt="School Header"
-                    width={1230} // Original image width
-                    height={220} // Original image height
-                    className="h-12 w-auto object-contain" // Smaller height for mobile menu
-                    data-ai-hint="school banner"
-                  />
+                <Link href="/" className="flex items-start space-x-2 mb-3" onClick={() => setMobileMenuOpen(false)}>
+                   <School className="h-8 w-8 text-primary mt-1" />
+                    <div className="flex flex-col max-w-xs">
+                        <span className="text-lg font-bold text-primary">{schoolName}</span>
+                         <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+                            <div className="flex items-center gap-1.5">
+                                <Phone size={12} /> <span>{contactNumber}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <Mail size={12} /> <span>{emailAddress}</span>
+                            </div>
+                             <div className="flex items-center gap-1.5">
+                                <Info size={12} /> <span>UDISE: {udiseNumber}</span>
+                            </div>
+                             <div className="flex items-center gap-1.5">
+                                <Building size={12} /> <span>Ward: {wardInfo}</span>
+                            </div>
+                            <div className="flex items-start gap-1.5 whitespace-normal">
+                                <MapPin size={12} className="mt-0.5 flex-shrink-0" /> <span>{addressInfo}</span>
+                            </div>
+                        </div>
+                    </div>
                 </Link>
                 <hr className="my-3"/>
                 {mobileNavLinks}
