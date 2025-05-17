@@ -16,7 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase"; // Removed storage import
+import { db } from "@/lib/firebase"; 
 
 // Schemas for different content types
 const noticeSchema = z.object({
@@ -63,22 +63,20 @@ const textbookSchema = z.object({
 });
 type TextbookFormValues = z.infer<typeof textbookSchema>;
 
-// Updated Photo Gallery Schema for URL input
 const photoGallerySchema = z.object({
   title: z.string().min(3, "Event/Album title is required"),
   description: z.string().optional(),
-  eventDate: z.string().optional(),
+  eventDate: z.string().optional(), // Keep as string for <input type="date">
   imageUrls: z.string()
-    .min(1, "At least one image URL is required.")
     .refine(value => {
+      if (!value) return true; // Optional, allow empty string
       try {
-        // Attempt to split by comma, then validate each part as a URL
         const urls = value.split(',').map(url => url.trim());
-        return urls.every(url => z.string().url().safeParse(url).success || url === ""); // Allow empty strings if user makes a mistake
+        return urls.every(url => url === "" || z.string().url().safeParse(url).success || url.startsWith('https://placehold.co')); // Allow placeholders too
       } catch (e) {
         return false;
       }
-    }, "Please provide comma-separated, valid URLs (e.g., https://example.com/image.png, https://another.com/photo.jpg).")
+    }, "Please provide comma-separated, valid URLs (e.g., https://example.com/image.png). Empty input is also allowed.")
     .optional(),
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
@@ -109,7 +107,7 @@ export function PostContentForm() {
     try {
       let collectionName = "";
       let documentData: any = {
-        ...data, // Spread initial form data
+        ...data, 
         postedByUid: user.uid,
         postedByName: user.displayName || user.email || "Teacher",
         timestamp: serverTimestamp(),
@@ -135,15 +133,15 @@ export function PostContentForm() {
         case "gallery":
           collectionName = "galleryAlbums";
           if (data.imageUrls) {
-            const urls = data.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url);
+            const urls = data.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url); // filter out empty strings after split
             documentData.images = urls.map((url: string, index: number) => ({
               url: url,
               alt: `${data.title || 'Gallery Image'} ${index + 1}`
             }));
           } else {
-            documentData.images = [];
+            documentData.images = []; // Ensure images is an empty array if no URLs provided
           }
-          delete documentData.imageUrls; // Remove the comma-separated string before saving
+          delete documentData.imageUrls; // Remove the comma-separated string before saving to Firestore
           break;
         default:
           toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
@@ -191,13 +189,12 @@ export function PostContentForm() {
         </div>
       )}
 
-      {type !== 'notice' && ( // File URL and Name not for notices
+      {type !== 'notice' && ( 
         <>
             <div>
                 <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
                 <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
                 {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.fileUrl as any).message}</p>}
-                <p className="text-xs text-muted-foreground mt-1">Actual file upload feature will be added later. For now, please provide a public URL if applicable.</p>
             </div>
             <div>
                 <Label htmlFor={`${activeTab}FileName`}>File Name (Optional, e.g., chapter5.pdf)</Label>
@@ -306,7 +303,6 @@ export function PostContentForm() {
                 <Label htmlFor="textbookFileUrl">PDF URL (Optional)</Label>
                 <Input id="textbookFileUrl" {...formTextbook.register("fileUrl")} placeholder="https://example.com/textbook.pdf"/>
                 {formTextbook.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.fileUrl.message}</p>}
-                 <p className="text-xs text-muted-foreground mt-1">Provide a direct link to the PDF if available.</p>
               </div>
                <div>
                 <Label htmlFor="textbookCoverImageUrl">Cover Image URL (Optional)</Label>
@@ -326,8 +322,8 @@ export function PostContentForm() {
                        <GradeDivisionSelector
                         grade={field.value || ""} 
                         onGradeChange={field.onChange} 
-                        division="" // Not used for textbooks
-                        onDivisionChange={() => {}} // No-op
+                        division="" 
+                        onDivisionChange={() => {}} 
                         showDivision={false} 
                         />
                     )}
@@ -356,7 +352,7 @@ export function PostContentForm() {
                 <Input id="galleryEventDate" type="date" {...formGallery.register("eventDate")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="galleryImageUrls">Image URLs (comma-separated) *</Label>
+                <Label htmlFor="galleryImageUrls">Image URLs (comma-separated, optional)</Label>
                 <Textarea 
                   id="galleryImageUrls"
                   {...formGallery.register("imageUrls")}
@@ -367,8 +363,8 @@ export function PostContentForm() {
                  <p className="text-xs text-muted-foreground mt-1">
                    Provide direct links to images, separated by commas. 
                    E.g., <code>https://path.to/image.jpg, https://another.site/pic.png</code>.
-                   Ensure these URLs are publicly accessible and the hostnames are configured in <code>next.config.ts</code> if using <code>next/image</code> elsewhere with these hosts.
-                   Google Drive folder links will NOT work.
+                   Google Drive links or search result links will NOT work directly. 
+                   Ensure image hostnames are configured in <code>next.config.ts</code> if not using common services like placehold.co.
                  </p>
               </div>
                <Button type="submit" disabled={isLoading}>
@@ -382,6 +378,3 @@ export function PostContentForm() {
     </Card>
   );
 }
-
-
-    
