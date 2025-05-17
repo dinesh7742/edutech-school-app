@@ -19,7 +19,7 @@ import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 
-const schoolName = "PM SHRI MPS VARSHA NAGAR"; 
+const schoolName = "PM SHRI MPS VARSHA NAGAR";
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -90,7 +90,7 @@ export function Navbar() {
       </Button>
     </>
   );
-  
+
   const mobileNavLinks = (
     <div className="flex flex-col space-y-2 pt-4">
       {user ? (
@@ -122,12 +122,12 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image 
-            src="https://placehold.co/100x40.png" // Placeholder image for the logo
-            alt="PM SHRI School Logo" 
-            width={100} // Adjust width as needed
-            height={40} // Adjust height as needed
-            className="h-10 w-auto object-contain" // Maintain aspect ratio, adjust height
+          <Image
+            src="https://placehold.co/100x40.png"
+            alt="PM SHRI School Logo"
+            width={100}
+            height={40}
+            className="h-10 w-[100px] object-contain"
             data-ai-hint="school logo"
           />
           <span className="font-semibold text-lg whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span>
@@ -175,12 +175,12 @@ export function Navbar() {
             <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <div className="p-4">
                 <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setMobileMenuOpen(false)}>
-                  <Image 
-                    src="https://placehold.co/80x32.png" // Placeholder image for the logo (smaller for mobile menu)
-                    alt="PM SHRI School Logo" 
-                    width={80} 
-                    height={32} 
-                    className="h-8 w-auto object-contain"
+                  <Image
+                    src="https://placehold.co/80x32.png"
+                    alt="PM SHRI School Logo"
+                    width={80}
+                    height={32}
+                    className="h-8 w-[80px] object-contain"
                     data-ai-hint="school logo"
                   />
                   <span className="font-semibold text-md">{schoolName}</span>
