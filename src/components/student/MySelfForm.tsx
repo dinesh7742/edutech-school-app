@@ -11,12 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase"; // Assuming you have storage configured in firebase.ts
+import { db } from "@/lib/firebase";
 import type { StudentProfile } from "@/types";
-import { Loader2, UploadCloud, UserCircle2, CalendarDays } from "lucide-react";
+import { Loader2, UploadCloud } from "lucide-react";
 import Image from "next/image";
 
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
@@ -32,6 +33,8 @@ const profileSchema = z.object({
     return /^\d{4}-\d{2}-\d{2}$/.test(val);
   }, "Invalid date format. Use YYYY-MM-DD"),
   gender: z.string().optional(),
+  grade: z.string().min(1, "Grade is required"),
+  division: z.string().min(1, "Division is required"),
   contactNumber: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), "Must be 10 digits"),
   aadharCardNumber: z.string().optional().refine(val => !val || /^\d{12}$/.test(val), "Must be 12 digits"),
   penNumber: z.string().optional(),
@@ -44,25 +47,47 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-export function MySelfForm() {
-  const { user } = useAuth();
+interface MySelfFormProps {
+  studentIdForEdit?: string; // If provided, teacher is editing this student
+  onSaveSuccess?: () => void; // Callback for teacher view to refresh
+  isTeacherEditing?: boolean; // To adjust UI/toast messages
+}
+
+export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing = false }: MySelfFormProps) {
+  const { user: loggedInUser } = useAuth(); // This is the logged-in user (student or teacher)
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const defaultPhotoPlaceholder = "https://placehold.co/128x128.png?text=Student+Photo";
+  const defaultPhotoPlaceholder = studentIdForEdit 
+    ? `https://placehold.co/128x128.png?text=Edit+Student`
+    : `https://placehold.co/128x128.png?text=My+Photo`;
+
 
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: { // Initial default values
+        firstName: "",
+        lastName: "",
+        grade: "1", // Default grade
+        division: "A", // Default division
+        photoUrl: defaultPhotoPlaceholder,
+        // other fields will be empty or use their Zod defaults
+    }
   });
 
   useEffect(() => {
-    if (user) {
+    const profileUidToFetch = studentIdForEdit || loggedInUser?.uid;
+
+    if (profileUidToFetch) {
       const fetchProfile = async () => {
         setIsFetchingProfile(true);
-        const profileDocRef = doc(db, "studentProfiles", user.uid);
+        const profileDocRef = doc(db, "studentProfiles", profileUidToFetch);
         const profileDoc = await getDoc(profileDocRef);
         
+        const userDocRef = doc(db, "users", profileUidToFetch); // Fetch from 'users' for grade/division fallback
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.exists() ? userDoc.data() : {};
 
         if (profileDoc.exists()) {
           const data = profileDoc.data() as StudentProfile;
@@ -73,6 +98,8 @@ export function MySelfForm() {
             motherName: data.motherName || "",
             dateOfBirth: data.dateOfBirth || "",
             gender: data.gender || "",
+            grade: data.grade || userData.grade || "1", // Prioritize profile, then user, then default
+            division: data.division || userData.division || "A",
             contactNumber: data.contactNumber || "",
             aadharCardNumber: data.aadharCardNumber || "",
             penNumber: data.penNumber || "",
@@ -80,15 +107,18 @@ export function MySelfForm() {
             religion: data.religion || "",
             caste: data.caste || "",
             fullAddress: data.fullAddress || "",
-            photoUrl: data.photoUrl || defaultPhotoPlaceholder, // Use placeholder if photoUrl is empty
+            photoUrl: data.photoUrl || defaultPhotoPlaceholder,
           });
           setPhotoPreview(data.photoUrl || defaultPhotoPlaceholder);
         } else {
-          // Pre-fill from auth if profile doesn't exist
-          const nameParts = user.displayName?.split(" ") || [];
+          // Pre-fill from 'users' collection if studentProfile doesn't exist
+          // This is more relevant if a teacher is creating/editing a sparse profile
+          const nameParts = userData.displayName?.split(" ") || loggedInUser?.displayName?.split(" ") || [];
           reset({
             firstName: nameParts[0] || "",
             lastName: nameParts.length > 1 ? nameParts[nameParts.length -1] : "",
+            grade: userData.grade || loggedInUser?.grade || "1",
+            division: userData.division || loggedInUser?.division || "A",
             motherName: "",
             dateOfBirth: "",
             gender: "",
@@ -99,39 +129,59 @@ export function MySelfForm() {
             religion: "",
             caste: "",
             fullAddress: "",
-            photoUrl: defaultPhotoPlaceholder, // Default placeholder for new profiles
+            photoUrl: defaultPhotoPlaceholder,
           });
           setPhotoPreview(defaultPhotoPlaceholder);
         }
         setIsFetchingProfile(false);
       };
       fetchProfile();
+    } else if (!isTeacherEditing) { // Only if student is editing their own profile and loggedInUser is null (should not happen with useRequireAuth)
+        setIsFetchingProfile(false);
+        toast({title: "Error", description: "Could not load user information.", variant: "destructive"});
     }
-  }, [user, reset, defaultPhotoPlaceholder]);
+  }, [studentIdForEdit, loggedInUser, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    if (!user) {
-      toast({ title: "Error", description: "You must be logged in.", variant: "destructive" });
+    const profileUidToSave = studentIdForEdit || loggedInUser?.uid;
+
+    if (!profileUidToSave) {
+      toast({ title: "Error", description: "User ID not found. Cannot save profile.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
 
+    // Fetch student's email from 'users' collection to store in 'studentProfiles'
+    // This is important if the email isn't part of the StudentProfile type yet from auth.
+    let studentEmail = "";
+    if (isTeacherEditing || !loggedInUser?.email) { // If teacher is editing, or student's auth object doesn't have email
+        const userDocRef = doc(db, "users", profileUidToSave);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+            studentEmail = userDoc.data().email || "";
+        }
+    } else {
+        studentEmail = loggedInUser?.email || "";
+    }
+
+
     try {
       const profileData: StudentProfile = {
-        uid: user.uid,
-        email: user.email || undefined,
-        grade: user.grade || "", 
-        division: user.division || "", 
-        ...data,
+        uid: profileUidToSave,
+        email: studentEmail, // Store the student's actual email
+        ...data, // grade and division are now part of 'data' from the form
         photoUrl: data.photoUrl === defaultPhotoPlaceholder ? "" : data.photoUrl || "",
       };
 
-      await setDoc(doc(db, "studentProfiles", user.uid), profileData, { merge: true });
+      await setDoc(doc(db, "studentProfiles", profileUidToSave), profileData, { merge: true });
 
       toast({
-        title: "Profile Updated",
-        description: "Your information has been saved successfully.",
+        title: isTeacherEditing ? "Student Profile Updated" : "Profile Updated",
+        description: "Information has been saved successfully.",
       });
+      if (onSaveSuccess) {
+        onSaveSuccess();
+      }
     } catch (error: any) {
       console.error("Profile update error:", error);
       toast({
@@ -154,15 +204,15 @@ export function MySelfForm() {
   }, [watchedPhotoUrl, defaultPhotoPlaceholder]);
 
 
-  if (isFetchingProfile && !user) { 
+  if (isFetchingProfile) { 
     return (
       <Card className="w-full max-w-2xl mx-auto shadow-xl">
         <CardHeader>
-          <CardTitle>My Profile</CardTitle>
-          <CardDescription>Loading your information...</CardDescription>
+          <CardTitle>{isTeacherEditing ? "Edit Student Profile" : "My Profile"}</CardTitle>
+          <CardDescription>Loading information...</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-10 w-1/3" />
         </CardContent>
@@ -170,12 +220,15 @@ export function MySelfForm() {
     );
   }
 
-
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold text-primary">My Profile</CardTitle>
-        <CardDescription>Keep your information up to date. Fields marked with * are required.</CardDescription>
+        <CardTitle className="text-3xl font-bold text-primary">
+          {isTeacherEditing ? "Edit Student Profile" : "My Profile"}
+        </CardTitle>
+        <CardDescription>
+            {isTeacherEditing ? "Modify the student's information below." : "Keep your information up to date. Fields marked with * are required."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -208,14 +261,15 @@ export function MySelfForm() {
               {errors.dateOfBirth && <p className="text-sm text-destructive mt-1">{errors.dateOfBirth.message}</p>}
             </div>
            </div>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
              <div>
               <Label htmlFor="gender">Gender</Label>
               <Controller
                 name="gender"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
                     <SelectTrigger id="gender">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -252,20 +306,33 @@ export function MySelfForm() {
                   <UploadCloud className="h-12 w-12 text-muted-foreground" />
                 </div>
               )}
-              <p className="text-xs text-muted-foreground mt-1">Enter a direct URL to your photo. Actual file upload will be supported later.</p>
+              <p className="text-xs text-muted-foreground mt-1">Enter a direct URL to the photo.</p>
             </div>
           </div>
-
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="gradeDisplay">Grade</Label>
-              <Input id="gradeDisplay" value={user?.grade || "N/A"} disabled className="bg-muted/50" />
-            </div>
-            <div>
-              <Label htmlFor="divisionDisplay">Division</Label>
-              <Input id="divisionDisplay" value={user?.division || "N/A"} disabled className="bg-muted/50" />
-            </div>
+          
+          <div>
+             <Label>Grade & Division *</Label>
+             <Controller
+                name="grade"
+                control={control}
+                render={({ field: gradeField }) => (
+                <Controller
+                    name="division"
+                    control={control}
+                    render={({ field: divisionField }) => ( 
+                    <GradeDivisionSelector
+                        grade={gradeField.value || ""}
+                        onGradeChange={gradeField.onChange}
+                        division={divisionField.value || ""} 
+                        onDivisionChange={divisionField.onChange}
+                        showDivision={true}
+                    />
+                    )}
+                />
+                )}
+            />
+            {errors.grade && <p className="text-sm text-destructive mt-1">{errors.grade.message}</p>}
+            {errors.division && <p className="text-sm text-destructive mt-1">{errors.division.message}</p>}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -299,7 +366,7 @@ export function MySelfForm() {
                 name="religion"
                 control={control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
                     <SelectTrigger id="religion">
                       <SelectValue placeholder="Select religion" />
                     </SelectTrigger>
@@ -332,5 +399,3 @@ export function MySelfForm() {
     </Card>
   );
 }
-
-    

@@ -8,7 +8,7 @@ export interface AppUser extends FirebaseUser {
   role?: UserRole;
   grade?: string;
   division?: string;
-  displayName?: string | null; 
+  displayName?: string | null;
 }
 
 export interface Notice {
@@ -33,8 +33,8 @@ export interface Homework {
   postedByName: string;
   timestamp: Timestamp | FieldValue;
   displayDate?: string;
-  dueDate?: string; 
-  subject?: string; 
+  dueDate?: string;
+  subject?: string;
   grade: string;
   division: string;
 }
@@ -62,19 +62,19 @@ export interface Textbook {
   fileName?: string;
   postedByUid: string;
   postedByName: string;
-  timestamp: Timestamp | FieldValue; 
+  timestamp: Timestamp | FieldValue;
   grade: string;
 }
 
-export interface PhotoGalleryAlbum { 
+export interface PhotoGalleryAlbum {
   id: string;
   title: string;
   description?: string;
   images: { url: string; alt?: string }[];
   postedByUid: string;
   postedByName: string;
-  eventDate?: string; 
-  timestamp: Timestamp | FieldValue; 
+  eventDate?: string;
+  timestamp: Timestamp | FieldValue;
 }
 
 export interface StudentProfile {
@@ -83,19 +83,19 @@ export interface StudentProfile {
   middleName?: string;
   lastName: string;
   motherName?: string;
-  dateOfBirth?: string; 
-  gender?: string; 
-  grade: string;
-  division: string;
+  dateOfBirth?: string;
+  gender?: string;
+  grade: string; // Made mandatory for consistency, will be editable in form
+  division: string; // Made mandatory
   contactNumber?: string;
   aadharCardNumber?: string;
-  penNumber?: string; 
-  grNumber?: string; 
+  penNumber?: string;
+  grNumber?: string;
   religion?: string;
   caste?: string;
   fullAddress?: string;
   photoUrl?: string;
-  email?: string;
+  email?: string; // Student's email
 }
 
 export interface LiveClass {
