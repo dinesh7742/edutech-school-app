@@ -33,8 +33,8 @@ export interface Homework {
   postedByName: string;
   timestamp: Timestamp | FieldValue;
   displayDate?: string;
-  dueDate?: string; // Keep dueDate if it's part of homework logic
-  subject?: string; // Keep subject if it's part of homework logic
+  dueDate?: string; 
+  subject?: string; 
   grade: string;
   division: string;
 }
@@ -62,19 +62,19 @@ export interface Textbook {
   fileName?: string;
   postedByUid: string;
   postedByName: string;
-  timestamp: Timestamp | FieldValue; // Added for sorting or tracking
+  timestamp: Timestamp | FieldValue; 
   grade: string;
 }
 
-export interface PhotoGalleryAlbum { // Renamed for clarity
+export interface PhotoGalleryAlbum { 
   id: string;
   title: string;
   description?: string;
   images: { url: string; alt?: string }[];
   postedByUid: string;
   postedByName: string;
-  eventDate?: string; // Keep eventDate
-  timestamp: Timestamp | FieldValue; // Added for sorting or tracking
+  eventDate?: string; 
+  timestamp: Timestamp | FieldValue; 
 }
 
 export interface StudentProfile {
@@ -83,14 +83,14 @@ export interface StudentProfile {
   middleName?: string;
   lastName: string;
   motherName?: string;
-  dateOfBirth?: string; // Added Date of Birth
-  gender?: string; // Added Gender
+  dateOfBirth?: string; 
+  gender?: string; 
   grade: string;
   division: string;
   contactNumber?: string;
   aadharCardNumber?: string;
-  penNumber?: string; // Parichay Education Number / Permanent Education Number
-  grNumber?: string; // General Register Number
+  penNumber?: string; 
+  grNumber?: string; 
   religion?: string;
   caste?: string;
   fullAddress?: string;
@@ -98,3 +98,16 @@ export interface StudentProfile {
   email?: string;
 }
 
+export interface LiveClass {
+  id: string;
+  subject: string; // This will be the main title, e.g., "Maths Chapter 5 Revision"
+  meetingLink: string;
+  description?: string;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue;
+  displayDate?: string;
+  grade?: string | null;
+  division?: string | null;
+  // You could add fields like `startTime`, `duration` if needed later
+}

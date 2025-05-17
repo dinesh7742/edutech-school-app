@@ -66,13 +66,13 @@ type TextbookFormValues = z.infer<typeof textbookSchema>;
 const photoGallerySchema = z.object({
   title: z.string().min(3, "Event/Album title is required"),
   description: z.string().optional(),
-  eventDate: z.string().optional(), // Keep as string for <input type="date">
+  eventDate: z.string().optional(), 
   imageUrls: z.string()
     .refine(value => {
-      if (!value) return true; // Optional, allow empty string
+      if (!value) return true; 
       try {
         const urls = value.split(',').map(url => url.trim());
-        return urls.every(url => url === "" || z.string().url().safeParse(url).success || url.startsWith('https://placehold.co')); // Allow placeholders too
+        return urls.every(url => url === "" || z.string().url().safeParse(url).success || url.startsWith('https://placehold.co')); 
       } catch (e) {
         return false;
       }
@@ -80,6 +80,15 @@ const photoGallerySchema = z.object({
     .optional(),
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
+
+const liveClassSchema = z.object({
+  subject: z.string().min(3, "Subject/Title is required"),
+  meetingLink: z.string().url("A valid meeting URL is required"),
+  description: z.string().optional(),
+  grade: z.string().optional(),
+  division: z.string().optional(),
+});
+type LiveClassFormValues = z.infer<typeof liveClassSchema>;
 
 
 export function PostContentForm() {
@@ -95,6 +104,7 @@ export function PostContentForm() {
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
   const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageUrls: "" }});
+  const formLiveClass = useForm<LiveClassFormValues>({ resolver: zodResolver(liveClassSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division} });
 
 
   const handleFormSubmit = async (data: any, type: string) => {
@@ -133,15 +143,20 @@ export function PostContentForm() {
         case "gallery":
           collectionName = "galleryAlbums";
           if (data.imageUrls) {
-            const urls = data.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url); // filter out empty strings after split
+            const urls = data.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url); 
             documentData.images = urls.map((url: string, index: number) => ({
               url: url,
               alt: `${data.title || 'Gallery Image'} ${index + 1}`
             }));
           } else {
-            documentData.images = []; // Ensure images is an empty array if no URLs provided
+            documentData.images = []; 
           }
-          delete documentData.imageUrls; // Remove the comma-separated string before saving to Firestore
+          delete documentData.imageUrls; 
+          break;
+        case "liveClass":
+          collectionName = "liveClasses";
+          documentData.grade = data.grade || null;
+          documentData.division = data.division || null;
           break;
         default:
           toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
@@ -159,6 +174,8 @@ export function PostContentForm() {
       if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
       if (type === 'textbook') formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1"});
       if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageUrls: "" });
+      if (type === 'liveClass') formLiveClass.reset({subject: "", meetingLink: "", description: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
+
 
     } catch (e: any) {
       console.error(`Error posting ${type}:`, e);
@@ -168,12 +185,12 @@ export function PostContentForm() {
     }
   };
   
-  const renderSharedFields = (formInstance: any, type: 'homework' | 'circular' | 'notice') => (
+  const renderSharedFields = (formInstance: any, type: 'homework' | 'circular' | 'notice' | 'liveClass') => (
     <>
        <div>
-        <Label htmlFor={`${activeTab}Title`}>Title *</Label>
-        <Input id={`${activeTab}Title`} {...formInstance.register("title")} />
-        {formInstance.formState.errors.title && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.title as any).message}</p>}
+        <Label htmlFor={`${activeTab}Title`}>{type === 'liveClass' ? 'Subject / Title *' : 'Title *'}</Label>
+        <Input id={`${activeTab}Title`} {...formInstance.register(type === 'liveClass' ? "subject" : "title")} />
+        {formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] as any).message}</p>}
       </div>
       
       {type === 'notice' ? (
@@ -182,14 +199,28 @@ export function PostContentForm() {
             <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
             {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
         </div>
-      ) : (
+      ) : type !== 'liveClass' ? ( // Description for homework, circular
         <div>
             <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
             <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
         </div>
+      ) : null}
+
+      {type === 'liveClass' && (
+         <>
+            <div>
+                <Label htmlFor="liveClassMeetingLink">Meeting Link *</Label>
+                <Input id="liveClassMeetingLink" {...formInstance.register("meetingLink")} placeholder="https://zoom.us/j/..." />
+                {formInstance.formState.errors.meetingLink && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.meetingLink as any).message}</p>}
+            </div>
+             <div>
+                <Label htmlFor="liveClassDescription">Description (Optional)</Label>
+                <Textarea id="liveClassDescription" {...formInstance.register("description")} placeholder="E.g., Class timing, topics to cover" />
+            </div>
+         </>
       )}
 
-      {type !== 'notice' && ( 
+      {type !== 'notice' && type !== 'liveClass' && ( 
         <>
             <div>
                 <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
@@ -237,9 +268,9 @@ export function PostContentForm() {
         )}
       />
       {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.grade as any).message}</p>}
-      {type === 'homework' && formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
+      {(type === 'homework' || type === 'liveClass') && formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
       
-      {(type === 'circular' || type === 'notice') && <p className="text-xs text-muted-foreground mt-1">Optionally select grade and division to target specific students. Leave empty for school-wide content.</p>}
+      {(type === 'circular' || type === 'notice' || type === 'liveClass') && <p className="text-xs text-muted-foreground mt-1">Optionally select grade and division to target specific students. Leave empty for school-wide content.</p>}
     </>
   );
 
@@ -252,12 +283,13 @@ export function PostContentForm() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6">
             <TabsTrigger value="notice">Notices</TabsTrigger>
             <TabsTrigger value="homework">Homework</TabsTrigger>
             <TabsTrigger value="circular">Circulars</TabsTrigger>
             <TabsTrigger value="textbook">Textbooks</TabsTrigger>
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
+            <TabsTrigger value="liveClass">Live Class</TabsTrigger>
           </TabsList>
 
           <TabsContent value="notice">
@@ -369,6 +401,15 @@ export function PostContentForm() {
               </div>
                <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Gallery
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="liveClass">
+            <form onSubmit={formLiveClass.handleSubmit(data => handleFormSubmit(data, "liveClass"))} className="space-y-4">
+              {renderSharedFields(formLiveClass, "liveClass")}
+               <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Live Class
               </Button>
             </form>
           </TabsContent>
