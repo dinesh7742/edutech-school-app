@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -14,7 +14,6 @@ import type { StudentProfile } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for dashboard overview - pending and events will remain mock for now
 const mockTeacherStats = {
   pendingAssignments: 5,
   upcomingEvents: 2,
@@ -60,16 +59,14 @@ export function TeacherDashboardClient() {
           setMaleStudents(males);
           setFemaleStudents(females);
 
-          console.log(`[TeacherDashboardClient] Fetched ${students.length} students for Grade ${teacherUser.grade} Div ${teacherUser.division}. Males: ${males}, Females: ${females}`);
-
         } catch (err: any) {
           console.error("Error fetching student data for teacher's class:", err);
           if (err.code === 'failed-precondition') {
              setStudentCountError(
-              `Failed to fetch student count. Firestore index required for 'grade' & 'division' on 'studentProfiles'. Please create this index in the Firebase console.`
+              `Firestore index required for 'grade' & 'division' on 'studentProfiles'. Please create this index.`
             );
           } else {
-            setStudentCountError("Failed to fetch student data. Please try again later.");
+            setStudentCountError("Failed to fetch student data.");
           }
           setTotalStudentsInClass(0); 
           setMaleStudents(0);
@@ -83,7 +80,7 @@ export function TeacherDashboardClient() {
         setMaleStudents(0);
         setFemaleStudents(0);
         if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
-            setStudentCountError("Your teacher profile is missing grade/division. Please update it.");
+            setStudentCountError("Your profile is missing grade/division.");
         }
       }
     };
@@ -96,13 +93,11 @@ export function TeacherDashboardClient() {
     toast({ title: "Preparing Download", description: "Fetching student data..." });
     try {
       const studentProfilesCollectionRef = collection(db, "studentProfiles");
-      // For "all student data", we fetch without grade/division filters
-      // If you want to download only the teacher's class, apply where clauses like above.
-      const q = query(studentProfilesCollectionRef, where("grade", "==", teacherUser?.grade), where("division", "==", teacherUser?.division)); // Downloading only teacher's class for now
+      const q = query(studentProfilesCollectionRef, where("grade", "==", teacherUser?.grade), where("division", "==", teacherUser?.division));
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
-        toast({ title: "No Data", description: "No student data found to download for your class.", variant: "destructive" });
+        toast({ title: "No Data", description: "No student data found for your class.", variant: "destructive" });
         setIsDownloadingStudentData(false);
         return;
       }
@@ -134,7 +129,6 @@ export function TeacherDashboardClient() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Student Data");
       
-      // Define the filename
       const filename = `StudentData_Grade${teacherUser?.grade}${teacherUser?.division}_${new Date().toISOString().split('T')[0]}.xlsx`;
       XLSX.writeFile(workbook, filename);
 
@@ -144,139 +138,158 @@ export function TeacherDashboardClient() {
       console.error("Error downloading student data:", error);
       toast({ title: "Download Failed", description: error.message || "Could not download student data.", variant: "destructive" });
        if (error.code === 'failed-precondition') {
-          toast({ title: "Index Required", description: "A Firestore index is needed to fetch student data for download. Please create it in the Firebase console.", variant: "destructive", duration: 10000 });
+          toast({ title: "Index Required", description: "A Firestore index is needed. Please create it.", variant: "destructive", duration: 10000 });
         }
     } finally {
       setIsDownloadingStudentData(false);
     }
   };
 
+  const quickStatsItems = [
+    {
+      title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
+      icon: Users,
+      dataAiHint: "group users",
+      content: loadingStudentCount ? (
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      ) : studentCountError ? (
+         <p className="text-xs text-destructive">{studentCountError}</p>
+      ) : (
+        <>
+          <div className="text-2xl font-bold">{totalStudentsInClass ?? 0}</div>
+          <p className="text-xs text-muted-foreground">Total students.</p>
+          <div className="mt-2 space-y-1">
+              <div className="flex items-center text-xs text-muted-foreground">
+                  <UserCheck className="h-4 w-4 mr-1 text-blue-500"/> Boys: {maleStudents}
+              </div>
+              <div className="flex items-center text-xs text-muted-foreground">
+                  <UserX className="h-4 w-4 mr-1 text-pink-500"/> Girls: {femaleStudents}
+              </div>
+          </div>
+        </>
+      )
+    },
+    {
+      title: "Pending Reviews",
+      icon: Edit3,
+      dataAiHint: "edit document",
+      content: (
+        <>
+          <div className="text-2xl font-bold">{mockTeacherStats.pendingAssignments}</div>
+          <p className="text-xs text-muted-foreground">Homework/Assignments</p>
+        </>
+      )
+    },
+    {
+      title: "Upcoming Events",
+      icon: BarChart3,
+      dataAiHint: "calendar event",
+      content: (
+        <>
+          <div className="text-2xl font-bold">{mockTeacherStats.upcomingEvents}</div>
+          <p className="text-xs text-muted-foreground">School events this month</p>
+        </>
+      )
+    },
+    {
+      title: "Profile Settings",
+      icon: UserCog,
+      dataAiHint: "user settings",
+      content: (
+        <>
+           <Button variant="outline" size="sm" className="w-full mt-2" asChild>
+              <Link href="/teacher/profile">Manage Profile</Link>
+           </Button>
+           <p className="text-xs text-muted-foreground mt-1">Update your account</p>
+        </>
+      )
+    },
+  ];
+
+  const mainActionItems = [
+     {
+      title: "Manage Content",
+      icon: UploadCloud,
+      description: "Post notices, homework, circulars, textbooks, and gallery photos for students.",
+      link: "/teacher/post-content",
+      buttonText: "Post Content",
+      dataAiHint: "cloud upload"
+    },
+    {
+      title: "Student Data",
+      icon: Users,
+      description: "View and manage student profiles for your assigned classes and the entire school.",
+      link: "/teacher/student-data",
+      buttonText: "View Student List",
+      dataAiHint: "group users"
+    },
+     {
+      title: "Download Data",
+      icon: FileSpreadsheet,
+      description: "Download an Excel sheet of student data for your assigned class.",
+      action: handleDownloadStudentData,
+      buttonText: "Download Excel",
+      loading: isDownloadingStudentData,
+      disabled: !teacherUser?.grade || !teacherUser?.division,
+      disabledText: "Update profile with grade/division to enable.",
+      dataAiHint: "spreadsheet file"
+    }
+  ];
+
 
   return (
     <div className="space-y-8">
       <WelcomeMessage />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Students in Your Class ({teacherUser?.grade}{teacherUser?.division})
-            </CardTitle>
-            <Users className="h-5 w-5 text-foreground" /> {/* Icon color changed to foreground */}
-          </CardHeader>
-          <CardContent>
-            {loadingStudentCount ? (
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-6 w-6 animate-spin text-foreground" /> {/* Icon color changed to foreground */}
-                <span className="text-muted-foreground">Loading...</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {quickStatsItems.map((item) => (
+          <Card key={item.title} className="shadow-lg rounded-lg">
+            <CardContent className="pt-5 pb-5">
+              <div className="flex flex-row items-center justify-between space-y-0 mb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {item.title}
+                </CardTitle>
+                <item.icon className="h-5 w-5 text-muted-foreground" data-ai-hint={item.dataAiHint} />
               </div>
-            ) : studentCountError ? (
-               <p className="text-xs text-destructive">{studentCountError}</p>
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{totalStudentsInClass ?? 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total students in Grade {teacherUser?.grade} Div {teacherUser?.division}.
-                </p>
-                <div className="mt-2 space-y-1">
-                    <div className="flex items-center text-xs">
-                        <UserCheck className="h-4 w-4 mr-1 text-blue-500"/> Boys: {maleStudents}
-                    </div>
-                    <div className="flex items-center text-xs">
-                        <UserX className="h-4 w-4 mr-1 text-pink-500"/> Girls: {femaleStudents}
-                    </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-            <Edit3 className="h-5 w-5 text-foreground" /> {/* Icon color changed to foreground */}
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockTeacherStats.pendingAssignments}</div>
-            <p className="text-xs text-muted-foreground">Homework/Assignments</p>
-          </CardContent>
-        </Card>
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
-            <BarChart3 className="h-5 w-5 text-foreground" /> {/* Icon color changed to foreground */}
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{mockTeacherStats.upcomingEvents}</div>
-            <p className="text-xs text-muted-foreground">School events this month</p>
-          </CardContent>
-        </Card>
-         <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Quick Settings</CardTitle>
-            <Settings className="h-5 w-5 text-foreground" /> {/* Icon color changed to foreground */}
-          </CardHeader>
-          <CardContent>
-             <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/teacher/profile">Profile Settings</Link>
-             </Button>
-             <p className="text-xs text-muted-foreground mt-1">Manage your account</p>
-          </CardContent>
-        </Card>
+              {item.content}
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Manage Content</CardTitle>
-            <CardDescription>Post notices, homework, circulars, textbooks, and gallery photos.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/teacher/post-content">
-              <Button className="w-full">
-                <Edit3 className="mr-2 h-5 w-5" /> Go to Content Posting
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Student Data</CardTitle>
-            <CardDescription>View and manage student profiles for your classes.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href="/teacher/student-data">
-              <Button className="w-full">
-                <Users className="mr-2 h-5 w-5" /> View Student List
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold">Download Student Data</CardTitle>
-            <CardDescription>Download an Excel sheet of student data for your class.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button className="w-full" onClick={handleDownloadStudentData} disabled={isDownloadingStudentData || !teacherUser?.grade || !teacherUser?.division}>
-              {isDownloadingStudentData ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-5 w-5" />
-              )}
-              Download Excel
-            </Button>
-             {(!teacherUser?.grade || !teacherUser?.division) && <p className="text-xs text-destructive mt-1">Update your profile with grade/division to enable download.</p>}
-          </CardContent>
-        </Card>
+         {mainActionItems.map((item) => (
+            <Card key={item.title} className="shadow-lg rounded-lg text-center">
+                <CardContent className="flex flex-col items-center justify-between pt-6 pb-6 space-y-4 min-h-[280px] sm:min-h-[300px]">
+                    <div className="flex flex-col items-center space-y-2">
+                        <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary mb-3" data-ai-hint={item.dataAiHint}/>
+                        <CardTitle className="text-lg sm:text-xl font-semibold">{item.title}</CardTitle>
+                        <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
+                            {item.description}
+                        </p>
+                    </div>
+                    {item.link ? (
+                        <Button asChild className="w-full mt-auto">
+                            <Link href={item.link}>{item.buttonText}</Link>
+                        </Button>
+                    ) : item.action ? (
+                        <Button onClick={item.action} className="w-full mt-auto" disabled={item.loading || item.disabled}>
+                            {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                            {item.buttonText}
+                        </Button>
+                    ) : null}
+                    {item.disabled && item.disabledText && <p className="text-xs text-destructive mt-1">{item.disabledText}</p>}
+                </CardContent>
+            </Card>
+         ))}
       </div>
       
-      <Card className="shadow-lg hover:shadow-xl transition-shadow">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="shadow-lg rounded-lg">
+        <CardContent className="pt-6 pb-6">
+          <CardTitle className="text-xl font-semibold mb-3">Recent Activity</CardTitle>
           <p className="text-muted-foreground">No recent activity to display. This section will show recent posts or student submissions.</p>
         </CardContent>
       </Card>

@@ -9,77 +9,82 @@ body {
 
 @layer base {
   :root {
-    --background: 190 50% 98%; /* Very Pale Cyan */
-    --foreground: 210 25% 30%; /* Dark Blue-Grey */
+    --background: 0 0% 100%; /* White */
+    --foreground: 220 10% 25%; /* Dark Gray for text */
 
-    --card: 180 60% 88%; /* Light Aqua/Cyan */
-    --card-foreground: 210 25% 30%; /* Dark Blue-Grey */
+    --card: 220 30% 97%; /* Very Light Gray (e.g., #F8F9FA) */
+    --card-foreground: 220 10% 25%; /* Dark Gray for text on cards */
 
-    --popover: 180 60% 88%; /* Light Aqua/Cyan */
-    --popover-foreground: 210 25% 30%; /* Dark Blue-Grey */
+    --popover: 220 30% 97%; /* Very Light Gray */
+    --popover-foreground: 220 10% 25%; /* Dark Gray */
 
-    --primary: 28 90% 60%; /* Bright Orange */
+    --primary: 265 60% 55%; /* Purple (from image example) */
     --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 180 50% 80%; /* Slightly Deeper Aqua/Cyan for secondary elements */
-    --secondary-foreground: 210 25% 25%; /* Darker Blue-Grey */
+    /* Optional: if you need other button colors from the image */
+    /* --secondary: 335 85% 58%; */ /* Pink/Magenta */
+    /* --secondary-foreground: 0 0% 100%; */
+    /* --accent: 30 100% 55%; */ /* Orange */
+    /* --accent-foreground: 0 0% 100%; */
+    
+    --secondary: 220 15% 80%; /* Lighter gray for secondary elements if needed */
+    --secondary-foreground: 220 10% 25%;
 
-    --muted: 180 50% 92%; /* Very Light Aqua/Cyan for muted elements */
-    --muted-foreground: 210 20% 45%; /* Muted Blue-Grey */
+    --muted: 220 25% 92%; /* Slightly darker light gray for muted elements */
+    --muted-foreground: 220 10% 45%; /* Medium Gray */
 
-    --accent: 25 85% 55%; /* Slightly Deeper Orange for accents and link hover */
-    --accent-foreground: 0 0% 100%; /* White */
+    --accent: 265 60% 50%; /* Slightly darker purple for accent hover etc. */
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 70% 50%; /* Standard Red */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 180 30% 80%; /* Soft Aqua/Cyan Border */
+    --border: 220 15% 88%; /* Light Gray Border */
     --input: 0 0% 100%; /* White input background */
-    --ring: 28 90% 65%; /* Brighter Orange for rings (focus) */
-    --radius: 0.75rem; /* Slightly more rounded corners like the image */
+    --ring: 265 60% 65%; /* Lighter purple for focus rings */
+    --radius: 0.5rem; /* Standard rounded corners */
 
-    --chart-1: 28 90% 60%;
-    --chart-2: 180 55% 70%;
-    --chart-3: 25 80% 70%;
+    --chart-1: 265 60% 55%;
+    --chart-2: 210 55% 70%;
+    --chart-3: 30 90% 65%;
     --chart-4: 180 45% 75%;
-    --chart-5: 210 30% 60%;
+    --chart-5: 240 30% 60%;
   }
 
   .dark {
-    /* Dark theme adapted to retain some of the requested feel */
-    --background: 210 15% 12%; /* Dark Blue-Grey */
-    --foreground: 190 30% 85%; /* Light Grey/Cyan text */
+    --background: 220 10% 15%; /* Dark Background */
+    --foreground: 220 15% 85%; /* Light Gray Text */
 
-    --card: 180 30% 28%; /* Darker, Desaturated Aqua/Cyan */
-    --card-foreground: 190 30% 85%; /* Light Grey/Cyan text */
+    --card: 220 10% 22%; /* Dark Gray Card */
+    --card-foreground: 220 15% 85%; /* Light Gray Text on Card */
 
-    --popover: 180 30% 25%; /* Darker Aqua/Cyan for popovers */
-    --popover-foreground: 190 30% 85%; /* Light Grey/Cyan text */
+    --popover: 220 10% 20%; 
+    --popover-foreground: 220 15% 85%;
 
-    --primary: 28 80% 65%; /* Orange (kept vibrant) */
-    --primary-foreground: 210 25% 15%; /* Dark text for contrast on orange */
+    --primary: 265 60% 60%; /* Purple */
+    --primary-foreground: 0 0% 100%; 
 
-    --secondary: 180 25% 35%; /* Medium Dark Aqua/Cyan */
-    --secondary-foreground: 190 30% 90%; 
+    --secondary: 220 10% 30%;
+    --secondary-foreground: 220 15% 90%; 
 
-    --muted: 180 20% 22%; /* Dark Muted Aqua/Cyan */
-    --muted-foreground: 190 25% 70%; 
+    --muted: 220 10% 25%; 
+    --muted-foreground: 220 15% 70%; 
 
-    --accent: 25 75% 60%; /* Orange Accent */
-    --accent-foreground: 210 25% 10%; 
+    --accent: 265 60% 55%; 
+    --accent-foreground: 0 0% 100%; 
 
     --destructive: 0 60% 55%; 
     --destructive-foreground: 0 0% 100%;
 
-    --border: 180 25% 40%; /* Defined Dark Aqua/Cyan border */
-    --input: 180 20% 20%; /* Dark Aqua/Cyan input background */
-    --ring: 28 80% 70%; 
+    --border: 220 10% 35%; 
+    --input: 220 10% 20%; 
+    --ring: 265 60% 70%; 
 
-    --chart-1: 28 80% 65%;
-    --chart-2: 180 50% 60%;
-    --chart-3: 25 70% 70%;
+    --chart-1: 265 60% 60%;
+    --chart-2: 210 50% 65%;
+    --chart-3: 30 80% 70%;
     --chart-4: 180 40% 70%;
-    --chart-5: 210 25% 65%;
+    --chart-5: 240 25% 65%;
   }
 }
 
@@ -97,11 +102,7 @@ body {
     flex-grow: 1;
   }
   a {
-    @apply text-primary hover:text-accent; /* Links will use the orange color */
-    /* Remove default underline for a cleaner look, can be added back if needed */
-    /* text-decoration-line: none; */ 
-  }
-  a:hover {
-    /* text-decoration-line: underline; */
+    @apply text-primary hover:text-accent; 
+    text-decoration-line: underline;
   }
 }
