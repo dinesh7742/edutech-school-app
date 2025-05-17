@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Loader2, UserCircle } from "lucide-react";
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, UserCircle } from "lucide-react";
 import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +44,11 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       setError(null);
       try {
         const profileDocRef = doc(db, "studentProfiles", studentId);
-        const profileDoc = await getDoc(profileDocRef);
+        const profileDoc = await getDocs(profileDocRef);
         if (profileDoc.exists()) {
-          setProfile({ uid: profileDoc.id, ...profileDoc.data() } as StudentProfile);
+          const fetchedData = profileDoc.data();
+          console.log("[StudentProfileView] Fetched data from Firestore for studentId " + studentId + ":", fetchedData); // Diagnostic log
+          setProfile({ uid: profileDoc.id, ...fetchedData } as StudentProfile);
         } else {
           setError("Student profile not found.");
           setProfile(null);
@@ -109,6 +111,10 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     );
   }
 
+  // Diagnostic log for the specific field before rendering DetailItem
+  if (profile) {
+    console.log("[StudentProfileView] Value for aadharCardNumber before DetailItem:", profile.aadharCardNumber);
+  }
 
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl overflow-hidden">
