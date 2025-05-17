@@ -1,130 +1,298 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIcon, UserCircle, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2 } from "lucide-react";
 import Link from "next/link";
-// import Image from "next/image"; // Removed Image as it was for mock gallery
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/context/AuthContext";
+import { db } from "@/lib/firebase";
+import { collection, query, orderBy, limit, getDocs, Timestamp, where } from "firebase/firestore";
+import type { Notice, Homework, Circular } from "@/types";
 
-// Mock data - replace with actual data fetching for summaries
-const mockNotices = [
-  { id: "1", title: "School Reopens Tomorrow", content: "Please note that the school reopens tomorrow, August 1st, after the summer break. Regular classes will resume." },
-  { id: "2", title: "Annual Sports Day", content: "The Annual Sports Day will be held on August 15th. All students are encouraged to participate." },
-  { id: "3", title: "Parent-Teacher Meeting", content: "A Parent-Teacher Meeting is scheduled for August 20th from 9 AM to 12 PM." },
-];
+interface LatestContent<T> {
+  item: T | null;
+  loading: boolean;
+}
 
-const mockHomework = [
-  { id: "1", title: "Math Assignment Ch 5", subject: "Mathematics", dueDate: "2024-08-05", fileUrl: "#", dataAiHint: "document sheet" },
-  { id: "2", title: "Science Project: Solar System", subject: "Science", dueDate: "2024-08-10", fileUrl: "#", dataAiHint: "document presentation" },
-];
-
-const mockCirculars = [
- { id: "1", title: "Fee Payment Reminder", date: "2024-07-28", fileUrl: "#", dataAiHint: "document letter" },
- { id: "2", title: "Holiday List 2024-25", date: "2024-07-20", fileUrl: "#", dataAiHint: "document calendar" },
-];
-
-const mockTextbooks = [
-  { id: "1", title: "Mathematics Grade 5", subject: "Mathematics", fileUrl: "#", dataAiHint: "textbook math" },
-  { id: "2", title: "Science Explorer Grade 5", subject: "Science", fileUrl: "#", dataAiHint: "textbook science" },
-];
-
-const dashboardItems = [
-  {
-    title: "Notice Board",
-    icon: Bell,
-    description: "View important school announcements and updates.",
-    link: "/student/notices",
-    buttonText: "View Notices",
-    data: mockNotices, // Optional: for inline summary if needed
-    summaryField: 'title',
-    dataAiHint: "notification bell"
-  },
-  {
-    title: "Homework",
-    icon: ClipboardList,
-    description: "Check your latest assignments and due dates.",
-    link: "/student/homework",
-    buttonText: "View Homework",
-    data: mockHomework,
-    summaryField: 'title',
-    dataAiHint: "clipboard list"
-  },
-  {
-    title: "Circulars",
-    icon: FileText,
-    description: "Access official school circulars and documents.",
-    link: "/student/circulars",
-    buttonText: "View Circulars",
-    data: mockCirculars,
-    summaryField: 'title',
-    dataAiHint: "document file"
-  },
-  {
-    title: "Textbooks",
-    icon: BookOpen,
-    description: "Find and download your digital textbooks.",
-    link: "/student/textbooks",
-    buttonText: "View Textbooks",
-    data: mockTextbooks,
-    summaryField: 'title',
-    dataAiHint: "book open"
-  },
-  {
-    title: "Photo Gallery",
-    icon: ImageIcon,
-    description: "Explore photos from school events and activities.",
-    link: "/student/gallery",
-    buttonText: "View Gallery",
-    data: [], // No inline summary for gallery on dashboard
-    dataAiHint: "image landscape"
-  },
-  {
-    title: "My Profile",
-    icon: UserCircle,
-    description: "Manage your personal information and settings.",
-    link: "/student/profile",
-    buttonText: "Go to Profile",
-    data: [],
-    dataAiHint: "user profile"
-  },
-];
+const isNew = (timestamp: Timestamp | undefined): boolean => {
+  if (!timestamp) return false;
+  const itemDate = timestamp.toDate();
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  return itemDate > twentyFourHoursAgo;
+};
 
 export function StudentDashboardClient() {
+  const { user } = useAuth();
+  const [latestNotice, setLatestNotice] = useState<LatestContent<Notice>>({ item: null, loading: true });
+  const [latestHomework, setLatestHomework] = useState<LatestContent<Homework>>({ item: null, loading: true });
+  const [latestCircular, setLatestCircular] = useState<LatestContent<Circular>>({ item: null, loading: true });
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Fetch Latest Notice
+    const fetchLatestNotice = async () => {
+      setLatestNotice(prev => ({ ...prev, loading: true }));
+      try {
+        const noticesRef = collection(db, "notices");
+        // Fetch a few recent notices to filter client-side for relevance
+        const q = query(noticesRef, orderBy("timestamp", "desc"), limit(5));
+        const noticeSnapshot = await getDocs(q);
+        const allRecentNotices = noticeSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp as Timestamp,
+          displayDate: doc.data().timestamp ? new Date((doc.data().timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+        })) as Notice[];
+
+        const relevantNotice = allRecentNotices.find(notice => {
+          if (!user.grade || !user.division) return !notice.grade && !notice.division; // School-wide only if user details incomplete
+          const isSchoolWide = !notice.grade || notice.grade === "";
+          const isGradeMatch = notice.grade === user.grade;
+          const isDivisionMatch = notice.division === user.division;
+          const isGradeWideForUser = isGradeMatch && (!notice.division || notice.division === "");
+          return isSchoolWide || (isGradeMatch && isDivisionMatch) || isGradeWideForUser;
+        });
+        setLatestNotice({ item: relevantNotice || null, loading: false });
+      } catch (error) {
+        console.error("Error fetching latest notice:", error);
+        setLatestNotice({ item: null, loading: false });
+      }
+    };
+
+    // Fetch Latest Homework
+    const fetchLatestHomework = async () => {
+      if (!user.grade || !user.division) {
+        setLatestHomework({ item: null, loading: false });
+        return;
+      }
+      setLatestHomework(prev => ({ ...prev, loading: true }));
+      try {
+        const homeworkRef = collection(db, "homework");
+        const q = query(
+          homeworkRef,
+          where("grade", "==", user.grade),
+          where("division", "==", user.division),
+          orderBy("timestamp", "desc"),
+          limit(1)
+        );
+        const homeworkSnapshot = await getDocs(q);
+        if (!homeworkSnapshot.empty) {
+          const hwDoc = homeworkSnapshot.docs[0];
+          const hwData = hwDoc.data();
+          setLatestHomework({
+            item: {
+              id: hwDoc.id,
+              ...hwData,
+              timestamp: hwData.timestamp as Timestamp,
+              displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+              dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
+            } as Homework,
+            loading: false,
+          });
+        } else {
+          setLatestHomework({ item: null, loading: false });
+        }
+      } catch (error) {
+        console.error("Error fetching latest homework:", error);
+        setLatestHomework({ item: null, loading: false });
+      }
+    };
+
+    // Fetch Latest Circular
+    const fetchLatestCircular = async () => {
+      setLatestCircular(prev => ({ ...prev, loading: true }));
+      try {
+        const circularsRef = collection(db, "circulars");
+        // Fetch a few recent circulars to filter client-side for relevance
+        const q = query(circularsRef, orderBy("timestamp", "desc"), limit(5));
+        const circularSnapshot = await getDocs(q);
+        const allRecentCirculars = circularSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          timestamp: doc.data().timestamp as Timestamp,
+          displayDate: doc.data().timestamp ? new Date((doc.data().timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+        })) as Circular[];
+
+        const relevantCircular = allRecentCirculars.find(circ => {
+          if (!user.grade || !user.division) return !circ.grade && !circ.division;
+          const isSchoolWide = !circ.grade || circ.grade === "";
+          const isGradeMatch = circ.grade === user.grade;
+          const isDivisionMatch = circ.division === user.division;
+          const isGradeWideForUser = isGradeMatch && (!circ.division || circ.division === "");
+          return isSchoolWide || (isGradeMatch && isDivisionMatch) || isGradeWideForUser;
+        });
+        setLatestCircular({ item: relevantCircular || null, loading: false });
+      } catch (error) {
+        console.error("Error fetching latest circular:", error);
+        setLatestCircular({ item: null, loading: false });
+      }
+    };
+
+    fetchLatestNotice();
+    fetchLatestHomework();
+    fetchLatestCircular();
+
+  }, [user]);
+
+  const dashboardCards = [
+    {
+      id: "notices",
+      title: "Notice Board",
+      icon: Bell,
+      link: "/student/notices",
+      buttonText: "View All Notices",
+      dataAiHint: "notification bell",
+      contentData: latestNotice,
+      renderContent: (data: Notice | null) => data && (
+        <div className="text-left w-full space-y-1">
+          <h3 className="font-semibold text-md truncate">{data.title}</h3>
+          <p className="text-xs text-muted-foreground">
+            Posted: {data.displayDate} by {data.postedByName}
+            {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
+            {!data.grade && ' | School Wide'}
+          </p>
+          <p className="text-sm line-clamp-4 whitespace-pre-wrap">{data.content}</p>
+        </div>
+      ),
+      emptyMessage: "No new notices relevant to you."
+    },
+    {
+      id: "homework",
+      title: "Homework",
+      icon: ClipboardList,
+      link: "/student/homework",
+      buttonText: "View All Homework",
+      dataAiHint: "clipboard list",
+      contentData: latestHomework,
+      renderContent: (data: Homework | null) => data && (
+        <div className="text-left w-full space-y-1">
+          <h3 className="font-semibold text-md truncate">{data.title}</h3>
+          <p className="text-xs text-muted-foreground">
+            Subject: {data.subject} | Due: {data.dueDate} <br/>
+            Posted: {data.displayDate} by {data.postedByName}
+          </p>
+          {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
+          {data.fileUrl && (
+            <Button asChild variant="outline" size="sm" className="mt-2">
+              <a href={data.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document sheet">
+                <Download className="mr-2 h-4 w-4" /> {data.fileName || 'Download Attachment'}
+              </a>
+            </Button>
+          )}
+        </div>
+      ),
+      emptyMessage: "No new homework for your class."
+    },
+    {
+      id: "circulars",
+      title: "Circulars",
+      icon: FileText,
+      link: "/student/circulars",
+      buttonText: "View All Circulars",
+      dataAiHint: "document file",
+      contentData: latestCircular,
+      renderContent: (data: Circular | null) => data && (
+        <div className="text-left w-full space-y-1">
+          <h3 className="font-semibold text-md truncate">{data.title}</h3>
+          <p className="text-xs text-muted-foreground">
+            Posted: {data.displayDate} by {data.postedByName}
+            {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
+            {!data.grade && ' | School Wide'}
+          </p>
+          {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
+          {data.fileUrl && (
+            <Button asChild variant="outline" size="sm" className="mt-2">
+              <a href={data.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document letter">
+                <Download className="mr-2 h-4 w-4" /> {data.fileName || 'Download Circular'}
+              </a>
+            </Button>
+          )}
+        </div>
+      ),
+      emptyMessage: "No new circulars relevant to you."
+    },
+  ];
+
+  const actionCards = [
+    {
+      title: "Textbooks",
+      icon: BookOpen,
+      description: "Find and download your digital textbooks.",
+      link: "/student/textbooks",
+      buttonText: "View Textbooks",
+      dataAiHint: "book open"
+    },
+    {
+      title: "Photo Gallery",
+      icon: ImageIconLucide,
+      description: "Explore photos from school events and activities.",
+      link: "/student/gallery",
+      buttonText: "View Gallery",
+      dataAiHint: "image landscape"
+    },
+    {
+      title: "My Profile",
+      icon: UserCircle,
+      description: "Manage your personal information and settings.",
+      link: "/student/profile",
+      buttonText: "Go to Profile",
+      dataAiHint: "user profile"
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <WelcomeMessage />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {dashboardItems.map((item) => (
-          <Card key={item.title} className="shadow-lg rounded-lg text-center">
-            <CardContent className="flex flex-col items-center justify-between pt-6 pb-6 space-y-4 min-h-[280px] sm:min-h-[320px]">
-              <div className="flex flex-col items-center space-y-2">
-                <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary mb-3" data-ai-hint={item.dataAiHint} />
-                <CardTitle className="text-lg sm:text-xl font-semibold">{item.title}</CardTitle>
-                <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
-                  {item.description}
-                </p>
+        {dashboardCards.map((card) => (
+          <Card key={card.id} className="shadow-lg rounded-lg flex flex-col">
+            <CardHeader className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <card.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={card.dataAiHint} />
               </div>
-              
-              {/* Optional: Display a few items from the mock data as a quick summary */}
-              {/* This part is illustrative and may need more refined styling or be removed if not desired */}
-              {item.data && item.data.length > 0 && item.summaryField && (
-                <ScrollArea className="h-[100px] w-full px-4 text-left my-2">
-                  <ul className="space-y-1 text-xs">
-                    {item.data.slice(0, 3).map((dataItem: any) => (
-                      <li key={dataItem.id} className="p-1.5 bg-background/70 rounded-md border border-border truncate">
-                        {dataItem[item.summaryField!]}
-                         {dataItem.subject && <span className="text-muted-foreground text-xs"> ({dataItem.subject})</span>}
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollArea>
+              <CardTitle className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+                {card.title}
+                {card.contentData?.item && isNew(card.contentData.item.timestamp) && (
+                  <Badge variant="destructive" className="animate-pulse">New</Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3">
+              {card.contentData?.loading ? (
+                <div className="flex flex-col items-center justify-center min-h-[100px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground mt-2">Loading latest {card.title.toLowerCase()}...</p>
+                </div>
+              ) : card.contentData?.item ? (
+                card.renderContent(card.contentData.item as any)
+              ) : (
+                <p className="text-muted-foreground text-sm px-4 text-center min-h-[100px] flex items-center">{card.emptyMessage}</p>
               )}
+              <Button asChild className="w-full mt-auto">
+                <Link href={card.link}>{card.buttonText}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
 
-
+        {actionCards.map((item) => (
+          <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
+            <CardHeader>
+                <div className="flex items-center justify-center mb-2">
+                    <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={item.dataAiHint} />
+                </div>
+                <CardTitle className="text-lg sm:text-xl font-semibold">{item.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
+              <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
+                {item.description}
+              </p>
               <Button asChild className="w-full mt-auto">
                 <Link href={item.link}>{item.buttonText}</Link>
               </Button>
@@ -135,3 +303,5 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
+    
