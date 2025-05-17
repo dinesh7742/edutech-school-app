@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, getCountFromServer } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import type { StudentProfile } from "@/types";
+import * as XLSX from 'xlsx';
+import { useToast } from "@/hooks/use-toast";
 
 // Mock data for dashboard overview - pending and events will remain mock for now
 const mockTeacherStats = {
@@ -20,11 +22,13 @@ const mockTeacherStats = {
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
+  const { toast } = useToast();
   const [totalStudentsInClass, setTotalStudentsInClass] = useState<number | null>(null);
   const [maleStudents, setMaleStudents] = useState<number>(0);
   const [femaleStudents, setFemaleStudents] = useState<number>(0);
   const [loadingStudentCount, setLoadingStudentCount] = useState(true);
   const [studentCountError, setStudentCountError] = useState<string | null>(null);
+  const [isDownloadingStudentData, setIsDownloadingStudentData] = useState(false);
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -61,9 +65,8 @@ export function TeacherDashboardClient() {
         } catch (err: any) {
           console.error("Error fetching student data for teacher's class:", err);
           if (err.code === 'failed-precondition') {
-            const firestoreConsoleLink = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/indexes`;
-            setStudentCountError(
-              `Failed to fetch student count. Firestore index required for 'grade' & 'division' on 'studentProfiles'. Check console or visit: ${firestoreConsoleLink}`
+             setStudentCountError(
+              `Failed to fetch student count. Firestore index required for 'grade' & 'division' on 'studentProfiles'. Please create this index in the Firebase console.`
             );
           } else {
             setStudentCountError("Failed to fetch student data. Please try again later.");
@@ -87,6 +90,67 @@ export function TeacherDashboardClient() {
 
     fetchStudentData();
   }, [teacherUser]);
+
+  const handleDownloadStudentData = async () => {
+    setIsDownloadingStudentData(true);
+    toast({ title: "Preparing Download", description: "Fetching student data..." });
+    try {
+      const studentProfilesCollectionRef = collection(db, "studentProfiles");
+      // For "all student data", we fetch without grade/division filters
+      // If you want to download only the teacher's class, apply where clauses like above.
+      const q = query(studentProfilesCollectionRef, where("grade", "==", teacherUser?.grade), where("division", "==", teacherUser?.division)); // Downloading only teacher's class for now
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        toast({ title: "No Data", description: "No student data found to download for your class.", variant: "destructive" });
+        setIsDownloadingStudentData(false);
+        return;
+      }
+
+      const studentsData = querySnapshot.docs.map(doc => {
+        const data = doc.data() as StudentProfile;
+        return {
+          UID: data.uid,
+          "First Name": data.firstName,
+          "Middle Name": data.middleName || "",
+          "Last Name": data.lastName,
+          "Mother's Name": data.motherName || "",
+          Gender: data.gender || "",
+          Grade: data.grade,
+          Division: data.division,
+          Email: data.email || "",
+          "Contact Number": data.contactNumber || "",
+          "Aadhar Card Number": data.aadharCardNumber || "",
+          "PEN Number": data.penNumber || "",
+          "GR Number": data.grNumber || "",
+          Religion: data.religion || "",
+          Caste: data.caste || "",
+          "Full Address": data.fullAddress || "",
+          "Photo URL": data.photoUrl || "",
+        };
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(studentsData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Student Data");
+      
+      // Define the filename
+      const filename = `StudentData_Grade${teacherUser?.grade}${teacherUser?.division}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, filename);
+
+      toast({ title: "Download Started", description: `File ${filename} should be downloading.` });
+
+    } catch (error: any) {
+      console.error("Error downloading student data:", error);
+      toast({ title: "Download Failed", description: error.message || "Could not download student data.", variant: "destructive" });
+       if (error.code === 'failed-precondition') {
+          toast({ title: "Index Required", description: "A Firestore index is needed to fetch student data for download. Please create it in the Firebase console.", variant: "destructive", duration: 10000 });
+        }
+    } finally {
+      setIsDownloadingStudentData(false);
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -160,7 +224,7 @@ export function TeacherDashboardClient() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Manage Content</CardTitle>
@@ -186,6 +250,24 @@ export function TeacherDashboardClient() {
                 <Users className="mr-2 h-5 w-5" /> View Student List
               </Button>
             </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Download Student Data</CardTitle>
+            <CardDescription>Download an Excel sheet of student data for your class.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button className="w-full" onClick={handleDownloadStudentData} disabled={isDownloadingStudentData || !teacherUser?.grade || !teacherUser?.division}>
+              {isDownloadingStudentData ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-5 w-5" />
+              )}
+              Download Excel
+            </Button>
+             {(!teacherUser?.grade || !teacherUser?.division) && <p className="text-xs text-destructive mt-1">Update your profile with grade/division to enable download.</p>}
           </CardContent>
         </Card>
       </div>
