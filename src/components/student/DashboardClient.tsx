@@ -12,7 +12,8 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass } from "@/types";
-import { TodaySpecial } from "@/components/shared/TodaySpecial"; // Added import
+import { TodaySpecial } from "@/components/shared/TodaySpecial";
+import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary"; // Added import
 
 interface LatestContent<T> {
   item: T | null;
@@ -136,6 +137,7 @@ export function StudentDashboardClient() {
       link: "/student/notices",
       buttonText: "View All Notices",
       dataAiHint: "notification bell",
+      description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data && (
         <div className="text-left w-full space-y-1">
@@ -157,6 +159,7 @@ export function StudentDashboardClient() {
       link: "/student/homework",
       buttonText: "View All Homework",
       dataAiHint: "clipboard list",
+      description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data && (
         <div className="text-left w-full space-y-1">
@@ -184,6 +187,7 @@ export function StudentDashboardClient() {
       link: "/student/circulars",
       buttonText: "View All Circulars",
       dataAiHint: "document file",
+      description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data && (
         <div className="text-left w-full space-y-1">
@@ -212,6 +216,7 @@ export function StudentDashboardClient() {
       link: "/student/live-classes", 
       buttonText: "View All Live Classes",
       dataAiHint: "video conference",
+      description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data && (
         <div className="text-left w-full space-y-2">
@@ -229,66 +234,70 @@ export function StudentDashboardClient() {
           </Button>
         </div>
       ),
-      emptyMessage: "No live classes scheduled or announced for you at the moment."
+      emptyMessage: "No live classes scheduled for you."
     },
-  ];
-
-  const actionCards = [
     {
+      id: "textbooks",
       title: "Textbooks",
       icon: BookOpen,
-      description: "Find and download your digital textbooks.",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      dataAiHint: "book open"
+      dataAiHint: "book open",
+      description: "Access your digital textbooks for all subjects.",
+      contentData: null, // No specific latest item summary for this card, direct link
+      renderContent: null,
+      emptyMessage: ""
     },
     {
+      id: "gallery",
       title: "Photo Gallery",
       icon: ImageIconLucide,
-      description: "Explore photos from school events and activities.",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      dataAiHint: "image landscape"
-    },
-    {
-      title: "My Profile",
-      icon: UserCircle,
-      description: "Manage your personal information and settings.",
-      link: "/student/profile",
-      buttonText: "Go to Profile",
-      dataAiHint: "user profile"
+      dataAiHint: "image landscape",
+      description: "Explore photos from school events and activities.",
+      contentData: null, // No specific latest item summary for this card, direct link
+      renderContent: null,
+      emptyMessage: ""
     },
   ];
 
   return (
     <div className="space-y-8">
       <WelcomeMessage />
-      <TodaySpecial /> {/* Added TodaySpecial component here */}
+      <StudentAttendanceSummary />
+      <TodaySpecial />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
-          <Card key={card.id} className="shadow-lg rounded-lg flex flex-col bg-card text-card-foreground">
-            <CardHeader className="text-center">
+          <Card key={card.id} className="shadow-lg rounded-lg flex flex-col bg-card text-card-foreground text-center">
+            <CardHeader>
               <div className="flex items-center justify-center mb-2">
-                <card.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={card.dataAiHint} />
+                <card.icon className="h-12 w-12 text-primary" data-ai-hint={card.dataAiHint} />
               </div>
-              <CardTitle className="text-lg sm:text-xl font-semibold flex items-center justify-center gap-2">
+              <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
-                {card.contentData?.item && isNew(card.contentData.item.timestamp) && (
+                {card.contentData?.item && isNew((card.contentData.item as any).timestamp) && (
                   <Badge variant="destructive" className="animate-pulse">New</Badge>
                 )}
               </CardTitle>
+               <CardDescription className="text-xs h-8 line-clamp-2">{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 min-h-[220px]">
-              {card.contentData?.loading ? (
+              {card.renderContent && card.contentData?.loading && (
                 <div className="flex flex-col items-center justify-center flex-grow">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest {card.title.toLowerCase()}...</p>
                 </div>
-              ) : card.contentData?.item ? (
+              )}
+              {card.renderContent && !card.contentData?.loading && card.contentData?.item && (
                 card.renderContent(card.contentData.item as any)
-              ) : (
+              )}
+              {card.renderContent && !card.contentData?.loading && !card.contentData?.item && (
                 <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center">{card.emptyMessage}</p>
+              )}
+              {!card.renderContent && ( // For cards like Textbooks, Gallery that don't render latest item
+                 <div className="flex-grow"></div> // Pushes button to bottom
               )}
               <Button asChild className="w-full mt-auto">
                 <Link href={card.link}>{card.buttonText}</Link>
@@ -296,26 +305,24 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
-
-        {actionCards.map((item) => (
-          <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col bg-card text-card-foreground">
+        {/* This card is handled by the existing TeacherProfileForm directly */}
+        <Card className="shadow-lg rounded-lg text-center flex flex-col bg-card text-card-foreground">
             <CardHeader>
                 <div className="flex items-center justify-center mb-2">
-                    <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={item.dataAiHint} />
+                    <UserCircle className="h-12 w-12 text-primary" data-ai-hint="user profile" />
                 </div>
-                <CardTitle className="text-lg sm:text-xl font-semibold">{item.title}</CardTitle>
+                <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
+                <CardDescription className="text-xs h-8 line-clamp-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[220px]">
-              <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
-                {item.description}
-              </p>
+              <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
-                <Link href={item.link}>{item.buttonText}</Link>
+                <Link href="/student/profile">Go to Profile</Link>
               </Button>
             </CardContent>
           </Card>
-        ))}
       </div>
     </div>
   );
 }
+
