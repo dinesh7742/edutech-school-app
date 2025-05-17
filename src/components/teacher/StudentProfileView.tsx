@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, UserCircle } from "lucide-react"; 
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users } from "lucide-react"; 
 import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +123,8 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       // Assuming dateString is in YYYY-MM-DD format from <input type="date">
       const date = new Date(dateString + 'T00:00:00'); // Ensure parsing in local timezone
       if (isNaN(date.getTime())) return "Invalid Date";
-      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+      // Using 'en-GB' locale to get DD/MM/YYYY format
+      return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch (e) {
       return "Invalid Date";
     }
@@ -156,7 +157,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         <DetailItem icon={Phone} label="Contact Number" value={profile.contactNumber} />
         <DetailItem icon={Award} label="Grade & Division" value={`Grade ${profile.grade} - ${profile.division}`} />
         <DetailItem icon={CalendarDays} label="Religion" value={profile.religion} />
-        <DetailItem icon={UserCircle} label="Caste" value={profile.caste} />
+        <DetailItem icon={User} label="Caste" value={profile.caste} />
         <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile.aadharCardNumber || "Not Provided"} />
         <DetailItem icon={BookUser} label="PEN Number" value={profile.penNumber} />
         <DetailItem icon={Hash} label="G.R. Number" value={profile.grNumber} />
