@@ -31,10 +31,8 @@ const mockTextbooks = [
   { id: "2", title: "Science Explorer Grade 5", subject: "Science", fileUrl: "https://placehold.co/150x200.pdf", dataAiHint: "textbook science" },
 ];
 
-const mockGalleryEvents = [
-  { id: "1", title: "Annual Day Celebration 2023", images: Array(5).fill(null).map((_, i) => ({ url: `https://placehold.co/600x400.png?id=${i}`, alt: `Event photo ${i+1}` })), dataAiHint: "school event" },
-  { id: "2", title: "Science Exhibition", images: Array(5).fill(null).map((_, i) => ({ url: `https://placehold.co/600x400.png?id=sci${i}`, alt: `Exhibition photo ${i+1}`})), dataAiHint: "science fair" },
-];
+// Demo gallery events removed
+const mockGalleryEvents: {id: string, title: string, images: {url: string, alt: string}[], dataAiHint: string}[] = [];
 
 
 export function StudentDashboardClient() {
@@ -146,18 +144,22 @@ export function StudentDashboardClient() {
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[250px] pr-4">
-              <div className="space-y-4">
-                {mockGalleryEvents.map(event => (
-                  <div key={event.id}>
-                    <h4 className="font-medium text-md mb-2">{event.title}</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                      {event.images.slice(0,5).map((img, idx) => ( // Show up to 5 images
-                         <Image key={idx} src={img.url} alt={img.alt || event.title} width={100} height={100} className="rounded-md object-cover aspect-square" data-ai-hint={event.dataAiHint} />
-                      ))}
+              {mockGalleryEvents.length > 0 ? (
+                <div className="space-y-4">
+                  {mockGalleryEvents.map(event => (
+                    <div key={event.id}>
+                      <h4 className="font-medium text-md mb-2">{event.title}</h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                        {event.images.slice(0,5).map((img, idx) => ( // Show up to 5 images
+                           <Image key={idx} src={img.url} alt={img.alt || event.title} width={100} height={100} className="rounded-md object-cover aspect-square" data-ai-hint={event.dataAiHint} />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No recent gallery events to display.</p>
+              )}
             </ScrollArea>
             <Button asChild className="mt-4 w-full">
                 <Link href="/student/gallery">View Full Gallery</Link>
@@ -183,3 +185,4 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
