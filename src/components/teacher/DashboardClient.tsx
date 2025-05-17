@@ -157,7 +157,7 @@ export function TeacherDashboardClient() {
       <WelcomeMessage />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Students in Your Class ({teacherUser?.grade}{teacherUser?.division})
@@ -190,7 +190,7 @@ export function TeacherDashboardClient() {
             )}
           </CardContent>
         </Card>
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
             <Edit3 className="h-5 w-5 text-primary" />
@@ -200,7 +200,7 @@ export function TeacherDashboardClient() {
             <p className="text-xs text-muted-foreground">Homework/Assignments</p>
           </CardContent>
         </Card>
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
             <BarChart3 className="h-5 w-5 text-primary" />
@@ -210,7 +210,7 @@ export function TeacherDashboardClient() {
             <p className="text-xs text-muted-foreground">School events this month</p>
           </CardContent>
         </Card>
-         <Card className="shadow-lg hover:shadow-xl transition-shadow">
+         <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Quick Settings</CardTitle>
             <Settings className="h-5 w-5 text-primary" />
@@ -225,7 +225,7 @@ export function TeacherDashboardClient() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Manage Content</CardTitle>
             <CardDescription>Post notices, homework, circulars, textbooks, and gallery photos.</CardDescription>
@@ -239,7 +239,7 @@ export function TeacherDashboardClient() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Student Data</CardTitle>
             <CardDescription>View and manage student profiles for your classes.</CardDescription>
@@ -253,7 +253,7 @@ export function TeacherDashboardClient() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader>
             <CardTitle className="text-xl font-semibold">Download Student Data</CardTitle>
             <CardDescription>Download an Excel sheet of student data for your class.</CardDescription>
@@ -272,7 +272,7 @@ export function TeacherDashboardClient() {
         </Card>
       </div>
       
-      <Card className="shadow-lg hover:shadow-xl transition-shadow">
+      <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
         </CardHeader>

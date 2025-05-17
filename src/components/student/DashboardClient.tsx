@@ -1,3 +1,4 @@
+
 "use client";
 
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
@@ -42,7 +43,7 @@ export function StudentDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Notice Board */}
-        <Card className="col-span-1 md:col-span-2 lg:col-span-1 shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="col-span-1 md:col-span-2 lg:col-span-1 shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Notice Board</CardTitle>
             <Bell className="h-6 w-6 text-primary" />
@@ -63,7 +64,7 @@ export function StudentDashboardClient() {
         </Card>
 
         {/* Homework */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Homework</CardTitle>
             <ClipboardList className="h-6 w-6 text-primary" />
@@ -75,7 +76,7 @@ export function StudentDashboardClient() {
                 <li key={hw.id} className="p-3 bg-secondary/50 rounded-md">
                   <h4 className="font-medium text-sm">{hw.title}</h4>
                   <p className="text-xs text-muted-foreground">Subject: {hw.subject} | Due: {hw.dueDate}</p>
-                  {hw.fileUrl && <a href={hw.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1">View Attachment <ExternalLink size={12}/></a>}
+                  {hw.fileUrl && <a href={hw.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={hw.dataAiHint}>View Attachment <ExternalLink size={12}/></a>}
                 </li>
               ))}
             </ul>
@@ -85,7 +86,7 @@ export function StudentDashboardClient() {
         </Card>
 
         {/* Circulars */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Circulars</CardTitle>
             <FileText className="h-6 w-6 text-primary" />
@@ -97,7 +98,7 @@ export function StudentDashboardClient() {
                 <li key={circ.id} className="p-3 bg-secondary/50 rounded-md">
                   <h4 className="font-medium text-sm">{circ.title}</h4>
                   <p className="text-xs text-muted-foreground">Date: {circ.date}</p>
-                   {circ.fileUrl && <a href={circ.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1">View Circular <ExternalLink size={12}/></a>}
+                   {circ.fileUrl && <a href={circ.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={circ.dataAiHint}>View Circular <ExternalLink size={12}/></a>}
                 </li>
               ))}
             </ul>
@@ -107,7 +108,7 @@ export function StudentDashboardClient() {
         </Card>
 
         {/* Textbooks */}
-        <Card className="md:col-span-2 lg:col-span-1 shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="md:col-span-2 lg:col-span-1 shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Textbooks</CardTitle>
             <BookOpen className="h-6 w-6 text-primary" />
@@ -119,7 +120,7 @@ export function StudentDashboardClient() {
                 <li key={book.id} className="p-3 bg-secondary/50 rounded-md">
                   <h4 className="font-medium text-sm">{book.title}</h4>
                   <p className="text-xs text-muted-foreground">Subject: {book.subject}</p>
-                  <a href={book.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1">Download PDF <ExternalLink size={12}/></a>
+                  <a href={book.fileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-accent hover:underline flex items-center gap-1" data-ai-hint={book.dataAiHint}>Download PDF <ExternalLink size={12}/></a>
                 </li>
               ))}
             </ul>
@@ -129,7 +130,7 @@ export function StudentDashboardClient() {
         </Card>
 
         {/* Photo Gallery */}
-        <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="md:col-span-2 shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">Photo Gallery</CardTitle>
             <ImageIcon className="h-6 w-6 text-primary" />
@@ -154,7 +155,7 @@ export function StudentDashboardClient() {
         </Card>
         
         {/* My Self / Profile Link */}
-        <Card className="shadow-lg hover:shadow-xl transition-shadow">
+        <Card className="shadow-lg hover:shadow-xl transition-shadow border-2 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
             <UserCircle className="h-6 w-6 text-primary" />
