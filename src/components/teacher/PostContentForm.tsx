@@ -17,7 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { Notice, Homework, Circular, Textbook, PhotoGalleryAlbum } from "@/types";
+// Remove unused types if they are fully replaced or handled by schema inference
+// import type { Notice, Homework, Circular, Textbook, PhotoGalleryAlbum } from "@/types";
 
 // Schemas for different content types
 const noticeSchema = z.object({
@@ -68,7 +69,17 @@ const photoGallerySchema = z.object({
   title: z.string().min(3, "Event/Album title is required"),
   description: z.string().optional(),
   eventDate: z.string().optional(),
-  imageUrls: z.array(z.string().url("Each URL must be valid.")).min(1, "At least one image URL is required").max(10, "Maximum 10 images"),
+  // Changed from imageUrls to imageFiles to handle FileList object from file input
+  imageFiles: z.custom<FileList>()
+    .refine((files) => files && files.length > 0, "At least one image is required.")
+    .refine((files) => files && files.length <= 10, "Maximum 10 images allowed.")
+    .refine((files) => {
+      if (!files) return true; // Allow if no files selected yet, first refine handles empty on submit
+      for (let i = 0; i < files.length; i++) {
+        if (!files[i].type.startsWith("image/")) return false;
+      }
+      return true;
+    }, "Only image files (e.g., JPG, PNG, GIF) are allowed."),
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
 
@@ -85,7 +96,8 @@ export function PostContentForm() {
   const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
-  const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageUrls: [""]}});
+  // Initialize imageFiles as null or undefined for controlled component if necessary
+  const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageFiles: undefined }});
 
 
   const handleFormSubmit = async (data: any, type: string) => {
@@ -120,12 +132,38 @@ export function PostContentForm() {
           break;
         case "textbook":
           collectionName = "textbooks";
-          // Division is not part of textbook schema, so it won't be saved.
           break;
         case "gallery":
           collectionName = "galleryAlbums";
-          documentData.images = data.imageUrls.map((url: string) => ({ url, alt: data.title }));
-          delete documentData.imageUrls; 
+          // START OF MODIFIED SECTION FOR GALLERY FILE UPLOAD
+          // The 'data.imageFiles' (FileList) needs to be uploaded to Firebase Storage.
+          // After uploading, you'll get download URLs for each image.
+          // These download URLs should then be stored in the 'images' array.
+          //
+          // Example (conceptual - actual implementation needed):
+          // const uploadedImageUrls = [];
+          // if (data.imageFiles) {
+          //   for (const file of Array.from(data.imageFiles as FileList)) {
+          //     // const storageRef = ref(storage, `galleryImages/${albumId}/${file.name}`);
+          //     // await uploadBytes(storageRef, file);
+          //     // const downloadURL = await getDownloadURL(storageRef);
+          //     // uploadedImageUrls.push(downloadURL);
+          //   }
+          // }
+          // documentData.images = uploadedImageUrls.map((url: string) => ({ url, alt: data.title }));
+          //
+          // For now, since direct Firebase Storage upload is not implemented here,
+          // we'll save an empty array for images and show a message.
+          // TODO: Implement actual Firebase Storage upload logic and then populate documentData.images.
+          documentData.images = []; 
+          toast({
+            title: "Gallery Album Info Saved (Images Pending)",
+            description: "Album details saved. File upload to Firebase Storage needs to be implemented to save the actual images.",
+            variant: "default", // "default" or "warning" like
+            duration: 9000, 
+          });
+          delete documentData.imageFiles; // Remove FileList before saving to Firestore
+          // END OF MODIFIED SECTION FOR GALLERY FILE UPLOAD
           break;
         default:
           toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
@@ -142,7 +180,7 @@ export function PostContentForm() {
       if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: ""});
       if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
       if (type === 'textbook') formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1"});
-      if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageUrls: [""]});
+      if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageFiles: undefined });
 
     } catch (e: any) {
       console.error(`Error posting ${type}:`, e);
@@ -209,20 +247,19 @@ export function PostContentForm() {
           <Controller
             name="division"
             control={formInstance.control}
-            render={({ field: divisionField }) => ( // This controller for division is used even if not in schema, RHF allows it
+            render={({ field: divisionField }) => ( 
               <GradeDivisionSelector
                 grade={gradeField.value || ""}
                 onGradeChange={gradeField.onChange}
-                division={divisionField.value || ""} // Will be empty string for textbook, not in schema
-                onDivisionChange={divisionField.onChange} // Will allow changes if showDivision is true
-                showDivision={type !== 'textbook'} // Only show division for non-textbooks
+                division={divisionField.value || ""} 
+                onDivisionChange={divisionField.onChange}
+                showDivision={type !== 'textbook'} 
               />
             )}
           />
         )}
       />
       {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.grade as any).message}</p>}
-      {/* Only show division errors if division is expected (i.e., for homework) */}
       {type === 'homework' && formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
       
       {(type === 'circular' || type === 'notice') && <p className="text-xs text-muted-foreground mt-1">Optionally select grade and division to target specific students. Leave empty for school-wide content.</p>}
@@ -303,15 +340,15 @@ export function PostContentForm() {
               <div>
                 <Label htmlFor="textbookGrade">Grade *</Label>
                  <Controller
-                    name="grade" // This name must match a field in textbookSchema
+                    name="grade" 
                     control={formTextbook.control}
                     render={({ field }) => (
                        <GradeDivisionSelector
-                        grade={field.value || ""} // Use field.value
-                        onGradeChange={field.onChange} // Use field.onChange
-                        division="" // Division not used for textbook logic
-                        onDivisionChange={() => {}} // No-op for division
-                        showDivision={false} // Explicitly hide division selector
+                        grade={field.value || ""} 
+                        onGradeChange={field.onChange} 
+                        division="" 
+                        onDivisionChange={() => {}} 
+                        showDivision={false} 
                         />
                     )}
                   />
@@ -339,35 +376,16 @@ export function PostContentForm() {
                 <Input id="galleryEventDate" type="date" {...formGallery.register("eventDate")} />
               </div>
               <div className="space-y-2">
-                <Label>Image URLs (at least 1, max 10) *</Label>
-                {formGallery.watch("imageUrls").map((_, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <Input
-                      {...formGallery.register(`imageUrls.${index}` as const)}
-                      placeholder={`https://example.com/image${index + 1}.jpg`}
-                    />
-                    {formGallery.watch("imageUrls").length > 1 && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => {
-                        const currentUrls = formGallery.getValues("imageUrls");
-                        currentUrls.splice(index, 1);
-                        formGallery.setValue("imageUrls", currentUrls);
-                      }}>Remove</Button>
-                    )}
-                  </div>
-                ))}
-                {formGallery.formState.errors.imageUrls && <p className="text-sm text-destructive mt-1">{ (formGallery.formState.errors.imageUrls as any)?.message || (formGallery.formState.errors.imageUrls as any)?.root?.message}</p>}
-                 { (formGallery.formState.errors.imageUrls as any)?.map((err: any, i:number) => err && <p key={i} className="text-sm text-destructive mt-1">{err.message}</p>) }
-
-
-                <Button type="button" variant="outline" size="sm" onClick={() => {
-                    const currentUrls = formGallery.getValues("imageUrls");
-                    if (currentUrls.length < 10) {
-                         formGallery.setValue("imageUrls", [...currentUrls, ""]);
-                    } else {
-                        toast({title: "Limit Reached", description: "You can add a maximum of 10 images."})
-                    }
-                }}>Add Image URL</Button>
-                 <p className="text-xs text-muted-foreground mt-1">Provide direct links to images. Recommended: 5 images.</p>
+                <Label htmlFor="galleryImageFiles">Upload Images (up to 10) *</Label>
+                <Input 
+                  id="galleryImageFiles"
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  {...formGallery.register("imageFiles")}
+                />
+                {formGallery.formState.errors.imageFiles && <p className="text-sm text-destructive mt-1">{(formGallery.formState.errors.imageFiles as any)?.message}</p>}
+                 <p className="text-xs text-muted-foreground mt-1">Select one or more image files. Max 10 images. Actual upload to storage needs to be implemented.</p>
               </div>
                <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Gallery
@@ -380,3 +398,5 @@ export function PostContentForm() {
     </Card>
   );
 }
+
+    
