@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,6 +25,7 @@ const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
+  motherName: z.string().optional(), // Added Mother's Name
   contactNumber: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), "Must be 10 digits"),
   aadharCardNumber: z.string().optional().refine(val => !val || /^\d{12}$/.test(val), "Must be 12 digits"),
   penNumber: z.string().optional(),
@@ -59,6 +61,7 @@ export function MySelfForm() {
             firstName: data.firstName || "",
             middleName: data.middleName || "",
             lastName: data.lastName || "",
+            motherName: data.motherName || "", // Added Mother's Name
             contactNumber: data.contactNumber || "",
             aadharCardNumber: data.aadharCardNumber || "",
             penNumber: data.penNumber || "",
@@ -172,6 +175,12 @@ export function MySelfForm() {
             </div>
           </div>
 
+          <div>
+            <Label htmlFor="motherName">Mother's Name</Label>
+            <Input id="motherName" {...register("motherName")} />
+            {errors.motherName && <p className="text-sm text-destructive mt-1">{errors.motherName.message}</p>}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="gradeDisplay">Grade</Label>
@@ -200,7 +209,7 @@ export function MySelfForm() {
             />
              {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
             {photoPreview ? (
-                <Image src={photoPreview} alt="Profile Preview" width={128} height={128} className="mt-2 rounded-md object-cover h-32 w-32 border" />
+                <Image src={photoPreview} alt="Profile Preview" width={128} height={128} className="mt-2 rounded-md object-cover h-32 w-32 border" data-ai-hint="profile photo"/>
             ) : (
               <div className="mt-2 flex items-center justify-center h-32 w-32 rounded-md border border-dashed bg-muted/50">
                 <UploadCloud className="h-12 w-12 text-muted-foreground" />
@@ -268,3 +277,4 @@ export function MySelfForm() {
     </Card>
   );
 }
+

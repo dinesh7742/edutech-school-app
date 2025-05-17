@@ -82,6 +82,7 @@ export interface StudentProfile {
   firstName: string;
   middleName?: string;
   lastName: string;
+  motherName?: string; // Added Mother's Name
   grade: string;
   division: string;
   contactNumber?: string;
@@ -94,3 +95,4 @@ export interface StudentProfile {
   photoUrl?: string;
   email?: string;
 }
+

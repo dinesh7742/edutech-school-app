@@ -9,7 +9,7 @@ import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore"; // Ensure getDoc is imported
+import { doc, getDoc } from "firebase/firestore"; 
 
 interface StudentProfileViewProps {
   studentId: string;
@@ -136,6 +136,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       </CardHeader>
       <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <DetailItem icon={User} label="Full Name" value={`${profile.firstName} ${profile.middleName || ''} ${profile.lastName || ''}`} />
+        <DetailItem icon={User} label="Mother's Name" value={profile.motherName || "Not Provided"} />
         <DetailItem icon={Mail} label="Email" value={profile.email} />
         <DetailItem icon={Phone} label="Contact Number" value={profile.contactNumber} />
         <DetailItem icon={Award} label="Grade & Division" value={`Grade ${profile.grade} - ${profile.division}`} />
@@ -149,3 +150,4 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     </Card>
   );
 }
+
