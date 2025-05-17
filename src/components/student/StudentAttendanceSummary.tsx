@@ -127,6 +127,8 @@ export function StudentAttendanceSummary() {
              <p className="mt-3 text-sm text-muted-foreground">Attendance data not yet available.</p>
            )}
 
+          {/* QR Code and Barcode Removed */}
+          {/* 
           <div className="mt-4 flex flex-col sm:flex-row items-center justify-center sm:justify-start gap-4">
             <div className="text-center">
                <Image src="https://placehold.co/80x80.png?text=QR" alt="QR Code Placeholder" width={80} height={80} data-ai-hint="QR code student" />
@@ -137,6 +139,7 @@ export function StudentAttendanceSummary() {
               <p className="text-xs text-muted-foreground mt-1">{user.grNumber || user.uid.substring(0,6) || "ID12345"}</p>
             </div>
           </div>
+          */}
         </div>
       </CardContent>
     </Card>
