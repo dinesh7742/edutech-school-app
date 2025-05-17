@@ -1,8 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { School, LogOut, User, LayoutDashboard, Menu as MenuIcon } from "lucide-react";
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon } from "lucide-react";
+import Image from "next/image"; // Added import for Next/Image
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +19,7 @@ import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 
-const schoolName = "PM SHRI MPS VARSHA NAGAR"; // Shortened for brevity in UI
+const schoolName = "PM SHRI MPS VARSHA NAGAR"; 
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -45,7 +47,12 @@ export function Navbar() {
           My Profile
         </DropdownMenuItem>
       )}
-      {/* Add more role-specific links here if needed */}
+      {role === 'teacher' && (
+        <DropdownMenuItem onSelect={() => router.push('/teacher/profile')}>
+          <User className="mr-2 h-4 w-4" />
+          My Profile
+        </DropdownMenuItem>
+      )}
     </>
   ) : null;
 
@@ -66,6 +73,9 @@ export function Navbar() {
           </Button>
           <Button variant="ghost" asChild>
             <Link href="/teacher/student-data">Student Data</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/teacher/profile">My Profile</Link>
           </Button>
          </>
       )}
@@ -91,6 +101,7 @@ export function Navbar() {
             <>
               <Link href="/teacher/post-content" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Post Content</Link>
               <Link href="/teacher/student-data" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Student Data</Link>
+              <Link href="/teacher/profile" className="block px-4 py-2 text-sm hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
             </>
           )}
           <Button variant="ghost" onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full justify-start px-4 py-2 text-sm">
@@ -111,7 +122,14 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <School className="h-7 w-7 text-primary" />
+          <Image 
+            src="https://placehold.co/100x40.png" // Placeholder image for the logo
+            alt="PM SHRI School Logo" 
+            width={100} // Adjust width as needed
+            height={40} // Adjust height as needed
+            className="h-10 w-auto object-contain" // Maintain aspect ratio, adjust height
+            data-ai-hint="school logo"
+          />
           <span className="font-semibold text-lg whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span>
         </Link>
 
@@ -157,7 +175,14 @@ export function Navbar() {
             <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <div className="p-4">
                 <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setMobileMenuOpen(false)}>
-                  <School className="h-6 w-6 text-primary" />
+                  <Image 
+                    src="https://placehold.co/80x32.png" // Placeholder image for the logo (smaller for mobile menu)
+                    alt="PM SHRI School Logo" 
+                    width={80} 
+                    height={32} 
+                    className="h-8 w-auto object-contain"
+                    data-ai-hint="school logo"
+                  />
                   <span className="font-semibold text-md">{schoolName}</span>
                 </Link>
                 {mobileNavLinks}
