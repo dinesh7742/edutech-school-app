@@ -33,8 +33,11 @@ export default function StudentGalleryPage() {
           const data = doc.data();
           console.log(`[StudentGalleryPage] Mapping document ${doc.id}:`, data);
           
-          if (!data.title || !Array.isArray(data.images)) {
-            console.warn(`[StudentGalleryPage] Document ${doc.id} is missing title or images and will be skipped.`, data);
+          // Ensure images is an array, even if it's missing or not an array in Firestore.
+          const imagesArray = Array.isArray(data.images) ? data.images : [];
+
+          if (!data.title) { // Removed check for data.images here, as it can be empty
+            console.warn(`[StudentGalleryPage] Document ${doc.id} is missing title and will be skipped.`, data);
             return null;
           }
 
@@ -44,7 +47,7 @@ export default function StudentGalleryPage() {
             id: doc.id,
             title: data.title,
             description: data.description || "",
-            images: data.images.map((img: any, idx: number) => {
+            images: imagesArray.map((img: any, idx: number) => {
               let currentUrl = img.url;
               const defaultPlaceholder = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
 
@@ -141,28 +144,32 @@ export default function StudentGalleryPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {event.images.map((img, idx) => (
-                  <div key={idx} className="aspect-square overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-shadow">
-                    <NextImage 
-                      src={img.url} 
-                      alt={img.alt || event.title} 
-                      width={300} 
-                      height={300} 
-                      className="w-full h-full object-cover"
-                      data-ai-hint={generateAiHint(event.title)} 
-                      onError={(e) => {
-                        // Fallback for next/image if the src is still problematic after our initial check
-                        console.warn(`[StudentGalleryPage] NextImage onError for URL: ${img.url}. Replacing with placeholder.`);
-                        const target = e.target as HTMLImageElement;
-                        const albumTitleForPlaceholders = (event.title || "Photo").toLowerCase().split(/\s+/).slice(0, 2).join(" ") || "Photo";
-                        target.src = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
-                        target.srcset = ""; // Clear srcset if it was set
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
+              {(event.images && event.images.length > 0) ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {event.images.map((img, idx) => (
+                    <div key={idx} className="aspect-square overflow-hidden rounded-lg border shadow-sm hover:shadow-md transition-shadow">
+                      <NextImage 
+                        src={img.url} 
+                        alt={img.alt || event.title} 
+                        width={300} 
+                        height={300} 
+                        className="w-full h-full object-cover"
+                        data-ai-hint={generateAiHint(event.title)} 
+                        onError={(e) => {
+                          // Fallback for next/image if the src is still problematic after our initial check
+                          console.warn(`[StudentGalleryPage] NextImage onError for URL: ${img.url}. Replacing with placeholder.`);
+                          const target = e.target as HTMLImageElement;
+                          const albumTitleForPlaceholders = (event.title || "Photo").toLowerCase().split(/\s+/).slice(0, 2).join(" ") || "Photo";
+                          target.src = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
+                          target.srcset = ""; // Clear srcset if it was set
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No images have been uploaded for this album yet.</p>
+              )}
             </CardContent>
           </Card>
         ))
