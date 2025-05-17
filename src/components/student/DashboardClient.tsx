@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass } from "@/types";
+import { TodaySpecial } from "@/components/shared/TodaySpecial"; // Added import
 
 interface LatestContent<T> {
   item: T | null;
@@ -44,12 +45,15 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
-        const q = query(ref, orderBy("timestamp", "desc"), limit(5));
+        const q = query(ref, orderBy("timestamp", "desc"), limit(5)); // Fetch 5 most recent for client-side filtering
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
+        // Client-side filtering for relevance
         const relevantItem = allRecentItems.find(item => {
-          if (!user.grade || !user.division) return !item.grade && !item.division;
+          if (!user.grade || !user.division) { // If student has no grade/division, only show school-wide
+             return !item.grade && !item.division;
+          }
           const isSchoolWide = !item.grade || item.grade === "";
           const isGradeMatch = item.grade === user.grade;
           const isDivisionMatch = item.division === user.division;
@@ -108,7 +112,7 @@ export function StudentDashboardClient() {
               ...hwData,
               timestamp: hwData.timestamp as Timestamp,
               displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-              dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
+              dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', // Ensure dueDate is also handled
             } as Homework,
             loading: false,
           });
@@ -259,6 +263,7 @@ export function StudentDashboardClient() {
   return (
     <div className="space-y-8">
       <WelcomeMessage />
+      <TodaySpecial /> {/* Added TodaySpecial component here */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
