@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Hash } from "lucide-react";
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Hash, MapPin, Building } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -19,9 +19,12 @@ import { signOut } from "firebase/auth";
 import { useState } from "react";
 
 const schoolName = "PM SHRI MPS VARSHA NAGAR";
-const contactNumber = "022-XXXX-XXXX"; // Replace with actual number
-const emailAddress = "varsha.nagarmps@gmail.com";
+const contactNumber = "+917506137742";
+const emailAddress = "varshanagarmps@gmail.com";
 const udiseNumber = "27220600119";
+const wardInfo = "S Ward";
+const addressInfo = "Veer savarkar marg, Beside Prabodhankar Thakare Garden, Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
+
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -125,7 +128,7 @@ export function Navbar() {
       <div className="container flex h-auto py-3 items-start justify-between"> {/* Changed h-20 to h-auto py-3, items-center to items-start */}
         <Link href="/" className="flex items-start gap-3"> {/* Changed gap-2 to gap-3 */}
           <School className="h-10 w-10 text-primary mt-1 flex-shrink-0" /> {/* Adjusted size to match example image */}
-          <div>
+          <div className="max-w-md">
             <span className="block font-semibold text-xl whitespace-nowrap" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">
               {schoolName}
             </span>
@@ -141,6 +144,14 @@ export function Navbar() {
               <div className="flex items-center gap-1.5">
                 <Hash size={12} className="flex-shrink-0" />
                 <span>UDISE: {udiseNumber}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Building size={12} className="flex-shrink-0" />
+                <span>Ward: {wardInfo}</span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <MapPin size={12} className="flex-shrink-0 mt-0.5" />
+                <span className="whitespace-normal">{addressInfo}</span>
               </div>
             </div>
           </div>
@@ -185,11 +196,11 @@ export function Navbar() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px]">
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] overflow-y-auto">
               <div className="p-4">
                 <Link href="/" className="flex items-start gap-2 mb-3" onClick={() => setMobileMenuOpen(false)}> {/* Changed mb-4 to mb-3 */}
                   <School className="h-8 w-8 text-primary mt-0.5 flex-shrink-0" /> {/* Adjusted size for mobile */}
-                  <div>
+                  <div className="max-w-xs">
                     <span className="block font-semibold text-lg">{schoolName}</span>
                      <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
                         <div className="flex items-center gap-1.5">
@@ -204,6 +215,14 @@ export function Navbar() {
                             <Hash size={12} className="flex-shrink-0" />
                             <span>UDISE: {udiseNumber}</span>
                         </div>
+                        <div className="flex items-center gap-1.5">
+                            <Building size={12} className="flex-shrink-0" />
+                            <span>Ward: {wardInfo}</span>
+                        </div>
+                        <div className="flex items-start gap-1.5">
+                            <MapPin size={12} className="flex-shrink-0 mt-0.5" />
+                            <span className="whitespace-normal">{addressInfo}</span>
+                        </div>
                     </div>
                   </div>
                 </Link>
@@ -217,4 +236,3 @@ export function Navbar() {
     </header>
   );
 }
-
