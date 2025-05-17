@@ -16,8 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase"; // Import storage
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"; // Import storage functions
+import { db } from "@/lib/firebase"; // Removed storage import
 
 // Schemas for different content types
 const noticeSchema = z.object({
@@ -64,21 +63,23 @@ const textbookSchema = z.object({
 });
 type TextbookFormValues = z.infer<typeof textbookSchema>;
 
+// Updated Photo Gallery Schema for URL input
 const photoGallerySchema = z.object({
   title: z.string().min(3, "Event/Album title is required"),
   description: z.string().optional(),
   eventDate: z.string().optional(),
-  imageFiles: z.custom<FileList>()
-    .refine((files) => files && files.length > 0, "At least one image is required.")
-    .refine((files) => files && files.length <= 10, "Maximum 10 images allowed.")
-    .refine((files) => {
-      if (!files || files.length === 0) return true;
-      for (let i = 0; i < files.length; i++) {
-        if (!files[i].type.startsWith("image/")) return false;
+  imageUrls: z.string()
+    .min(1, "At least one image URL is required.")
+    .refine(value => {
+      try {
+        // Attempt to split by comma, then validate each part as a URL
+        const urls = value.split(',').map(url => url.trim());
+        return urls.every(url => z.string().url().safeParse(url).success || url === ""); // Allow empty strings if user makes a mistake
+      } catch (e) {
+        return false;
       }
-      return true;
-    }, "Only image files (e.g., JPG, PNG, GIF) are allowed.")
-    .optional(), // Make it optional if no files are selected initially
+    }, "Please provide comma-separated, valid URLs (e.g., https://example.com/image.png, https://another.com/photo.jpg).")
+    .optional(),
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
 
@@ -95,7 +96,7 @@ export function PostContentForm() {
   const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
-  const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageFiles: undefined }});
+  const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageUrls: "" }});
 
 
   const handleFormSubmit = async (data: any, type: string) => {
@@ -133,28 +134,16 @@ export function PostContentForm() {
           break;
         case "gallery":
           collectionName = "galleryAlbums";
-          if (data.imageFiles && data.imageFiles.length > 0) {
-            toast({ title: "Uploading Images...", description: `Starting upload of ${data.imageFiles.length} image(s). This may take a moment.` });
-            const uploadedImageObjects = await Promise.all(
-              Array.from(data.imageFiles as FileList).map(async (file, index) => {
-                const fileExtension = file.name.split('.').pop();
-                const randomFileNamePart = Math.random().toString(36).substring(2, 15);
-                const storagePath = `galleryImages/${user.uid}/${Date.now()}-${randomFileNamePart}.${fileExtension}`;
-                const storageRef = ref(storage, storagePath);
-                
-                // console.log(`Uploading ${file.name} to ${storagePath}`);
-                const uploadTaskSnapshot = await uploadBytesResumable(storageRef, file);
-                const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
-                // console.log(`${file.name} uploaded. URL: ${downloadURL}`);
-                return { url: downloadURL, alt: `${data.title || 'Gallery Image'} ${index + 1}` };
-              })
-            );
-            documentData.images = uploadedImageObjects;
-            toast({ title: "Image Upload Complete", description: `${uploadedImageObjects.length} image(s) uploaded successfully.` });
+          if (data.imageUrls) {
+            const urls = data.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url);
+            documentData.images = urls.map((url: string, index: number) => ({
+              url: url,
+              alt: `${data.title || 'Gallery Image'} ${index + 1}`
+            }));
           } else {
-            documentData.images = []; // Ensure images is an empty array if no files
+            documentData.images = [];
           }
-          delete documentData.imageFiles; // Remove FileList before saving to Firestore
+          delete documentData.imageUrls; // Remove the comma-separated string before saving
           break;
         default:
           toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
@@ -171,7 +160,7 @@ export function PostContentForm() {
       if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: ""});
       if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
       if (type === 'textbook') formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1"});
-      if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageFiles: undefined });
+      if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageUrls: "" });
 
     } catch (e: any) {
       console.error(`Error posting ${type}:`, e);
@@ -367,16 +356,20 @@ export function PostContentForm() {
                 <Input id="galleryEventDate" type="date" {...formGallery.register("eventDate")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="galleryImageFiles">Upload Images (up to 10) *</Label>
-                <Input 
-                  id="galleryImageFiles"
-                  type="file" 
-                  multiple 
-                  accept="image/*" 
-                  {...formGallery.register("imageFiles")}
+                <Label htmlFor="galleryImageUrls">Image URLs (comma-separated) *</Label>
+                <Textarea 
+                  id="galleryImageUrls"
+                  {...formGallery.register("imageUrls")}
+                  placeholder="https://example.com/image1.jpg, https://example.com/image2.png"
+                  rows={3}
                 />
-                {formGallery.formState.errors.imageFiles && <p className="text-sm text-destructive mt-1">{(formGallery.formState.errors.imageFiles as any)?.message}</p>}
-                 <p className="text-xs text-muted-foreground mt-1">Select one or more image files. Max 10 images.</p>
+                {formGallery.formState.errors.imageUrls && <p className="text-sm text-destructive mt-1">{(formGallery.formState.errors.imageUrls as any)?.message}</p>}
+                 <p className="text-xs text-muted-foreground mt-1">
+                   Provide direct links to images, separated by commas. 
+                   E.g., <code>https://path.to/image.jpg, https://another.site/pic.png</code>.
+                   Ensure these URLs are publicly accessible and the hostnames are configured in <code>next.config.ts</code> if using <code>next/image</code> elsewhere with these hosts.
+                   Google Drive folder links will NOT work.
+                 </p>
               </div>
                <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Gallery
@@ -390,3 +383,5 @@ export function PostContentForm() {
   );
 }
 
+
+    
