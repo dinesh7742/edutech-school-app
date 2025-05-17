@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -91,9 +91,14 @@ export function TeacherDashboardClient() {
   const handleDownloadStudentData = async () => {
     setIsDownloadingStudentData(true);
     toast({ title: "Preparing Download", description: "Fetching student data..." });
+    if (!teacherUser?.grade || !teacherUser?.division) {
+      toast({ title: "Missing Info", description: "Your profile must have grade and division to download class data.", variant: "destructive"});
+      setIsDownloadingStudentData(false);
+      return;
+    }
     try {
       const studentProfilesCollectionRef = collection(db, "studentProfiles");
-      const q = query(studentProfilesCollectionRef, where("grade", "==", teacherUser?.grade), where("division", "==", teacherUser?.division));
+      const q = query(studentProfilesCollectionRef, where("grade", "==", teacherUser.grade), where("division", "==", teacherUser.division));
       const querySnapshot = await getDocs(q);
       
       if (querySnapshot.empty) {
@@ -138,7 +143,7 @@ export function TeacherDashboardClient() {
       console.error("Error downloading student data:", error);
       toast({ title: "Download Failed", description: error.message || "Could not download student data.", variant: "destructive" });
        if (error.code === 'failed-precondition') {
-          toast({ title: "Index Required", description: "A Firestore index is needed. Please create it.", variant: "destructive", duration: 10000 });
+          toast({ title: "Index Required", description: "A Firestore index is needed for grade & division on studentProfiles. Please create it.", variant: "destructive", duration: 10000 });
         }
     } finally {
       setIsDownloadingStudentData(false);
@@ -226,8 +231,16 @@ export function TeacherDashboardClient() {
       buttonText: "View Student List",
       dataAiHint: "group users"
     },
+    {
+      title: "Mark Attendance",
+      icon: CalendarCheck,
+      description: "Mark daily attendance for students in your assigned class.",
+      link: "/teacher/mark-attendance",
+      buttonText: "Mark Attendance",
+      dataAiHint: "calendar check attendance"
+    },
      {
-      title: "Download Data",
+      title: "Download Class Data",
       icon: FileSpreadsheet,
       description: "Download an Excel sheet of student data for your assigned class.",
       action: handleDownloadStudentData,
@@ -247,30 +260,32 @@ export function TeacherDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {quickStatsItems.map((item) => (
           <Card key={item.title} className="shadow-lg rounded-lg">
-            <CardContent className="pt-5 pb-5">
-              <div className="flex flex-row items-center justify-between space-y-0 mb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {item.title}
-                </CardTitle>
-                <item.icon className="h-5 w-5 text-muted-foreground" data-ai-hint={item.dataAiHint} />
-              </div>
+            <CardHeader className="text-center">
+                 <div className="flex items-center justify-center mb-2">
+                    <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={item.dataAiHint}/>
+                </div>
+                <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2 pb-6 text-center">
               {item.content}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
          {mainActionItems.map((item) => (
-            <Card key={item.title} className="shadow-lg rounded-lg text-center">
-                <CardContent className="flex flex-col items-center justify-between pt-6 pb-6 space-y-4 min-h-[280px] sm:min-h-[300px]">
-                    <div className="flex flex-col items-center space-y-2">
-                        <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary mb-3" data-ai-hint={item.dataAiHint}/>
-                        <CardTitle className="text-lg sm:text-xl font-semibold">{item.title}</CardTitle>
-                        <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
-                            {item.description}
-                        </p>
+            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
+                <CardHeader>
+                    <div className="flex items-center justify-center mb-2">
+                        <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={item.dataAiHint}/>
                     </div>
+                    <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 min-h-[220px]">
+                    <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
+                        {item.description}
+                    </p>
                     {item.link ? (
                         <Button asChild className="w-full mt-auto">
                             <Link href={item.link}>{item.buttonText}</Link>
@@ -288,12 +303,15 @@ export function TeacherDashboardClient() {
       </div>
       
       <Card className="shadow-lg rounded-lg">
-        <CardContent className="pt-6 pb-6">
-          <CardTitle className="text-xl font-semibold mb-3">Recent Activity</CardTitle>
-          <p className="text-muted-foreground">No recent activity to display. This section will show recent posts or student submissions.</p>
+         <CardHeader className="text-center">
+             <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
+         </CardHeader>
+        <CardContent className="pt-2 pb-6">
+          <p className="text-muted-foreground text-center">No recent activity to display. This section will show recent posts or student submissions.</p>
         </CardContent>
       </Card>
 
     </div>
   );
 }
+

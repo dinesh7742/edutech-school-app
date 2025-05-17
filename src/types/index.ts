@@ -109,5 +109,22 @@ export interface LiveClass {
   displayDate?: string;
   grade?: string | null;
   division?: string | null;
-  // You could add fields like `startTime`, `duration` if needed later
+}
+
+// Attendance Types
+export type AttendanceStatus = "Present" | "Absent" | "Late" | "Excused";
+
+export interface StudentAttendanceRecord {
+  [studentUid: string]: AttendanceStatus;
+}
+
+export interface DailyAttendanceLog {
+  id?: string; // YYYY-MM-DD_GRADE_DIVISION
+  date: string; // YYYY-MM-DD
+  grade: string;
+  division: string;
+  studentRecords: StudentAttendanceRecord;
+  markedByTeacherId: string;
+  markedByTeacherName: string;
+  lastUpdatedAt: Timestamp | FieldValue;
 }
