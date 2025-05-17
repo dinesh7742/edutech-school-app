@@ -5,16 +5,15 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2 } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs,getCountFromServer } from "firebase/firestore";
+import { collection, query, where, getDocs, getCountFromServer } from "firebase/firestore";
 import type { StudentProfile } from "@/types";
 
 // Mock data for dashboard overview - pending and events will remain mock for now
 const mockTeacherStats = {
-  // totalStudents will be replaced by fetched data
   pendingAssignments: 5,
   upcomingEvents: 2,
 };
@@ -22,11 +21,13 @@ const mockTeacherStats = {
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
   const [totalStudentsInClass, setTotalStudentsInClass] = useState<number | null>(null);
+  const [maleStudents, setMaleStudents] = useState<number>(0);
+  const [femaleStudents, setFemaleStudents] = useState<number>(0);
   const [loadingStudentCount, setLoadingStudentCount] = useState(true);
   const [studentCountError, setStudentCountError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchStudentCount = async () => {
+    const fetchStudentData = async () => {
       if (teacherUser && teacherUser.grade && teacherUser.division) {
         setLoadingStudentCount(true);
         setStudentCountError(null);
@@ -38,44 +39,55 @@ export function TeacherDashboardClient() {
             where("division", "==", teacherUser.division)
           );
           
-          // Use getCountFromServer for optimized counting if only count is needed
-          const snapshot = await getCountFromServer(q);
-          setTotalStudentsInClass(snapshot.data().count);
-          console.log(`[TeacherDashboardClient] Fetched student count for Grade ${teacherUser.grade} Div ${teacherUser.division}: ${snapshot.data().count}`);
+          const querySnapshot = await getDocs(q);
+          const students = querySnapshot.docs.map(doc => doc.data() as StudentProfile);
+          
+          setTotalStudentsInClass(students.length);
+          
+          let males = 0;
+          let females = 0;
+          students.forEach(student => {
+            if (student.gender === "Male") {
+              males++;
+            } else if (student.gender === "Female") {
+              females++;
+            }
+          });
+          setMaleStudents(males);
+          setFemaleStudents(females);
+
+          console.log(`[TeacherDashboardClient] Fetched ${students.length} students for Grade ${teacherUser.grade} Div ${teacherUser.division}. Males: ${males}, Females: ${females}`);
 
         } catch (err: any) {
-          console.error("Error fetching student count for teacher's class:", err);
-          // Check for missing index error
+          console.error("Error fetching student data for teacher's class:", err);
           if (err.code === 'failed-precondition') {
-            let firestoreConsoleLink = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/indexes`;
-            // Attempt to construct a more specific link if possible, though Firestore error messages are best
-            const collectionPath = `studentProfiles`;
-            const field1 = `grade`;
-            const field2 = `division`;
-            // This is a generic pattern, the actual link from Firestore error is more reliable
-            const createIndexLink = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/indexes?create_composite=ClRwcm9qZWN0cy9${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID_ENCODED_PART || 'YOUR_PROJECT_ID_ENCODED_PART'}/databases/(default)/collectionGroups/${collectionPath}/indexes/EgkK${Buffer.from(field1).toString('base64')}${Buffer.from(field2).toString('base64')}Gg4KCmNvdW50cnlfY29kZRABGgwKCF9fbmFtZV9fEAE`;
-            
+            // This error usually means a composite index is required.
+            // Firestore console should provide a link to create it.
+            const firestoreConsoleLink = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/indexes`;
             setStudentCountError(
-              `Failed to fetch student count. This query likely requires a Firestore index. Please check the browser console for a direct link to create it, or create an index on 'studentProfiles' for 'grade' (Ascending) AND 'division' (Ascending). Visit Firestore console: ${firestoreConsoleLink}`
+              `Failed to fetch student count. This query likely requires a Firestore index for 'grade' AND 'division' on the 'studentProfiles' collection. Please check the browser console for a direct link to create it, or visit Firestore console: ${firestoreConsoleLink}`
             );
           } else {
-            setStudentCountError("Failed to fetch student count. Please try again later.");
+            setStudentCountError("Failed to fetch student data. Please try again later.");
           }
-          setTotalStudentsInClass(0); // Default to 0 on error
+          setTotalStudentsInClass(0); 
+          setMaleStudents(0);
+          setFemaleStudents(0);
         } finally {
           setLoadingStudentCount(false);
         }
       } else {
-        // Teacher details not yet loaded or missing grade/division
         setLoadingStudentCount(false);
         setTotalStudentsInClass(0);
+        setMaleStudents(0);
+        setFemaleStudents(0);
         if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
             setStudentCountError("Your teacher profile is missing grade/division. Please update it.");
         }
       }
     };
 
-    fetchStudentCount();
+    fetchStudentData();
   }, [teacherUser]);
 
   return (
@@ -99,15 +111,21 @@ export function TeacherDashboardClient() {
             ) : studentCountError ? (
                <p className="text-xs text-destructive">{studentCountError}</p>
             ) : (
-              <div className="text-2xl font-bold">{totalStudentsInClass ?? 0}</div>
+              <>
+                <div className="text-2xl font-bold">{totalStudentsInClass ?? 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Total students in Grade {teacherUser?.grade} Div {teacherUser?.division}.
+                </p>
+                <div className="mt-2 space-y-1">
+                    <div className="flex items-center text-xs">
+                        <UserCheck className="h-4 w-4 mr-1 text-blue-500"/> Boys: {maleStudents}
+                    </div>
+                    <div className="flex items-center text-xs">
+                        <UserX className="h-4 w-4 mr-1 text-pink-500"/> Girls: {femaleStudents}
+                    </div>
+                </div>
+              </>
             )}
-            <p className="text-xs text-muted-foreground">
-              Total students in Grade {teacherUser?.grade} Div {teacherUser?.division}.
-            </p>
-             {/* Placeholder for Boy/Girl count - to be implemented after gender field is added */}
-            <p className="text-xs text-muted-foreground mt-1">
-              (Boy/Girl count will be available after 'gender' field is added to student profiles.)
-            </p>
           </CardContent>
         </Card>
         <Card className="shadow-lg hover:shadow-xl transition-shadow">
@@ -184,5 +202,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    

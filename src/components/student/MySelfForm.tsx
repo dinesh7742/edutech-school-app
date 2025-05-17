@@ -16,16 +16,18 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase"; // Assuming you have storage configured in firebase.ts
 import type { StudentProfile } from "@/types";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Loader2, UploadCloud, UserCircle2 } from "lucide-react";
 import Image from "next/image";
 
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
+const genderOptions = ["Male", "Female", "Other", "Prefer not to say"];
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
-  motherName: z.string().optional(), // Added Mother's Name
+  motherName: z.string().optional(),
+  gender: z.string().optional(),
   contactNumber: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), "Must be 10 digits"),
   aadharCardNumber: z.string().optional().refine(val => !val || /^\d{12}$/.test(val), "Must be 12 digits"),
   penNumber: z.string().optional(),
@@ -45,7 +47,7 @@ export function MySelfForm() {
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
   });
 
@@ -57,11 +59,12 @@ export function MySelfForm() {
         const profileDoc = await getDoc(profileDocRef);
         if (profileDoc.exists()) {
           const data = profileDoc.data() as StudentProfile;
-          reset({ // reset form with fetched data
+          reset({ 
             firstName: data.firstName || "",
             middleName: data.middleName || "",
             lastName: data.lastName || "",
-            motherName: data.motherName || "", // Added Mother's Name
+            motherName: data.motherName || "",
+            gender: data.gender || "",
             contactNumber: data.contactNumber || "",
             aadharCardNumber: data.aadharCardNumber || "",
             penNumber: data.penNumber || "",
@@ -78,6 +81,17 @@ export function MySelfForm() {
           reset({
             firstName: nameParts[0] || "",
             lastName: nameParts.length > 1 ? nameParts[nameParts.length -1] : "",
+            // Initialize other fields as empty or default
+            motherName: "",
+            gender: "",
+            contactNumber: "",
+            aadharCardNumber: "",
+            penNumber: "",
+            grNumber: "",
+            religion: "",
+            caste: "",
+            fullAddress: "",
+            photoUrl: "",
           });
         }
         setIsFetchingProfile(false);
@@ -100,7 +114,7 @@ export function MySelfForm() {
         grade: user.grade || "", // From auth context
         division: user.division || "", // From auth context
         ...data,
-        photoUrl: data.photoUrl || photoPreview || undefined, // Persist current preview if no new URL
+        photoUrl: data.photoUrl || photoPreview || undefined, 
       };
 
       await setDoc(doc(db, "studentProfiles", user.uid), profileData, { merge: true });
@@ -121,19 +135,18 @@ export function MySelfForm() {
     }
   };
   
-  // Watch photoUrl for preview updates
   const watchedPhotoUrl = watch("photoUrl");
   useEffect(() => {
     if (watchedPhotoUrl && watchedPhotoUrl.startsWith('http')) {
       setPhotoPreview(watchedPhotoUrl);
     } else if (!watchedPhotoUrl && photoPreview !== (user?.photoURL || null) ) {
-      // If URL is cleared and it's not the original auth photoURL, clear preview
-      // This logic might need refinement based on how photoUrl is handled (direct URL input vs. file upload state)
+      // if photoUrl field is cleared by user, and it's not the default photoURL, clear preview
+      // setPhotoPreview(null); // This line might be too aggressive if user clears field temporarily
     }
   }, [watchedPhotoUrl, user?.photoURL, photoPreview]);
 
 
-  if (isFetchingProfile && !user) { // still waiting for user from auth
+  if (isFetchingProfile && !user) { 
     return (
       <Card className="w-full max-w-2xl mx-auto shadow-xl">
         <CardHeader>
@@ -175,10 +188,26 @@ export function MySelfForm() {
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="motherName">Mother's Name</Label>
-            <Input id="motherName" {...register("motherName")} />
-            {errors.motherName && <p className="text-sm text-destructive mt-1">{errors.motherName.message}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="motherName">Mother's Name</Label>
+              <Input id="motherName" {...register("motherName")} />
+              {errors.motherName && <p className="text-sm text-destructive mt-1">{errors.motherName.message}</p>}
+            </div>
+             <div>
+              <Label htmlFor="gender">Gender</Label>
+              <Select onValueChange={(value) => setValue("gender", value)} value={watch("gender")}>
+                <SelectTrigger id="gender">
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {genderOptions.map(option => (
+                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender.message}</p>}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -203,7 +232,7 @@ export function MySelfForm() {
                 if (e.target.value && e.target.value.startsWith('http')) {
                   setPhotoPreview(e.target.value);
                 } else {
-                  setPhotoPreview(null); // Clear preview if URL is invalid or empty
+                  setPhotoPreview(null); 
                 }
               }}
             />
@@ -277,4 +306,3 @@ export function MySelfForm() {
     </Card>
   );
 }
-

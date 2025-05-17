@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, UserCircle } from "lucide-react";
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users } from "lucide-react"; // Changed UserCircle to Users
 import type { StudentProfile } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -82,7 +82,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
            <Skeleton className="h-4 w-1/4 mt-2" />
         </CardHeader>
         <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+            {[...Array(9)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
         </CardContent>
       </Card>
     );
@@ -114,6 +114,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     );
   }
 
+  console.log("[StudentProfileView] Fetched profile data:", profile);
   console.log("[StudentProfileView] Value for aadharCardNumber before DetailItem:", profile.aadharCardNumber);
 
   return (
@@ -137,11 +138,12 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
         <DetailItem icon={User} label="Full Name" value={`${profile.firstName} ${profile.middleName || ''} ${profile.lastName || ''}`} />
         <DetailItem icon={User} label="Mother's Name" value={profile.motherName || "Not Provided"} />
+        <DetailItem icon={Users} label="Gender" value={profile.gender || "Not Provided"} /> 
         <DetailItem icon={Mail} label="Email" value={profile.email} />
         <DetailItem icon={Phone} label="Contact Number" value={profile.contactNumber} />
         <DetailItem icon={Award} label="Grade & Division" value={`Grade ${profile.grade} - ${profile.division}`} />
         <DetailItem icon={CalendarDays} label="Religion" value={profile.religion} />
-        <DetailItem icon={UserCircle} label="Caste" value={profile.caste} />
+        <DetailItem icon={User} label="Caste" value={profile.caste} />
         <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile.aadharCardNumber || "Not Provided"} />
         <DetailItem icon={BookUser} label="PEN Number" value={profile.penNumber} />
         <DetailItem icon={Hash} label="G.R. Number" value={profile.grNumber} />
@@ -150,4 +152,3 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     </Card>
   );
 }
-

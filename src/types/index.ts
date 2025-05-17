@@ -82,7 +82,8 @@ export interface StudentProfile {
   firstName: string;
   middleName?: string;
   lastName: string;
-  motherName?: string; // Added Mother's Name
+  motherName?: string;
+  gender?: string; // Added Gender
   grade: string;
   division: string;
   contactNumber?: string;
