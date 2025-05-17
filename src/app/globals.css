@@ -12,10 +12,10 @@ body {
     --background: 0 0% 100%; /* White */
     --foreground: 210 15% 25%; /* Dark Slate Blue/Grey for text */
 
-    --card: 0 0% 98%; /* Very Light Grey */
+    --card: 0 0% 98%; /* Very Light Grey for cards */
     --card-foreground: 210 15% 20%;
 
-    --popover: 0 0% 98%; /* Very Light Grey */
+    --popover: 0 0% 98%; /* Very Light Grey for popovers */
     --popover-foreground: 210 15% 20%;
 
     --primary: 217 71% 45%; /* Classic Deep Blue */
@@ -24,7 +24,7 @@ body {
     --secondary: 210 20% 75%; /* Muted Light Blue/Grey */
     --secondary-foreground: 217 71% 25%; /* Darker version of primary for text on secondary */
 
-    --muted: 0 0% 96%; /* Light Grey for muted backgrounds */
+    --muted: 0 0% 96%; /* Light Grey for muted backgrounds (e.g., TabList) */
     --muted-foreground: 210 15% 45%; /* Softer muted text */
 
     --accent: 200 80% 50%; /* A slightly brighter classic blue for accents */
@@ -46,14 +46,16 @@ body {
   }
 
   .dark {
+    /* Dark mode remains white-background based as per previous request,
+       but with distinct element backgrounds. */
     --background: 0 0% 100%; /* White */
-    --foreground: 210 15% 25%; /* Dark Slate Blue/Grey for text (same as light) */
+    --foreground: 210 15% 25%; /* Dark Slate Blue/Grey for text */
 
-    --card: 0 0% 98%; /* Very Light Grey (same as light) */
-    --card-foreground: 210 15% 20%; /* Dark (same as light) */
+    --card: 0 0% 98%; /* Very Light Grey for cards */
+    --card-foreground: 210 15% 20%; 
 
-    --popover: 0 0% 98%; /* Very Light Grey (same as light) */
-    --popover-foreground: 210 15% 20%; /* Dark (same as light) */
+    --popover: 0 0% 98%; /* Very Light Grey for popovers */
+    --popover-foreground: 210 15% 20%;
 
     --primary: 217 71% 65%; /* Lighter Classic Deep Blue for dark mode accents */
     --primary-foreground: 210 15% 10%; /* Very dark text on primary */
@@ -61,18 +63,18 @@ body {
     --secondary: 210 15% 30%; /* Muted dark blue/grey */
     --secondary-foreground: 48 33% 85%; /* Light text on dark secondary */
 
-    --muted: 0 0% 96%; /* Light Grey (same as light) */
-    --muted-foreground: 210 15% 45%; /* Softer muted text (same as light) */
-
+    --muted: 0 0% 96%; /* Light Grey for muted backgrounds (e.g., TabList) */
+    --muted-foreground: 210 15% 45%; 
+    
     --accent: 200 80% 60%; /* Lighter accent blue for dark mode accents */
     --accent-foreground: 210 15% 10%; /* Darker text on accent */
     
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 210 15% 75%; /* Same as light theme border */
-    --input: 210 20% 92%; /* Same as light theme input */
-    --ring: 217 71% 65%; /* Primary color for rings in dark mode (can differ) */
+    --border: 210 15% 75%; 
+    --input: 210 20% 92%; 
+    --ring: 217 71% 65%; 
 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
