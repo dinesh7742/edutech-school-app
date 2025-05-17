@@ -3,8 +3,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, User, LayoutDashboard, Menu as MenuIcon } from "lucide-react";
-import Image from "next/image"; 
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School } from "lucide-react"; // Added School icon
+// Removed Image from next/image as it's no longer used for the logo
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -120,17 +120,10 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-20 items-center justify-between"> {/* Increased height to h-20 */}
+      <div className="container flex h-20 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="https://placehold.co/100x40.png"
-            alt="PM SHRI School Logo"
-            width={100} 
-            height={40}
-            className="block h-10 object-contain" 
-            data-ai-hint="school logo"
-          />
-          <span className="font-semibold text-xl whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span> {/* Increased font size to text-xl */}
+          <School className="h-8 w-8 text-primary" /> {/* Reverted to School icon, adjusted size */}
+          <span className="font-semibold text-xl whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -139,7 +132,7 @@ export function Navbar() {
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10"> {/* Ensured icon button size */}
+                <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
                   <User className="h-5 w-5" />
                   <span className="sr-only">User menu</span>
                 </Button>
@@ -168,22 +161,15 @@ export function Navbar() {
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
-                <MenuIcon className="h-7 w-7" /> {/* Slightly larger menu icon */}
+                <MenuIcon className="h-7 w-7" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <div className="p-4">
                 <Link href="/" className="flex items-center gap-2 mb-4" onClick={() => setMobileMenuOpen(false)}>
-                  <Image
-                    src="https://placehold.co/80x32.png" 
-                    alt="PM SHRI School Logo"
-                    width={80}
-                    height={32}
-                    className="block h-8 object-contain"
-                    data-ai-hint="school logo"
-                  />
-                  <span className="font-semibold text-lg">{schoolName}</span> {/* Increased font size */}
+                  <School className="h-7 w-7 text-primary" /> {/* Reverted to School icon for mobile, adjusted size */}
+                  <span className="font-semibold text-lg">{schoolName}</span>
                 </Link>
                 {mobileNavLinks}
               </div>
