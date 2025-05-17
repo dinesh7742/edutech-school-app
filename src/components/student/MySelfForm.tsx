@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -48,31 +48,41 @@ const profileSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 interface MySelfFormProps {
-  studentIdForEdit?: string; // If provided, teacher is editing this student
-  onSaveSuccess?: () => void; // Callback for teacher view to refresh
-  isTeacherEditing?: boolean; // To adjust UI/toast messages
+  studentIdForEdit?: string;
+  onSaveSuccess?: () => void;
+  isTeacherEditing?: boolean;
 }
 
 export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing = false }: MySelfFormProps) {
-  const { user: loggedInUser } = useAuth(); // This is the logged-in user (student or teacher)
+  const { user: loggedInUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const defaultPhotoPlaceholder = studentIdForEdit 
+  
+  const defaultPhotoPlaceholder = studentIdForEdit
     ? `https://placehold.co/128x128.png?text=Edit+Student`
     : `https://placehold.co/128x128.png?text=My+Photo`;
 
-
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { // Initial default values
+    defaultValues: { // Static default values
         firstName: "",
+        middleName: "",
         lastName: "",
-        grade: "1", // Default grade
-        division: "A", // Default division
-        photoUrl: defaultPhotoPlaceholder,
-        // other fields will be empty or use their Zod defaults
+        motherName: "",
+        dateOfBirth: "",
+        gender: "",
+        grade: "1", 
+        division: "A", 
+        contactNumber: "",
+        aadharCardNumber: "",
+        penNumber: "",
+        grNumber: "",
+        religion: "",
+        caste: "",
+        fullAddress: "",
+        photoUrl: "", // Initialize as empty, useEffect will set specific placeholder
     }
   });
 
@@ -85,20 +95,22 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         const profileDocRef = doc(db, "studentProfiles", profileUidToFetch);
         const profileDoc = await getDoc(profileDocRef);
         
-        const userDocRef = doc(db, "users", profileUidToFetch); // Fetch from 'users' for grade/division fallback
+        const userDocRef = doc(db, "users", profileUidToFetch);
         const userDoc = await getDoc(userDocRef);
         const userData = userDoc.exists() ? userDoc.data() : {};
 
+        let dataToReset: ProfileFormValues;
+
         if (profileDoc.exists()) {
           const data = profileDoc.data() as StudentProfile;
-          reset({ 
+          dataToReset = { 
             firstName: data.firstName || "",
             middleName: data.middleName || "",
             lastName: data.lastName || "",
             motherName: data.motherName || "",
             dateOfBirth: data.dateOfBirth || "",
             gender: data.gender || "",
-            grade: data.grade || userData.grade || "1", // Prioritize profile, then user, then default
+            grade: data.grade || userData.grade || "1",
             division: data.division || userData.division || "A",
             contactNumber: data.contactNumber || "",
             aadharCardNumber: data.aadharCardNumber || "",
@@ -108,17 +120,16 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             caste: data.caste || "",
             fullAddress: data.fullAddress || "",
             photoUrl: data.photoUrl || defaultPhotoPlaceholder,
-          });
+          };
           setPhotoPreview(data.photoUrl || defaultPhotoPlaceholder);
         } else {
-          // Pre-fill from 'users' collection if studentProfile doesn't exist
-          // This is more relevant if a teacher is creating/editing a sparse profile
           const nameParts = userData.displayName?.split(" ") || loggedInUser?.displayName?.split(" ") || [];
-          reset({
+          dataToReset = {
             firstName: nameParts[0] || "",
             lastName: nameParts.length > 1 ? nameParts[nameParts.length -1] : "",
             grade: userData.grade || loggedInUser?.grade || "1",
             division: userData.division || loggedInUser?.division || "A",
+            middleName: "",
             motherName: "",
             dateOfBirth: "",
             gender: "",
@@ -130,17 +141,19 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             caste: "",
             fullAddress: "",
             photoUrl: defaultPhotoPlaceholder,
-          });
+          };
           setPhotoPreview(defaultPhotoPlaceholder);
         }
+        reset(dataToReset);
         setIsFetchingProfile(false);
       };
       fetchProfile();
-    } else if (!isTeacherEditing) { // Only if student is editing their own profile and loggedInUser is null (should not happen with useRequireAuth)
+    } else if (!isTeacherEditing) {
         setIsFetchingProfile(false);
         toast({title: "Error", description: "Could not load user information.", variant: "destructive"});
     }
-  }, [studentIdForEdit, loggedInUser, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
+  }, [studentIdForEdit, loggedInUser?.uid, loggedInUser?.displayName, loggedInUser?.grade, loggedInUser?.division, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
+
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     const profileUidToSave = studentIdForEdit || loggedInUser?.uid;
@@ -151,10 +164,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     }
     setIsLoading(true);
 
-    // Fetch student's email from 'users' collection to store in 'studentProfiles'
-    // This is important if the email isn't part of the StudentProfile type yet from auth.
     let studentEmail = "";
-    if (isTeacherEditing || !loggedInUser?.email) { // If teacher is editing, or student's auth object doesn't have email
+    if (isTeacherEditing || !loggedInUser?.email) {
         const userDocRef = doc(db, "users", profileUidToSave);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -164,12 +175,11 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         studentEmail = loggedInUser?.email || "";
     }
 
-
     try {
       const profileData: StudentProfile = {
         uid: profileUidToSave,
-        email: studentEmail, // Store the student's actual email
-        ...data, // grade and division are now part of 'data' from the form
+        email: studentEmail,
+        ...data,
         photoUrl: data.photoUrl === defaultPhotoPlaceholder ? "" : data.photoUrl || "",
       };
 
@@ -196,12 +206,34 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   
   const watchedPhotoUrl = watch("photoUrl");
   useEffect(() => {
+    // This effect updates photoPreview based on the current form value of photoUrl
     if (watchedPhotoUrl && watchedPhotoUrl.startsWith('http')) {
       setPhotoPreview(watchedPhotoUrl);
-    } else if (!watchedPhotoUrl) {
-      setPhotoPreview(defaultPhotoPlaceholder);
+    } else if (watchedPhotoUrl === "") { // If form field is empty after reset or user clears it
+        setPhotoPreview(defaultPhotoPlaceholder);
+    } else if (!watchedPhotoUrl && !isFetchingProfile) { // Initially, if no URL and not fetching, show default
+        setPhotoPreview(defaultPhotoPlaceholder);
     }
-  }, [watchedPhotoUrl, defaultPhotoPlaceholder]);
+    // Avoid setting to defaultPhotoPlaceholder if watchedPhotoUrl is non-empty but not http (e.g. invalid user input)
+    // In that case, photoPreview might remain as is or clear, letting validation handle the input field.
+  }, [watchedPhotoUrl, defaultPhotoPlaceholder, isFetchingProfile]);
+
+
+  if (isFetchingProfile && !studentIdForEdit && !loggedInUser?.uid) { 
+      // Special case for initial load if loggedInUser is somehow not yet available
+      // This prevents rendering the form until essential auth context is ready
+      return (
+         <Card className="w-full max-w-2xl mx-auto shadow-xl">
+            <CardHeader>
+                <CardTitle>{isTeacherEditing ? "Edit Student Profile" : "My Profile"}</CardTitle>
+                <CardDescription>Verifying user...</CardDescription>
+            </CardHeader>
+             <CardContent className="space-y-4">
+                 <Skeleton className="h-10 w-full" />
+            </CardContent>
+         </Card>
+      )
+  }
 
 
   if (isFetchingProfile) { 
@@ -288,15 +320,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
               <Input 
                 id="photoUrl" 
                 {...register("photoUrl")} 
-                placeholder={defaultPhotoPlaceholder}
-                onChange={(e) => {
-                  setValue("photoUrl", e.target.value);
-                  if (e.target.value && e.target.value.startsWith('http')) {
-                    setPhotoPreview(e.target.value);
-                  } else {
-                     setPhotoPreview(defaultPhotoPlaceholder); 
-                  }
-                }}
+                placeholder={defaultPhotoPlaceholder} // Show dynamic placeholder in input field
+                // onChange is handled by react-hook-form, watcher updates preview
               />
                {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
               {photoPreview ? (
@@ -399,3 +424,5 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     </Card>
   );
 }
+
+    
