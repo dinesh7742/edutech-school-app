@@ -44,10 +44,23 @@ export default function StudentGalleryPage() {
             id: doc.id,
             title: data.title,
             description: data.description || "",
-            images: data.images.map((img: any, idx: number) => ({
-              url: img.url || `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`,
-              alt: img.alt || `${data.title || 'Gallery Image'} - Image ${idx + 1}`,
-            })),
+            images: data.images.map((img: any, idx: number) => {
+              let currentUrl = img.url;
+              const defaultPlaceholder = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
+
+              if (typeof currentUrl === 'string' && (currentUrl.includes('google.com/imgres') || currentUrl.includes('google.com/search'))) {
+                console.warn(`[StudentGalleryPage] Detected Google Image search/result URL: ${currentUrl}. Replacing with placeholder. Please use direct image URLs.`);
+                currentUrl = defaultPlaceholder;
+              } else if (!currentUrl || typeof currentUrl !== 'string') {
+                console.warn(`[StudentGalleryPage] Invalid or missing URL for image in album "${data.title}". Using placeholder.`);
+                currentUrl = defaultPlaceholder;
+              }
+              
+              return {
+                url: currentUrl,
+                alt: img.alt || `${data.title || 'Gallery Image'} - Image ${idx + 1}`,
+              };
+            }),
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
             eventDate: data.eventDate || undefined,
@@ -138,6 +151,14 @@ export default function StudentGalleryPage() {
                       height={300} 
                       className="w-full h-full object-cover"
                       data-ai-hint={generateAiHint(event.title)} 
+                      onError={(e) => {
+                        // Fallback for next/image if the src is still problematic after our initial check
+                        console.warn(`[StudentGalleryPage] NextImage onError for URL: ${img.url}. Replacing with placeholder.`);
+                        const target = e.target as HTMLImageElement;
+                        const albumTitleForPlaceholders = (event.title || "Photo").toLowerCase().split(/\s+/).slice(0, 2).join(" ") || "Photo";
+                        target.src = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
+                        target.srcset = ""; // Clear srcset if it was set
+                      }}
                     />
                   </div>
                 ))}
