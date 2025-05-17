@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, User, LayoutDashboard, Menu as MenuIcon } from "lucide-react";
-import Image from "next/image"; // Added import for Next/Image
+import Image from "next/image"; 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -125,9 +125,9 @@ export function Navbar() {
           <Image
             src="https://placehold.co/100x40.png"
             alt="PM SHRI School Logo"
-            width={100}
+            width={100} 
             height={40}
-            className="h-10 w-[100px] object-contain"
+            className="block h-10 object-contain" 
             data-ai-hint="school logo"
           />
           <span className="font-semibold text-lg whitespace-nowrap truncate" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">{schoolName}</span>
@@ -180,7 +180,7 @@ export function Navbar() {
                     alt="PM SHRI School Logo"
                     width={80}
                     height={32}
-                    className="h-8 w-[80px] object-contain"
+                    className="block h-8 object-contain"
                     data-ai-hint="school logo"
                   />
                   <span className="font-semibold text-md">{schoolName}</span>
