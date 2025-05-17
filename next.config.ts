@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'jmp.sh',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
