@@ -3,7 +3,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Hash, MapPin, Building } from "lucide-react";
+import Image from "next/image"; // Import next/image
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,13 +19,7 @@ import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
 
-const schoolName = "PM SHRI MPS VARSHA NAGAR";
-const contactNumber = "+917506137742";
-const emailAddress = "varshanagarmps@gmail.com";
-const udiseNumber = "27220600119";
-const wardInfo = "S Ward";
-const addressInfo = "Veer savarkar marg, Beside Prabodhankar Thakare Garden, Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
-
+const headerImageUrl = "https://placehold.co/1230x220.png"; // Placeholder for your header image
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -97,7 +92,7 @@ export function Navbar() {
   );
 
   const mobileNavLinks = (
-    <div className="flex flex-col space-y-2 pt-2"> {/* Reduced pt from 4 to 2 */}
+    <div className="flex flex-col space-y-2 pt-2">
       {user ? (
         <>
           <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
@@ -125,40 +120,21 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
-      <div className="container flex h-auto py-3 items-start justify-between"> {/* Changed h-20 to h-auto py-3, items-center to items-start */}
-        <Link href="/" className="flex items-start gap-3"> {/* Changed gap-2 to gap-3 */}
-          <School className="h-10 w-10 text-primary mt-1 flex-shrink-0" /> {/* Adjusted size to match example image */}
-          <div className="max-w-md">
-            <span className="block font-semibold text-xl whitespace-nowrap" title="PM SHRI MPS VARSHA NAGAR VIKHROLI WEST MUMBAI 79">
-              {schoolName}
-            </span>
-            <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
-              <div className="flex items-center gap-1.5">
-                <Phone size={12} className="flex-shrink-0" />
-                <span>{contactNumber}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Mail size={12} className="flex-shrink-0" />
-                <span>{emailAddress}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Hash size={12} className="flex-shrink-0" />
-                <span>UDISE: {udiseNumber}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Building size={12} className="flex-shrink-0" />
-                <span>Ward: {wardInfo}</span>
-              </div>
-              <div className="flex items-start gap-1.5">
-                <MapPin size={12} className="flex-shrink-0 mt-0.5" />
-                <span className="whitespace-normal">{addressInfo}</span>
-              </div>
-            </div>
-          </div>
+      <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between"> {/* Adjusted height and items-center */}
+        <Link href="/" className="flex items-center">
+          <Image
+            src={headerImageUrl}
+            alt="School Header"
+            width={1230} // Original image width
+            height={220} // Original image height
+            className="h-14 md:h-16 w-auto object-contain" // Displayed height, width auto
+            priority // Load this image eagerly as it's LCP
+            data-ai-hint="school banner"
+          />
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-1 mt-1"> {/* Adjusted space-x-2 to space-x-1, added mt-1 */}
+        <nav className="hidden md:flex items-center space-x-1">
           {navLinks}
           {user && (
             <DropdownMenu>
@@ -188,7 +164,7 @@ export function Navbar() {
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden mt-1"> {/* Added mt-1 */}
+        <div className="md:hidden">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -198,35 +174,17 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[320px] overflow-y-auto">
               <div className="p-4">
-                <Link href="/" className="flex items-start gap-2 mb-3" onClick={() => setMobileMenuOpen(false)}> {/* Changed mb-4 to mb-3 */}
-                  <School className="h-8 w-8 text-primary mt-0.5 flex-shrink-0" /> {/* Adjusted size for mobile */}
-                  <div className="max-w-xs">
-                    <span className="block font-semibold text-lg">{schoolName}</span>
-                     <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                            <Phone size={12} className="flex-shrink-0" />
-                            <span>{contactNumber}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Mail size={12} className="flex-shrink-0" />
-                            <span>{emailAddress}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Hash size={12} className="flex-shrink-0" />
-                            <span>UDISE: {udiseNumber}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <Building size={12} className="flex-shrink-0" />
-                            <span>Ward: {wardInfo}</span>
-                        </div>
-                        <div className="flex items-start gap-1.5">
-                            <MapPin size={12} className="flex-shrink-0 mt-0.5" />
-                            <span className="whitespace-normal">{addressInfo}</span>
-                        </div>
-                    </div>
-                  </div>
+                <Link href="/" className="flex items-center mb-3" onClick={() => setMobileMenuOpen(false)}>
+                  <Image
+                    src={headerImageUrl}
+                    alt="School Header"
+                    width={1230} // Original image width
+                    height={220} // Original image height
+                    className="h-12 w-auto object-contain" // Smaller height for mobile menu
+                    data-ai-hint="school banner"
+                  />
                 </Link>
-                <hr className="my-3"/> {/* Added separator */}
+                <hr className="my-3"/>
                 {mobileNavLinks}
               </div>
             </SheetContent>
