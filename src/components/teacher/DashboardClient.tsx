@@ -61,11 +61,9 @@ export function TeacherDashboardClient() {
         } catch (err: any) {
           console.error("Error fetching student data for teacher's class:", err);
           if (err.code === 'failed-precondition') {
-            // This error usually means a composite index is required.
-            // Firestore console should provide a link to create it.
             const firestoreConsoleLink = `https://console.firebase.google.com/project/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/firestore/indexes`;
             setStudentCountError(
-              `Failed to fetch student count. This query likely requires a Firestore index for 'grade' AND 'division' on the 'studentProfiles' collection. Please check the browser console for a direct link to create it, or visit Firestore console: ${firestoreConsoleLink}`
+              `Failed to fetch student count. Firestore index required for 'grade' & 'division' on 'studentProfiles'. Check console or visit: ${firestoreConsoleLink}`
             );
           } else {
             setStudentCountError("Failed to fetch student data. Please try again later.");
@@ -154,7 +152,9 @@ export function TeacherDashboardClient() {
             <Settings className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
-             <Button variant="outline" size="sm" className="w-full">Profile Settings</Button>
+             <Button variant="outline" size="sm" className="w-full" asChild>
+                <Link href="/teacher/profile">Profile Settings</Link>
+             </Button>
              <p className="text-xs text-muted-foreground mt-1">Manage your account</p>
           </CardContent>
         </Card>
