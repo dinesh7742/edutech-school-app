@@ -161,3 +161,11 @@ export interface LeaveApplication {
   reviewTimestamp?: Timestamp | FieldValue;
   teacherComments?: string; // Optional: for teachers to add comments during review
 }
+
+export interface SchoolForm {
+  id: string;
+  title: string;
+  description: string;
+  pdfUrl: string; // Relative path to the PDF in the public/forms directory
+  dataAiHint: string;
+}

@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass, FileArchive } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -78,12 +78,15 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
+        // Fetch a few recent items for client-side filtering
         const q = query(ref, orderBy("timestamp", "desc"), limit(5));
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
+        // Find the most recent relevant item
         const relevantItem = allRecentItems.find(item => {
           if (!user.grade || !user.division) {
+             // If student has no grade/division, only show school-wide items
              return !item.grade && !item.division;
           }
           const isSchoolWide = !item.grade || item.grade === "";
@@ -145,7 +148,7 @@ export function StudentDashboardClient() {
             ...hwData,
             timestamp: hwData.timestamp as Timestamp,
             displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
+            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', // Corrected dueDate parsing
           } as Homework;
           setLatestHomework({ item: currentHomeworkItem, loading: false });
 
@@ -231,6 +234,7 @@ export function StudentDashboardClient() {
         title: "Homework Marked!",
         description: `"${homeworkItem.title}" marked as completed.`,
       });
+      // TODO: Implement teacher notification (e.g., via Cloud Functions)
       console.log("TODO: Notify teacher about homework completion for homeworkId:", homeworkItem.id, "by studentId:", user.uid);
     } catch (error: any) {
       console.error("Error marking homework as completed:", error);
@@ -256,7 +260,7 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -279,7 +283,7 @@ export function StudentDashboardClient() {
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
@@ -326,7 +330,7 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data ? (
-         <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+         <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -356,7 +360,7 @@ export function StudentDashboardClient() {
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data ? (
-        <div className="text-left w-full space-y-2 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-2 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.subject}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -384,7 +388,7 @@ export function StudentDashboardClient() {
       description: "Submit leave requests and check their status.",
       contentData: latestLeaveApplication,
       renderContent: (data: LeaveApplication | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-md truncate">Latest Application Status</h3>
             <Badge variant={getLeaveStatusBadgeVariant(data.status)}>{data.status}</Badge>
@@ -427,6 +431,18 @@ export function StudentDashboardClient() {
       renderContent: null,
       emptyMessage: ""
     },
+    {
+      id: "schoolForms",
+      title: "School Forms",
+      icon: FileArchive,
+      link: "/student/school-forms",
+      buttonText: "Download Forms",
+      dataAiHint: "file archive documents",
+      description: "Access various school application forms and consents.",
+      contentData: null,
+      renderContent: null,
+      emptyMessage: ""
+    },
   ];
 
   return (
@@ -453,7 +469,7 @@ export function StudentDashboardClient() {
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               {card.renderContent && card.contentData?.loading && (
-                <div className="flex flex-col items-center justify-center flex-grow min-h-[100px]">
+                <div className="flex flex-col items-center justify-center flex-grow">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
@@ -462,7 +478,7 @@ export function StudentDashboardClient() {
                 card.renderContent(card.contentData.item as any)
               )}
               {card.renderContent && !card.contentData?.loading && !card.contentData?.item && (
-                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center min-h-[100px]">{card.emptyMessage}</p>
+                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center">{card.emptyMessage}</p>
               )}
               {!card.renderContent && (
                  <div className="flex-grow flex items-center justify-center">
