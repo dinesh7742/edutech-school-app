@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -127,6 +127,7 @@ export function TeacherDashboardClient() {
           Caste: data.caste || "",
           "Full Address": data.fullAddress || "",
           "Photo URL": data.photoUrl || "",
+          "Date of Birth": data.dateOfBirth || ""
         };
       });
 
@@ -190,7 +191,7 @@ export function TeacherDashboardClient() {
     },
     {
       title: "Upcoming Events",
-      icon: BarChart3,
+      icon: BarChart3, // Changed from CalendarDays to BarChart3 for more variety if needed
       dataAiHint: "calendar event",
       content: (
         <>
@@ -201,7 +202,7 @@ export function TeacherDashboardClient() {
     },
     {
       title: "Profile Settings",
-      icon: UserCog,
+      icon: UserCog, // Changed from Settings to UserCog
       dataAiHint: "user settings",
       content: (
         <>
@@ -218,7 +219,16 @@ export function TeacherDashboardClient() {
      {
       title: "Manage Content",
       icon: UploadCloud,
-      description: "Post notices, homework, circulars, textbooks, and gallery photos for students.",
+      description: (
+        <ul className="space-y-1 text-left text-xs sm:text-sm text-muted-foreground px-2 sm:px-4">
+          <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" /> Notices</li>
+          <li className="flex items-center"><ClipboardList className="mr-2 h-4 w-4 text-primary" /> Homework</li>
+          <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" /> Circulars</li>
+          <li className="flex items-center"><BookOpen className="mr-2 h-4 w-4 text-primary" /> Textbooks</li>
+          <li className="flex items-center"><ImageIconLucide className="mr-2 h-4 w-4 text-primary" /> Gallery Photos</li>
+          <li className="flex items-center"><Video className="mr-2 h-4 w-4 text-primary" /> Live Classes</li>
+        </ul>
+      ),
       link: "/teacher/post-content",
       buttonText: "Post Content",
       dataAiHint: "cloud upload"
@@ -283,9 +293,15 @@ export function TeacherDashboardClient() {
                     <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 min-h-[220px]">
-                    <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-12 line-clamp-3 overflow-hidden">
-                        {item.description}
-                    </p>
+                    {typeof item.description === 'string' ? (
+                        <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-auto min-h-[60px] line-clamp-none overflow-hidden">
+                            {item.description}
+                        </p>
+                    ) : (
+                         <div className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-auto min-h-[60px] flex-grow">
+                            {item.description}
+                        </div>
+                    )}
                     {item.link ? (
                         <Button asChild className="w-full mt-auto">
                             <Link href={item.link}>{item.buttonText}</Link>
@@ -314,4 +330,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
