@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"; // Added SheetHeader, SheetTitle
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
@@ -26,6 +26,8 @@ const emailAddress = "varshanagarmps@gmail.com";
 const udiseNumber = "27220600119";
 const wardInfo = "S ward";
 const addressInfo = "Veer savarkar marg,Beside Prabodhankar Thakare Garden,Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
+
+const headerImageUrl = "https://placehold.co/1230x220.png";
 
 
 export function Navbar() {
@@ -127,33 +129,13 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground">
-      <div className="container flex h-auto min-h-[80px] py-3 items-start justify-between">
-        <Link href="/" className="flex items-start space-x-3">
-          <School className="h-10 w-10 mt-1 flex-shrink-0" />
-          <div className="flex flex-col max-w-md">
-            <span className="text-xl font-bold">{schoolName}</span>
-            <div className="text-xs space-y-0.5 mt-1">
-                <div className="flex items-center gap-1.5">
-                    <Phone size={12} /> <span>{contactNumber}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <Mail size={12} /> <span>{emailAddress}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <Info size={12} /> <span>UDISE: {udiseNumber}</span>
-                </div>
-                 <div className="flex items-center gap-1.5">
-                    <Building size={12} /> <span>Ward: {wardInfo}</span>
-                </div>
-                <div className="flex items-start gap-1.5 whitespace-normal">
-                    <MapPin size={12} className="mt-0.5 flex-shrink-0" /> <span>{addressInfo}</span>
-                </div>
-            </div>
-          </div>
+      <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between">
+        <Link href="/" className="flex items-center space-x-3">
+            <Image src={headerImageUrl} alt={`${schoolName} Header`} width={1230} height={220} className="block h-14 sm:h-16 w-auto object-contain" priority data-ai-hint="school banner"/>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-1 mt-1">
+        <nav className="hidden md:flex items-center space-x-1">
           {navLinks}
           {user && (
             <DropdownMenu>
@@ -163,7 +145,7 @@ export function Navbar() {
                   <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end"> {/* Dropdown content will use card/popover theme from globals.css */}
+              <DropdownMenuContent align="end">
                 <DropdownMenuItem disabled>
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user.displayName || user.email}</p>
@@ -183,7 +165,7 @@ export function Navbar() {
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden mt-1">
+        <div className="md:hidden">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10">
@@ -191,32 +173,14 @@ export function Navbar() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px] overflow-y-auto bg-card text-card-foreground"> {/* Mobile sheet uses card theme */}
-              <div className="p-4">
-                <Link href="/" className="flex items-start space-x-2 mb-3" onClick={() => setMobileMenuOpen(false)}>
-                   <School className="h-8 w-8 text-primary mt-1 flex-shrink-0" /> {/* Icon uses primary color from card theme */}
-                    <div className="flex flex-col max-w-xs">
-                        <span className="text-lg font-bold text-primary">{schoolName}</span>
-                         <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
-                            <div className="flex items-center gap-1.5">
-                                <Phone size={12} /> <span>{contactNumber}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <Mail size={12} /> <span>{emailAddress}</span>
-                            </div>
-                             <div className="flex items-center gap-1.5">
-                                <Info size={12} /> <span>UDISE: {udiseNumber}</span>
-                            </div>
-                             <div className="flex items-center gap-1.5">
-                                <Building size={12} /> <span>Ward: {wardInfo}</span>
-                            </div>
-                            <div className="flex items-start gap-1.5 whitespace-normal">
-                                <MapPin size={12} className="mt-0.5 flex-shrink-0" /> <span>{addressInfo}</span>
-                            </div>
-                        </div>
-                    </div>
-                </Link>
-                <hr className="my-3"/>
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-card text-card-foreground flex flex-col p-0">
+              <SheetHeader className="p-4 border-b text-left">
+                <SheetTitle className="flex items-center gap-2 text-lg">
+                  <School className="h-6 w-6 text-primary" /> 
+                  {schoolName}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="p-4 flex-grow overflow-y-auto">
                 {mobileNavLinks}
               </div>
             </SheetContent>
@@ -226,3 +190,4 @@ export function Navbar() {
     </header>
   );
 }
+
