@@ -6,14 +6,16 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, Tv2, ListChecks, CalendarCheck } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs, Timestamp, where } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass } from "@/types";
+import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary"; 
+import { useToast } from "@/hooks/use-toast";
+
 
 interface LatestContent<T> {
   item: T | null;
@@ -29,10 +31,14 @@ const isNew = (timestamp: Timestamp | undefined): boolean => {
 
 export function StudentDashboardClient() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [latestNotice, setLatestNotice] = useState<LatestContent<Notice>>({ item: null, loading: true });
   const [latestHomework, setLatestHomework] = useState<LatestContent<Homework>>({ item: null, loading: true });
   const [latestCircular, setLatestCircular] = useState<LatestContent<Circular>>({ item: null, loading: true });
   const [latestLiveClass, setLatestLiveClass] = useState<LatestContent<LiveClass>>({ item: null, loading: true });
+  
+  const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
+  const [completingHomework, setCompletingHomework] = useState(false);
 
 
   useEffect(() => {
@@ -46,15 +52,13 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
-        // Fetch 5 most recent for client-side filtering for notices, circulars, live classes
-        // This ensures we find a relevant item even if the absolute latest isn't for this student
         const q = query(ref, orderBy("timestamp", "desc"), limit(5)); 
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
         const relevantItem = allRecentItems.find(item => {
           if (!user.grade || !user.division) { 
-             return !item.grade && !item.division; // Only school-wide if student has no grade/division
+             return !item.grade && !item.division;
           }
           const isSchoolWide = !item.grade || item.grade === "";
           const isGradeMatch = item.grade === user.grade;
@@ -88,13 +92,15 @@ export function StudentDashboardClient() {
     } as LiveClass));
 
 
-    // Fetch Latest Homework (specific query for student's class)
     const fetchLatestHomework = async () => {
-      if (!user.grade || !user.division) {
+      if (!user?.uid || !user?.grade || !user?.division) {
         setLatestHomework({ item: null, loading: false });
+        setIsLatestHomeworkCompleted(false);
         return;
       }
       setLatestHomework(prev => ({ ...prev, loading: true }));
+      setIsLatestHomeworkCompleted(false); 
+
       try {
         const homeworkRef = collection(db, "homework");
         const q = query(
@@ -108,32 +114,83 @@ export function StudentDashboardClient() {
         if (!homeworkSnapshot.empty) {
           const hwDoc = homeworkSnapshot.docs[0];
           const hwData = hwDoc.data();
-          setLatestHomework({
-            item: {
-              id: hwDoc.id,
-              ...hwData,
-              timestamp: hwData.timestamp as Timestamp,
-              displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-              dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
-            } as Homework,
-            loading: false,
-          });
+          const currentHomeworkItem = {
+            id: hwDoc.id,
+            ...hwData,
+            timestamp: hwData.timestamp as Timestamp,
+            displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
+          } as Homework;
+          setLatestHomework({ item: currentHomeworkItem, loading: false });
+
+          // Check completion status
+          const submissionDocId = `${currentHomeworkItem.id}_${user.uid}`;
+          const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
+          const submissionSnap = await getDoc(submissionDocRef);
+          if (submissionSnap.exists()) {
+            setIsLatestHomeworkCompleted(true);
+          } else {
+            setIsLatestHomeworkCompleted(false);
+          }
+
         } else {
           setLatestHomework({ item: null, loading: false });
+          setIsLatestHomeworkCompleted(false);
         }
-      } catch (error)
-      {
+      } catch (error) {
         console.error("Error fetching latest homework:", error);
         setLatestHomework({ item: null, loading: false });
+        setIsLatestHomeworkCompleted(false);
          if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
              console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
-            // Optionally, you could use toast here to inform the admin/user if this is critical
         }
       }
     };
     fetchLatestHomework();
 
   }, [user]);
+
+  const handleMarkHomeworkCompleted = async (homeworkItem: Homework) => {
+    if (!user || !homeworkItem || !user.uid || !user.grade || !user.division) {
+      toast({ title: "Error", description: "User or homework details missing.", variant: "destructive"});
+      return;
+    }
+    setCompletingHomework(true);
+    const submissionDocId = `${homeworkItem.id}_${user.uid}`;
+    const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
+
+    const submissionData: HomeworkSubmission = {
+      homeworkId: homeworkItem.id,
+      studentId: user.uid,
+      studentName: user.displayName || "Unknown Student",
+      grade: user.grade,
+      division: user.division,
+      homeworkTitle: homeworkItem.title,
+      completedAt: serverTimestamp(),
+      status: 'completed',
+    };
+
+    try {
+      await setDoc(submissionDocRef, submissionData);
+      setIsLatestHomeworkCompleted(true);
+      toast({
+        title: "Homework Marked!",
+        description: `"${homeworkItem.title}" marked as completed.`,
+      });
+      // TODO: Implement teacher notification (e.g., via Cloud Function)
+      console.log("TODO: Notify teacher about homework completion for homeworkId:", homeworkItem.id, "by studentId:", user.uid);
+    } catch (error: any) {
+      console.error("Error marking homework as completed:", error);
+      toast({
+        title: "Error",
+        description: `Could not mark homework as completed. ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setCompletingHomework(false);
+    }
+  };
+
 
   const dashboardCards = [
     {
@@ -183,6 +240,24 @@ export function StudentDashboardClient() {
                 <Download className="mr-2 h-4 w-4" /> {data.fileName || 'Download Attachment'}
               </a>
             </Button>
+          )}
+          {data && !isLatestHomeworkCompleted && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 w-full"
+              onClick={() => handleMarkHomeworkCompleted(data)}
+              disabled={completingHomework}
+            >
+              {completingHomework && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Mark as Completed
+            </Button>
+          )}
+          {data && isLatestHomeworkCompleted && (
+            <Badge variant="accent" className="mt-2 w-full flex items-center justify-center text-center py-2 px-4 text-sm">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Homework Completed
+            </Badge>
           )}
         </div>
       ) : null,
@@ -308,7 +383,6 @@ export function StudentDashboardClient() {
               )}
               {!card.renderContent && ( 
                  <div className="flex-grow flex items-center justify-center">
-                    {/* Placeholder for cards without dynamic content, ensuring button is at bottom */}
                  </div> 
               )}
               <Button asChild className="w-full mt-auto">
@@ -351,5 +425,3 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-
-    
