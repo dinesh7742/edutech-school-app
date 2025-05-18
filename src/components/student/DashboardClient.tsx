@@ -6,15 +6,16 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, LeaveApplication } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
-import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary"; 
+import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
 import { useToast } from "@/hooks/use-toast";
+import { format, parseISO } from "date-fns";
 
 
 interface LatestContent<T> {
@@ -29,6 +30,30 @@ const isNew = (timestamp: Timestamp | undefined): boolean => {
   return itemDate > twentyFourHoursAgo;
 };
 
+const getLeaveStatusBadgeVariant = (status?: LeaveApplication['status']) => {
+  if (!status) return "default";
+  switch (status) {
+    case "Pending":
+      return "outline";
+    case "Approved":
+      return "accent";
+    case "Rejected":
+      return "destructive";
+    default:
+      return "default";
+  }
+};
+
+const formatDateDisplay = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    try {
+      return format(parseISO(dateString), "dd MMM yyyy");
+    } catch (e) {
+      return dateString; // Fallback if parsing fails
+    }
+};
+
+
 export function StudentDashboardClient() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -36,7 +61,8 @@ export function StudentDashboardClient() {
   const [latestHomework, setLatestHomework] = useState<LatestContent<Homework>>({ item: null, loading: true });
   const [latestCircular, setLatestCircular] = useState<LatestContent<Circular>>({ item: null, loading: true });
   const [latestLiveClass, setLatestLiveClass] = useState<LatestContent<LiveClass>>({ item: null, loading: true });
-  
+  const [latestLeaveApplication, setLatestLeaveApplication] = useState<LatestContent<LeaveApplication>>({ item: null, loading: true });
+
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
   const [completingHomework, setCompletingHomework] = useState(false);
 
@@ -52,14 +78,12 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
-        // Fetch more items initially to increase chances of finding a relevant one after client-side filtering
-        const q = query(ref, orderBy("timestamp", "desc"), limit(5)); 
+        const q = query(ref, orderBy("timestamp", "desc"), limit(5));
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
-        // Client-side filtering to find the most recent relevant item
         const relevantItem = allRecentItems.find(item => {
-          if (!user.grade || !user.division) { // If student has no grade/division, only show school-wide
+          if (!user.grade || !user.division) {
              return !item.grade && !item.division;
           }
           const isSchoolWide = !item.grade || item.grade === "";
@@ -74,7 +98,7 @@ export function StudentDashboardClient() {
         setter({ item: null, loading: false });
       }
     };
-    
+
     fetchGenericLatestItem<Notice>("notices", setLatestNotice, (data) => ({
       ...data,
       timestamp: data.timestamp as Timestamp,
@@ -101,7 +125,7 @@ export function StudentDashboardClient() {
         return;
       }
       setLatestHomework(prev => ({ ...prev, loading: true }));
-      setIsLatestHomeworkCompleted(false); 
+      setIsLatestHomeworkCompleted(false);
 
       try {
         const homeworkRef = collection(db, "homework");
@@ -125,15 +149,10 @@ export function StudentDashboardClient() {
           } as Homework;
           setLatestHomework({ item: currentHomeworkItem, loading: false });
 
-          // Check completion status
           const submissionDocId = `${currentHomeworkItem.id}_${user.uid}`;
           const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
           const submissionSnap = await getDoc(submissionDocRef);
-          if (submissionSnap.exists()) {
-            setIsLatestHomeworkCompleted(true);
-          } else {
-            setIsLatestHomeworkCompleted(false);
-          }
+          setIsLatestHomeworkCompleted(submissionSnap.exists());
 
         } else {
           setLatestHomework({ item: null, loading: false });
@@ -150,6 +169,38 @@ export function StudentDashboardClient() {
       }
     };
     fetchLatestHomework();
+
+    const fetchLatestLeaveApplication = async () => {
+      if (!user?.uid) {
+        setLatestLeaveApplication({ item: null, loading: false });
+        return;
+      }
+      setLatestLeaveApplication(prev => ({ ...prev, loading: true }));
+      try {
+        const leaveAppsRef = collection(db, "leaveApplications");
+        const q = query(
+          leaveAppsRef,
+          where("studentUid", "==", user.uid),
+          orderBy("applicationDate", "desc"),
+          limit(1)
+        );
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const appDoc = snapshot.docs[0];
+          setLatestLeaveApplication({ item: { id: appDoc.id, ...appDoc.data() } as LeaveApplication, loading: false });
+        } else {
+          setLatestLeaveApplication({ item: null, loading: false });
+        }
+      } catch (error) {
+        console.error("Error fetching latest leave application:", error);
+        setLatestLeaveApplication({ item: null, loading: false });
+        if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
+          console.error("Firestore index required for leave application query. Collection: 'leaveApplications', Fields: studentUid (ASC), applicationDate (DESC).");
+          toast({title: "Error", description: "Database setup needed for leave status. Please contact admin.", variant: "destructive"});
+        }
+      }
+    };
+    fetchLatestLeaveApplication();
 
   }, [user, toast]);
 
@@ -205,7 +256,7 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -228,7 +279,7 @@ export function StudentDashboardClient() {
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
@@ -275,7 +326,7 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data ? (
-         <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
+         <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -299,13 +350,13 @@ export function StudentDashboardClient() {
       id: "liveClass",
       title: "Live Class",
       icon: Video,
-      link: "/student/live-classes", 
+      link: "/student/live-classes",
       buttonText: "View All Live Classes",
       dataAiHint: "video conference",
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data ? (
-        <div className="text-left w-full space-y-2 p-2 border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-2 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.subject}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -324,6 +375,35 @@ export function StudentDashboardClient() {
       emptyMessage: "No live classes scheduled for you."
     },
     {
+      id: "applyLeave",
+      title: "Leave Application",
+      icon: CalendarPlus,
+      link: "/student/apply-leave",
+      buttonText: "Apply or View History",
+      dataAiHint: "calendar plus",
+      description: "Submit leave requests and check their status.",
+      contentData: latestLeaveApplication,
+      renderContent: (data: LeaveApplication | null) => data ? (
+        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-md truncate">Latest Application Status</h3>
+            <Badge variant={getLeaveStatusBadgeVariant(data.status)}>{data.status}</Badge>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Applied: {data.applicationDate ? formatDateDisplay( (data.applicationDate as Timestamp).toDate().toISOString().split('T')[0]) : 'N/A'}
+          </div>
+          <p className="text-sm">
+            <strong>Dates:</strong> {formatDateDisplay(data.leaveStartDate)} to {formatDateDisplay(data.leaveEndDate)}
+          </p>
+          <p className="text-sm line-clamp-2"><strong>Reason:</strong> {data.reason}</p>
+          {data.teacherComments && (data.status === "Approved" || data.status === "Rejected") && (
+            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher Comments:</strong> {data.teacherComments}</p>
+          )}
+        </div>
+      ) : null,
+      emptyMessage: "You haven't applied for leave recently."
+    },
+    {
       id: "textbooks",
       title: "Textbooks",
       icon: BookOpen,
@@ -331,7 +411,7 @@ export function StudentDashboardClient() {
       buttonText: "View Textbooks",
       dataAiHint: "book open",
       description: "Access your digital textbooks for all subjects.",
-      contentData: null, 
+      contentData: null,
       renderContent: null,
       emptyMessage: ""
     },
@@ -358,21 +438,22 @@ export function StudentDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
           <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-center mb-3">
-                <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint} />
-              </div>
+            <CardHeader className="pb-2 items-center">
+              <card.icon className="h-16 w-16 text-foreground mb-3" data-ai-hint={card.dataAiHint} />
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
-                {card.contentData?.item && isNew((card.contentData.item as any).timestamp) && (
+                {card.contentData?.item && isNew((card.contentData.item as any).timestamp || (card.contentData.item as LeaveApplication).applicationDate) && (
                   <Badge variant="accent" className="animate-pulse">New</Badge>
                 )}
+                 {card.id === 'applyLeave' && latestLeaveApplication.item?.status === "Pending" && (
+                    <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
+                 )}
               </CardTitle>
                <CardDescription className="text-sm h-10 line-clamp-2">{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               {card.renderContent && card.contentData?.loading && (
-                <div className="flex flex-col items-center justify-center flex-grow">
+                <div className="flex flex-col items-center justify-center flex-grow min-h-[100px]">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
@@ -381,11 +462,11 @@ export function StudentDashboardClient() {
                 card.renderContent(card.contentData.item as any)
               )}
               {card.renderContent && !card.contentData?.loading && !card.contentData?.item && (
-                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center">{card.emptyMessage}</p>
+                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center min-h-[100px]">{card.emptyMessage}</p>
               )}
-              {!card.renderContent && ( 
+              {!card.renderContent && (
                  <div className="flex-grow flex items-center justify-center">
-                 </div> 
+                 </div>
               )}
               <Button asChild className="w-full mt-auto">
                 <Link href={card.link}>{card.buttonText}</Link>
@@ -394,10 +475,8 @@ export function StudentDashboardClient() {
           </Card>
         ))}
          <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-center mb-3">
-                    <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
-                </div>
+            <CardHeader className="pb-2 items-center">
+                <ListChecks className="h-16 w-16 text-foreground mb-3" data-ai-hint="attendance list" />
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm h-10 line-clamp-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
@@ -408,26 +487,9 @@ export function StudentDashboardClient() {
               </Button>
             </CardContent>
           </Card>
-           <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-center mb-3">
-                    <CalendarPlus className="h-16 w-16 text-foreground" data-ai-hint="calendar plus" />
-                </div>
-                <CardTitle className="text-xl font-semibold">Apply for Leave</CardTitle>
-                <CardDescription className="text-sm h-10 line-clamp-2">Submit a leave application for approval.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
-              <div className="flex-grow"></div>
-              <Button asChild className="w-full mt-auto">
-                <Link href="/student/apply-leave">Apply for Leave</Link>
-              </Button>
-            </CardContent>
-          </Card>
         <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader className="pb-2">
-                <div className="flex items-center justify-center mb-3">
-                    <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
-                </div>
+            <CardHeader className="pb-2 items-center">
+                <UserCircle className="h-16 w-16 text-foreground mb-3" data-ai-hint="user profile" />
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm h-10 line-clamp-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>

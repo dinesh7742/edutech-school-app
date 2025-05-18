@@ -99,8 +99,8 @@ export interface StudentProfile {
   motherName?: string;
   dateOfBirth?: string;
   gender?: string;
-  grade: string; 
-  division: string; 
+  grade: string;
+  division: string;
   contactNumber?: string;
   aadharCardNumber?: string;
   penNumber?: string;
@@ -109,12 +109,12 @@ export interface StudentProfile {
   caste?: string;
   fullAddress?: string;
   photoUrl?: string;
-  email?: string; 
+  email?: string;
 }
 
 export interface LiveClass {
   id: string;
-  subject: string; 
+  subject: string;
   meetingLink: string;
   description?: string;
   postedByUid: string;
@@ -161,4 +161,3 @@ export interface LeaveApplication {
   reviewTimestamp?: Timestamp | FieldValue;
   teacherComments?: string; // Optional: for teachers to add comments during review
 }
-
