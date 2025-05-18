@@ -5,19 +5,15 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2 } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import type { StudentProfile } from "@/types";
+import { collection, query, where, getDocs, orderBy, limit, Timestamp } from "firebase/firestore";
+import type { StudentProfile, HomeworkSubmission } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
-
-const mockTeacherStats = {
-  pendingAssignments: 5,
-  upcomingEvents: 2,
-};
+import { format } from "date-fns";
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -28,6 +24,11 @@ export function TeacherDashboardClient() {
   const [loadingStudentCount, setLoadingStudentCount] = useState(true);
   const [studentCountError, setStudentCountError] = useState<string | null>(null);
   const [isDownloadingStudentData, setIsDownloadingStudentData] = useState(false);
+
+  const [recentSubmissions, setRecentSubmissions] = useState<HomeworkSubmission[]>([]);
+  const [loadingSubmissions, setLoadingSubmissions] = useState(true);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -85,7 +86,51 @@ export function TeacherDashboardClient() {
       }
     };
 
+    const fetchRecentSubmissions = async () => {
+      if (teacherUser && teacherUser.grade && teacherUser.division) {
+        setLoadingSubmissions(true);
+        setSubmissionsError(null);
+        try {
+          const submissionsRef = collection(db, "homeworkSubmissions");
+          const q = query(
+            submissionsRef,
+            where("grade", "==", teacherUser.grade),
+            where("division", "==", teacherUser.division),
+            orderBy("completedAt", "desc"),
+            limit(5) // Show latest 5 submissions
+          );
+          const querySnapshot = await getDocs(q);
+          const fetchedSubmissions = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              completedAt: data.completedAt as Timestamp, // Ensure type
+            } as HomeworkSubmission;
+          });
+          setRecentSubmissions(fetchedSubmissions);
+        } catch (err: any) {
+          console.error("Error fetching recent homework submissions:", err);
+          if (err.code === 'failed-precondition') {
+            setSubmissionsError(
+              `Firestore index required for homework submissions. Please check console for a link to create it.`
+            );
+          } else {
+            setSubmissionsError("Failed to fetch recent submissions.");
+          }
+        } finally {
+          setLoadingSubmissions(false);
+        }
+      } else {
+        setLoadingSubmissions(false);
+         if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
+            setSubmissionsError("Your profile is missing grade/division.");
+        }
+      }
+    };
+
     fetchStudentData();
+    fetchRecentSubmissions();
   }, [teacherUser]);
 
   const handleDownloadStudentData = async () => {
@@ -153,25 +198,26 @@ export function TeacherDashboardClient() {
 
   const quickStatsItems = [
     {
+      id: "studentCount",
       title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
       icon: Users,
       dataAiHint: "group users",
       content: loadingStudentCount ? (
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center justify-center space-x-2 h-full">
           <Loader2 className="h-6 w-6 animate-spin text-foreground" />
           <span className="text-muted-foreground">Loading...</span>
         </div>
       ) : studentCountError ? (
-         <p className="text-xs text-destructive">{studentCountError}</p>
+         <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
         <>
-          <div className="text-2xl font-bold">{totalStudentsInClass ?? 0}</div>
+          <div className="text-3xl font-bold">{totalStudentsInClass ?? 0}</div>
           <p className="text-xs text-muted-foreground">Total students.</p>
-          <div className="mt-2 space-y-1">
-              <div className="flex items-center text-xs text-muted-foreground">
+          <div className="mt-2 space-y-1 text-xs">
+              <div className="flex items-center justify-center text-muted-foreground">
                   <UserCheck className="h-4 w-4 mr-1 text-blue-500"/> Boys: {maleStudents}
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
+              <div className="flex items-center justify-center text-muted-foreground">
                   <UserX className="h-4 w-4 mr-1 text-pink-500"/> Girls: {femaleStudents}
               </div>
           </div>
@@ -179,30 +225,48 @@ export function TeacherDashboardClient() {
       )
     },
     {
-      title: "Pending Reviews",
-      icon: Edit3,
-      dataAiHint: "edit document",
-      content: (
-        <>
-          <div className="text-2xl font-bold">{mockTeacherStats.pendingAssignments}</div>
-          <p className="text-xs text-muted-foreground">Homework/Assignments</p>
-        </>
+      id: "recentSubmissions",
+      title: "Recent Homework Submissions",
+      icon: CheckSquare, // Changed icon
+      dataAiHint: "homework check",
+      content: loadingSubmissions ? (
+         <div className="flex items-center justify-center space-x-2 h-full">
+          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      ) : submissionsError ? (
+        <p className="text-xs text-destructive text-center">{submissionsError}</p>
+      ) : recentSubmissions.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
+      ) : (
+        <ul className="space-y-2 text-xs text-left">
+          {recentSubmissions.map(sub => (
+            <li key={sub.id} className="p-2 border rounded-md bg-background shadow-sm">
+              <p className="font-semibold truncate text-sm">{sub.homeworkTitle}</p>
+              <p>Student: {sub.studentName}</p>
+              <p>Completed: {sub.completedAt ? format(sub.completedAt.toDate(), "PP pp") : "N/A"}</p>
+            </li>
+          ))}
+        </ul>
       )
     },
-    {
+     {
+      id: "upcomingEvents", // Kept for structure, can be implemented later
       title: "Upcoming Events",
-      icon: BarChart3, // Changed from CalendarDays to BarChart3 for more variety if needed
+      icon: BarChart3, 
       dataAiHint: "calendar event",
       content: (
         <>
-          <div className="text-2xl font-bold">{mockTeacherStats.upcomingEvents}</div>
+          <div className="text-3xl font-bold">0</div> 
           <p className="text-xs text-muted-foreground">School events this month</p>
+          <p className="text-xs text-muted-foreground mt-2">(Feature to be implemented)</p>
         </>
       )
     },
     {
+      id: "profileSettings",
       title: "Profile Settings",
-      icon: UserCog, // Changed from Settings to UserCog
+      icon: UserCog, 
       dataAiHint: "user settings",
       content: (
         <>
@@ -269,15 +333,15 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {quickStatsItems.map((item) => (
-          <Card key={item.title} className="shadow-lg rounded-lg">
+          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col">
             <CardHeader className="text-center">
-                 <div className="flex items-center justify-center mb-2">
-                    <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-foreground" data-ai-hint={item.dataAiHint}/>
+                 <div className="flex items-center justify-center mb-3">
+                    <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
                 </div>
-                <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
+                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>
-            <CardContent className="pt-2 pb-6 text-center">
-              {item.content}
+            <CardContent className="pt-2 pb-6 text-center flex-grow flex flex-col justify-between">
+             <div className="flex-grow flex flex-col justify-center items-center"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
@@ -287,21 +351,15 @@ export function TeacherDashboardClient() {
          {mainActionItems.map((item) => (
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
                 <CardHeader>
-                    <div className="flex items-center justify-center mb-2">
-                        <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-foreground" data-ai-hint={item.dataAiHint}/>
+                    <div className="flex items-center justify-center mb-3">
+                        <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
                     </div>
-                    <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
+                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3">
-                    {typeof item.description === 'string' ? (
-                        <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-auto min-h-[60px] line-clamp-none overflow-hidden">
-                            {item.description}
-                        </p>
-                    ) : (
-                         <div className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-auto min-h-[60px] flex-grow">
-                            {item.description}
-                        </div>
-                    )}
+                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
+                    <div className="text-sm text-muted-foreground px-4 flex-grow">
+                        {item.description}
+                    </div>
                     {item.link ? (
                         <Button asChild className="w-full mt-auto">
                             <Link href={item.link}>{item.buttonText}</Link>
@@ -317,18 +375,6 @@ export function TeacherDashboardClient() {
             </Card>
          ))}
       </div>
-      
-      <Card className="shadow-lg rounded-lg">
-         <CardHeader className="text-center">
-             <CardTitle className="text-xl font-semibold">Recent Activity</CardTitle>
-         </CardHeader>
-        <CardContent className="pt-2 pb-6">
-          <p className="text-muted-foreground text-center">No recent activity to display. This section will show recent posts or student submissions.</p>
-        </CardContent>
-      </Card>
-
     </div>
   );
 }
-
-    
