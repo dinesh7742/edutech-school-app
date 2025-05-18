@@ -272,7 +272,7 @@ export function TeacherDashboardClient() {
           <Card key={item.title} className="shadow-lg rounded-lg">
             <CardHeader className="text-center">
                  <div className="flex items-center justify-center mb-2">
-                    <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={item.dataAiHint}/>
+                    <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-foreground" data-ai-hint={item.dataAiHint}/>
                 </div>
                 <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
             </CardHeader>
@@ -288,11 +288,11 @@ export function TeacherDashboardClient() {
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
                 <CardHeader>
                     <div className="flex items-center justify-center mb-2">
-                        <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-primary" data-ai-hint={item.dataAiHint}/>
+                        <item.icon className="h-10 w-10 sm:h-12 sm:w-12 text-foreground" data-ai-hint={item.dataAiHint}/>
                     </div>
                     <CardTitle className="text-lg sm:text-xl">{item.title}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 min-h-[220px]">
+                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3">
                     {typeof item.description === 'string' ? (
                         <p className="text-xs sm:text-sm text-muted-foreground px-2 sm:px-4 h-auto min-h-[60px] line-clamp-none overflow-hidden">
                             {item.description}
@@ -330,3 +330,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    

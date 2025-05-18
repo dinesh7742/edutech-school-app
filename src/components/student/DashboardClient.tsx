@@ -146,7 +146,7 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -169,7 +169,7 @@ export function StudentDashboardClient() {
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
@@ -198,7 +198,7 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data ? (
-         <div className="text-left w-full space-y-1 p-2 border border-primary/50 rounded-md bg-background">
+         <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -228,7 +228,7 @@ export function StudentDashboardClient() {
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data ? (
-        <div className="text-left w-full space-y-2 p-2 border border-primary/50 rounded-md bg-background">
+        <div className="text-left w-full space-y-2 p-2 border border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.subject}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -283,7 +283,7 @@ export function StudentDashboardClient() {
           <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
             <CardHeader>
               <div className="flex items-center justify-center mb-3">
-                <card.icon className="h-16 w-16 text-primary" data-ai-hint={card.dataAiHint} />
+                <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint} />
               </div>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
@@ -293,7 +293,7 @@ export function StudentDashboardClient() {
               </CardTitle>
                <CardDescription className="text-sm h-10 line-clamp-2">{card.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[240px]">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               {card.renderContent && card.contentData?.loading && (
                 <div className="flex flex-col items-center justify-center flex-grow">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -320,12 +320,12 @@ export function StudentDashboardClient() {
          <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader>
                 <div className="flex items-center justify-center mb-3">
-                    <ListChecks className="h-16 w-16 text-primary" data-ai-hint="attendance list" />
+                    <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm h-10 line-clamp-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[240px]">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/attendance">View Detailed Attendance</Link>
@@ -335,12 +335,12 @@ export function StudentDashboardClient() {
         <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader>
                 <div className="flex items-center justify-center mb-3">
-                    <UserCircle className="h-16 w-16 text-primary" data-ai-hint="user profile" />
+                    <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm h-10 line-clamp-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 min-h-[240px]">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/profile">Go to Profile</Link>
@@ -351,3 +351,5 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
+    
