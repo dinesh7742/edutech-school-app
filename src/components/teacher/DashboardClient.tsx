@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare, MailOpen } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -255,6 +255,7 @@ export function TeacherDashboardClient() {
       title: "Upcoming Events",
       icon: BarChart3, 
       dataAiHint: "calendar event",
+      description: "School events and important dates this month.",
       content: (
         <>
           <div className="text-3xl font-bold">0</div> 
@@ -267,6 +268,7 @@ export function TeacherDashboardClient() {
       id: "profileSettings",
       title: "Profile Settings",
       icon: UserCog, 
+      description: "Update your account and display information.",
       dataAiHint: "user settings",
       content: (
         <>
@@ -313,6 +315,14 @@ export function TeacherDashboardClient() {
       buttonText: "Mark Attendance",
       dataAiHint: "calendar check attendance"
     },
+    {
+      title: "Leave Applications",
+      icon: MailOpen,
+      description: "Review and process student leave applications.",
+      link: "/teacher/leave-applications",
+      buttonText: "Manage Leave",
+      dataAiHint: "mail open letter"
+    },
      {
       title: "Download Class Data",
       icon: FileSpreadsheet,
@@ -333,14 +343,15 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col">
-            <CardHeader className="text-center">
+          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center">
+            <CardHeader className="pb-2">
                  <div className="flex items-center justify-center mb-3">
                     <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
+                {item.description && <CardDescription className="text-sm h-10 line-clamp-2">{item.description}</CardDescription>}
             </CardHeader>
-            <CardContent className="pt-2 pb-6 text-center flex-grow flex flex-col justify-between">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
              <div className="flex-grow flex flex-col justify-center items-center"> {item.content} </div>
             </CardContent>
           </Card>
@@ -350,14 +361,14 @@ export function TeacherDashboardClient() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
          {mainActionItems.map((item) => (
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
-                <CardHeader>
+                <CardHeader className="pb-2">
                     <div className="flex items-center justify-center mb-3">
                         <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
                     </div>
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
-                    <div className="text-sm text-muted-foreground px-4 flex-grow">
+                    <div className="text-sm text-muted-foreground px-4 flex-grow flex items-center justify-center">
                         {item.description}
                     </div>
                     {item.link ? (
@@ -378,3 +389,4 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+

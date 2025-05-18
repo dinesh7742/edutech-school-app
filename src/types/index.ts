@@ -159,5 +159,6 @@ export interface LeaveApplication {
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
   reviewTimestamp?: Timestamp | FieldValue;
-  teacherComments?: string;
+  teacherComments?: string; // Optional: for teachers to add comments during review
 }
+
