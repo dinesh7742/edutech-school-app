@@ -1,10 +1,11 @@
+
 "use client";
 
 import { useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, type AuthError } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -23,6 +24,13 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+function getLoginErrorMessage(error: AuthError): string {
+  if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+    return "Invalid email or password. Please check your credentials or sign up if you don't have an account.";
+  }
+  return error.message || "An unexpected error occurred during login. Please try again.";
+}
+
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -38,7 +46,6 @@ export function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       // User state will be set by AuthProvider's onAuthStateChanged listener
-      // setUser(userCredential.user as AppUser); // This line could be problematic with type casting AppUser here
       
       toast({
         title: "Login Successful",
@@ -53,7 +60,7 @@ export function LoginForm() {
       console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: error.message || "Invalid email or password. Please try again.",
+        description: getLoginErrorMessage(error as AuthError),
         variant: "destructive",
       });
     } finally {
