@@ -17,7 +17,6 @@ import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
-// import Image from "next/image"; // Removed Image import
 
 // School Information
 const schoolName = "PM SHRI MPS VARSHA NAGAR";
@@ -27,7 +26,6 @@ const udiseNumber = "27220600119";
 const wardInfo = "S ward";
 const addressInfo = "Veer savarkar marg,Beside Prabodhankar Thakare Garden,Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
 
-// const headerImageUrl = "https://placehold.co/1230x220.png"; // Removed header image URL
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -130,14 +128,14 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground">
       <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between">
         <Link href="/" className="flex items-start space-x-3">
-          <School className="h-10 w-10 mt-1 flex-shrink-0" data-ai-hint="school building" />
+          <School className="h-10 w-10 mt-1 flex-shrink-0 text-primary-foreground" data-ai-hint="school building" />
           <div className="flex flex-col max-w-md sm:max-w-lg text-primary-foreground">
             <span className="text-xl font-bold ">{schoolName}</span>
-            <span className="text-xs flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3"/> {contactNumber}</span>
-            <span className="text-xs flex items-center"><Mail className="mr-1.5 h-3 w-3"/> {emailAddress}</span>
-            <span className="text-xs flex items-center"><Info className="mr-1.5 h-3 w-3"/> UDISE: {udiseNumber}</span>
-            <span className="text-xs flex items-center"><Building className="mr-1.5 h-3 w-3"/> Ward: {wardInfo}</span>
-            <span className="text-xs flex items-center whitespace-normal"><MapPin className="mr-1.5 h-3 w-3 flex-shrink-0"/> {addressInfo}</span>
+            <span className="text-xs flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3 text-primary-foreground"/> {contactNumber}</span>
+            <span className="text-xs flex items-center"><Mail className="mr-1.5 h-3 w-3 text-primary-foreground"/> {emailAddress}</span>
+            <span className="text-xs flex items-center"><Info className="mr-1.5 h-3 w-3 text-primary-foreground"/> UDISE: {udiseNumber}</span>
+            <span className="text-xs flex items-center"><Building className="mr-1.5 h-3 w-3 text-primary-foreground"/> Ward: {wardInfo}</span>
+            <span className="text-xs flex items-center whitespace-normal"><MapPin className="mr-1.5 h-3 w-3 text-primary-foreground flex-shrink-0"/> {addressInfo}</span>
           </div>
         </Link>
 
