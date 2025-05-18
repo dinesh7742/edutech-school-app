@@ -12,12 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"; // Added SheetHeader, SheetTitle
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
-import Image from "next/image";
+// import Image from "next/image"; // Removed Image import
 
 // School Information
 const schoolName = "PM SHRI MPS VARSHA NAGAR";
@@ -27,8 +27,7 @@ const udiseNumber = "27220600119";
 const wardInfo = "S ward";
 const addressInfo = "Veer savarkar marg,Beside Prabodhankar Thakare Garden,Kailas complex, Varsha nagar bus stop Vikhroli west Mumbai - 79";
 
-const headerImageUrl = "https://placehold.co/1230x220.png";
-
+// const headerImageUrl = "https://placehold.co/1230x220.png"; // Removed header image URL
 
 export function Navbar() {
   const { user, role } = useAuth();
@@ -130,8 +129,16 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground">
       <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between">
-        <Link href="/" className="flex items-center space-x-3">
-            <Image src={headerImageUrl} alt={`${schoolName} Header`} width={1230} height={220} className="block h-14 sm:h-16 w-auto object-contain" priority data-ai-hint="school banner"/>
+        <Link href="/" className="flex items-start space-x-3">
+          <School className="h-10 w-10 mt-1 flex-shrink-0" data-ai-hint="school building" />
+          <div className="flex flex-col max-w-md sm:max-w-lg text-primary-foreground">
+            <span className="text-xl font-bold ">{schoolName}</span>
+            <span className="text-xs flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3"/> {contactNumber}</span>
+            <span className="text-xs flex items-center"><Mail className="mr-1.5 h-3 w-3"/> {emailAddress}</span>
+            <span className="text-xs flex items-center"><Info className="mr-1.5 h-3 w-3"/> UDISE: {udiseNumber}</span>
+            <span className="text-xs flex items-center"><Building className="mr-1.5 h-3 w-3"/> Ward: {wardInfo}</span>
+            <span className="text-xs flex items-center whitespace-normal"><MapPin className="mr-1.5 h-3 w-3 flex-shrink-0"/> {addressInfo}</span>
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
@@ -173,14 +180,21 @@ export function Navbar() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-card text-card-foreground flex flex-col p-0">
+            <SheetContent side="right" className="w-[300px] sm:w-[340px] bg-card text-card-foreground flex flex-col p-0 overflow-y-auto">
               <SheetHeader className="p-4 border-b text-left">
-                <SheetTitle className="flex items-center gap-2 text-lg">
-                  <School className="h-6 w-6 text-primary" /> 
-                  {schoolName}
+                <SheetTitle className="flex items-start gap-2 text-lg">
+                  <School className="h-8 w-8 text-primary mt-1 flex-shrink-0" /> 
+                  <div className="flex flex-col text-sm">
+                    <span className="font-semibold">{schoolName}</span>
+                    <span className="text-xs text-muted-foreground flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3"/> {contactNumber}</span>
+                    <span className="text-xs text-muted-foreground flex items-center"><Mail className="mr-1.5 h-3 w-3"/> {emailAddress}</span>
+                    <span className="text-xs text-muted-foreground flex items-center"><Info className="mr-1.5 h-3 w-3"/> UDISE: {udiseNumber}</span>
+                    <span className="text-xs text-muted-foreground flex items-center"><Building className="mr-1.5 h-3 w-3"/> Ward: {wardInfo}</span>
+                    <span className="text-xs text-muted-foreground flex items-center whitespace-normal"><MapPin className="mr-1.5 h-3 w-3 flex-shrink-0"/> {addressInfo}</span>
+                  </div>
                 </SheetTitle>
               </SheetHeader>
-              <div className="p-4 flex-grow overflow-y-auto">
+              <div className="p-4 flex-grow">
                 {mobileNavLinks}
               </div>
             </SheetContent>
@@ -190,4 +204,3 @@ export function Navbar() {
     </header>
   );
 }
-
