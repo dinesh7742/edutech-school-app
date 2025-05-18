@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -52,12 +52,14 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
+        // Fetch more items initially to increase chances of finding a relevant one after client-side filtering
         const q = query(ref, orderBy("timestamp", "desc"), limit(5)); 
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
+        // Client-side filtering to find the most recent relevant item
         const relevantItem = allRecentItems.find(item => {
-          if (!user.grade || !user.division) { 
+          if (!user.grade || !user.division) { // If student has no grade/division, only show school-wide
              return !item.grade && !item.division;
           }
           const isSchoolWide = !item.grade || item.grade === "";
@@ -143,12 +145,13 @@ export function StudentDashboardClient() {
         setIsLatestHomeworkCompleted(false);
          if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
              console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
+             toast({title: "Error", description: "A database configuration is needed for homework. Please inform your administrator.", variant: "destructive"});
         }
       }
     };
     fetchLatestHomework();
 
-  }, [user]);
+  }, [user, toast]);
 
   const handleMarkHomeworkCompleted = async (homeworkItem: Homework) => {
     if (!user || !homeworkItem || !user.uid || !user.grade || !user.division) {
@@ -177,7 +180,6 @@ export function StudentDashboardClient() {
         title: "Homework Marked!",
         description: `"${homeworkItem.title}" marked as completed.`,
       });
-      // TODO: Implement teacher notification (e.g., via Cloud Function)
       console.log("TODO: Notify teacher about homework completion for homeworkId:", homeworkItem.id, "by studentId:", user.uid);
     } catch (error: any) {
       console.error("Error marking homework as completed:", error);
@@ -203,7 +205,7 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -226,7 +228,7 @@ export function StudentDashboardClient() {
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
@@ -273,7 +275,7 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data ? (
-         <div className="text-left w-full space-y-1 p-2 border border-primary rounded-md bg-background">
+         <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -303,7 +305,7 @@ export function StudentDashboardClient() {
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data ? (
-        <div className="text-left w-full space-y-2 p-2 border border-primary rounded-md bg-background">
+        <div className="text-left w-full space-y-2 p-2 border-primary rounded-md bg-background">
           <h3 className="font-semibold text-md truncate">{data.subject}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
@@ -313,7 +315,7 @@ export function StudentDashboardClient() {
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
-            <a href={data.meetingLink} target="_blank" rel="noopener noreferrer">
+            <a href={data.meetingLink} target="_blank" rel="noopener noreferrer" data-ai-hint="video play">
               Join Meeting
             </a>
           </Button>
@@ -356,7 +358,7 @@ export function StudentDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
           <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
-            <CardHeader>
+            <CardHeader className="pb-2">
               <div className="flex items-center justify-center mb-3">
                 <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint} />
               </div>
@@ -392,7 +394,7 @@ export function StudentDashboardClient() {
           </Card>
         ))}
          <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader>
+            <CardHeader className="pb-2">
                 <div className="flex items-center justify-center mb-3">
                     <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
                 </div>
@@ -406,8 +408,23 @@ export function StudentDashboardClient() {
               </Button>
             </CardContent>
           </Card>
+           <Card className="shadow-lg rounded-lg text-center flex flex-col">
+            <CardHeader className="pb-2">
+                <div className="flex items-center justify-center mb-3">
+                    <CalendarPlus className="h-16 w-16 text-foreground" data-ai-hint="calendar plus" />
+                </div>
+                <CardTitle className="text-xl font-semibold">Apply for Leave</CardTitle>
+                <CardDescription className="text-sm h-10 line-clamp-2">Submit a leave application for approval.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
+              <div className="flex-grow"></div>
+              <Button asChild className="w-full mt-auto">
+                <Link href="/student/apply-leave">Apply for Leave</Link>
+              </Button>
+            </CardContent>
+          </Card>
         <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader>
+            <CardHeader className="pb-2">
                 <div className="flex items-center justify-center mb-3">
                     <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
                 </div>
