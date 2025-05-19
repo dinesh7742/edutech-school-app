@@ -47,8 +47,10 @@ const getStatusBadgeVariant = (status?: LeaveApplication['status'] | LateArrival
 const formatDateDisplay = (dateString?: string) => {
     if (!dateString) return "N/A";
     try {
+      // Assuming dateString is 'YYYY-MM-DD'
       return format(parseISO(dateString), "dd MMM yyyy");
     } catch (e) {
+      // Fallback if parseISO fails (e.g., dateString is not in expected format)
       return dateString; 
     }
 };
@@ -81,18 +83,22 @@ export function StudentDashboardClient() {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
+        // Fetch the 5 most recent items overall, then filter client-side for relevance
         const q = query(ref, orderBy(useTimestampField as string, "desc"), limit(5));
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
+        // Client-side filtering logic to find the single most relevant item for the student
         const relevantItem = allRecentItems.find(item => {
           if (!user.grade || !user.division) {
+             // If student's grade/division is unknown, only show school-wide items
              return !item.grade && !item.division;
           }
           const isSchoolWide = !item.grade || item.grade === "";
           const isGradeMatch = item.grade === user.grade;
           const isDivisionMatch = item.division === user.division;
           const isGradeWideForUser = isGradeMatch && (!item.division || item.division === "");
+
           return isSchoolWide || (isGradeMatch && isDivisionMatch) || isGradeWideForUser;
         });
         setter({ item: relevantItem || null, loading: false });
@@ -128,7 +134,7 @@ export function StudentDashboardClient() {
         return;
       }
       setLatestHomework(prev => ({ ...prev, loading: true }));
-      setIsLatestHomeworkCompleted(false);
+      setIsLatestHomeworkCompleted(false); // Reset completion status on new fetch
 
       try {
         const homeworkRef = collection(db, "homework");
@@ -148,10 +154,12 @@ export function StudentDashboardClient() {
             ...hwData,
             timestamp: hwData.timestamp as Timestamp,
             displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+            // Ensure dueDate is handled correctly, even if it's just a date string from Firestore
             dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', 
           } as Homework;
           setLatestHomework({ item: currentHomeworkItem, loading: false });
 
+          // Check if this specific homework has been submitted
           const submissionDocId = `${currentHomeworkItem.id}_${user.uid}`;
           const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
           const submissionSnap = await getDoc(submissionDocRef);
@@ -165,6 +173,7 @@ export function StudentDashboardClient() {
         console.error("Error fetching latest homework:", error);
         setLatestHomework({ item: null, loading: false });
         setIsLatestHomeworkCompleted(false);
+         // Specific error handling for missing Firestore index
          if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
              console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
              toast({title: "Error", description: "A database configuration is needed for homework. Please inform your administrator.", variant: "destructive"});
@@ -173,10 +182,11 @@ export function StudentDashboardClient() {
     };
     fetchLatestHomework();
 
-    const fetchLatestApplication = async <T extends { studentUid: string; applicationTimestamp?: Timestamp }>(
+    // Fetch latest leave application status
+    const fetchLatestApplication = async <T extends { studentUid: string; applicationTimestamp?: Timestamp; applicationDate?: Timestamp }>(
         collectionName: string,
         setter: React.Dispatch<React.SetStateAction<LatestContent<T>>>,
-        timestampField: keyof T = "applicationTimestamp" as keyof T
+        timestampField: keyof T = "applicationTimestamp" as keyof T // Default for most, but leaveApp uses applicationDate
       ) => {
         if (!user?.uid) {
           setter({ item: null, loading: false });
@@ -241,6 +251,7 @@ export function StudentDashboardClient() {
         title: "Homework Marked!",
         description: `"${homeworkItem.title}" marked as completed.`,
       });
+      // TODO: Implement teacher notification system here (e.g., using Cloud Functions)
       console.log("TODO: Notify teacher about homework completion for homeworkId:", homeworkItem.id, "by studentId:", user.uid);
     } catch (error: any) {
       console.error("Error marking homework as completed:", error);
@@ -386,8 +397,8 @@ export function StudentDashboardClient() {
     },
     {
       id: "applyLeave",
-      title: "Leave Application",
-      icon: CalendarPlus,
+      title: "Leave Application Status", // Renamed slightly to differentiate from "New Leave Request"
+      icon: CalendarPlus, // Could use History icon here too
       link: "/student/apply-leave",
       buttonText: "Apply or View History",
       dataAiHint: "calendar plus",
@@ -412,6 +423,18 @@ export function StudentDashboardClient() {
         </div>
       ) : null,
       emptyMessage: "You haven't applied for leave recently."
+    },
+    {
+      id: "newLeaveApplication", // Changed from schoolFormsDownload
+      title: "New Leave Request",
+      icon: CalendarPlus,
+      link: "/student/apply-leave",
+      buttonText: "Open Leave Form",
+      dataAiHint: "calendar new",
+      description: "Submit a new leave application for teacher approval.",
+      contentData: null, // This card doesn't show status, the other one does
+      renderContent: null,
+      emptyMessage: "" // Not applicable as it's an action card
     },
     {
       id: "lateArrivalRequest",
@@ -463,19 +486,7 @@ export function StudentDashboardClient() {
       contentData: null,
       renderContent: null,
       emptyMessage: ""
-    },
-     {
-      id: "schoolFormsDownload", // Differentiate from the new online form request
-      title: "Downloadable School Forms",
-      icon: FileArchive,
-      link: "/student/school-forms", // Link to the existing PDF download page
-      buttonText: "Access PDF Forms",
-      dataAiHint: "file archive documents",
-      description: "Download various school application forms and consents in PDF format.",
-      contentData: null,
-      renderContent: null,
-      emptyMessage: ""
-    },
+    }
   ];
 
   return (
@@ -488,7 +499,9 @@ export function StudentDashboardClient() {
         {dashboardCards.map((card) => (
           <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
             <CardHeader className="pb-2 items-center">
-              <card.icon className="h-16 w-16 text-foreground mb-3" data-ai-hint={card.dataAiHint} />
+              <div className="flex justify-center mb-4">
+                 <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint}/>
+              </div>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
@@ -505,7 +518,7 @@ export function StudentDashboardClient() {
                     <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
                  )}
               </CardTitle>
-               <CardDescription className="text-sm h-10 line-clamp-2">{card.description}</CardDescription>
+               <CardDescription className="text-sm h-12 line-clamp-2">{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               {card.renderContent && card.contentData?.loading && (
@@ -532,9 +545,11 @@ export function StudentDashboardClient() {
         ))}
          <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader className="pb-2 items-center">
-                <ListChecks className="h-16 w-16 text-foreground mb-3" data-ai-hint="attendance list" />
+                <div className="flex justify-center mb-4">
+                    <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
+                </div>
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
-                <CardDescription className="text-sm h-10 line-clamp-2">View your detailed attendance records.</CardDescription>
+                <CardDescription className="text-sm h-12 line-clamp-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               <div className="flex-grow"></div>
@@ -545,9 +560,11 @@ export function StudentDashboardClient() {
           </Card>
         <Card className="shadow-lg rounded-lg text-center flex flex-col">
             <CardHeader className="pb-2 items-center">
-                <UserCircle className="h-16 w-16 text-foreground mb-3" data-ai-hint="user profile" />
+                <div className="flex justify-center mb-4">
+                     <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
+                </div>
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
-                <CardDescription className="text-sm h-10 line-clamp-2">Manage your personal information and settings.</CardDescription>
+                <CardDescription className="text-sm h-12 line-clamp-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
               <div className="flex-grow"></div>
@@ -556,7 +573,9 @@ export function StudentDashboardClient() {
               </Button>
             </CardContent>
           </Card>
+           {/* The Downloadable School Forms card will be linked here if needed, or managed separately */}
       </div>
     </div>
   );
 }
+
