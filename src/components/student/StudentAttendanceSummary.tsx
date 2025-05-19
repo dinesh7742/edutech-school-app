@@ -18,7 +18,7 @@ export function StudentAttendanceSummary() {
   const [attendancePercentage, setAttendancePercentage] = useState<number | null>(null);
   const [isLoadingAttendance, setIsLoadingAttendance] = useState(true);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null | undefined>(undefined); // undefined means not fetched yet
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null | undefined>(undefined);
   const [isLoadingProfilePhoto, setIsLoadingProfilePhoto] = useState(true);
 
 
@@ -35,13 +35,13 @@ export function StudentAttendanceSummary() {
         const profileDocSnap = await getDoc(profileDocRef);
         if (profileDocSnap.exists()) {
           const profileData = profileDocSnap.data() as StudentProfile;
-          setProfilePhotoUrl(profileData.photoUrl || null); // Use null if empty to differentiate from 'not fetched'
+          setProfilePhotoUrl(profileData.photoUrl || null); 
         } else {
-          setProfilePhotoUrl(null); // Profile doesn't exist, use null
+          setProfilePhotoUrl(null); 
         }
       } catch (err) {
         console.error("Error fetching profile photo for summary:", err);
-        setProfilePhotoUrl(null); // Error occurred, use null
+        setProfilePhotoUrl(null); 
       } finally {
         setIsLoadingProfilePhoto(false);
       }
@@ -57,7 +57,6 @@ export function StudentAttendanceSummary() {
       setAttendanceError("User details incomplete for fetching attendance.");
       return;
     }
-    console.log("[StudentAttendanceSummary] User for summary:", user);
 
     const fetchAttendanceData = async () => {
       setIsLoadingAttendance(true);
@@ -84,8 +83,8 @@ export function StudentAttendanceSummary() {
           }
         });
         
-        console.log(`[StudentAttendanceSummary] Calculation: Present Days: ${presentDays}, Total Marked Days: ${totalMarkedDays} for student ${user.uid}`);
-        console.log("[StudentAttendanceSummary] User object from useAuth:", user);
+        // console.log(`[StudentAttendanceSummary] Calculation: Present Days: ${presentDays}, Total Marked Days: ${totalMarkedDays} for student ${user.uid}`);
+        // console.log("[StudentAttendanceSummary] User object from useAuth:", user);
 
 
         if (totalMarkedDays > 0) {

@@ -6,69 +6,67 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, Timestamp } from "firebase/firestore"; // Removed orderBy for now
+import { collection, query, getDocs, Timestamp, orderBy } from "firebase/firestore"; 
 import type { Textbook } from "@/types";
 
 export default function StudentTextbooksPage() {
   const [textbooksList, setTextbooksList] = useState<Textbook[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // For displaying errors
+  const [error, setError] = useState<string | null>(null); 
 
   useEffect(() => {
     const fetchTextbooks = async () => {
       setLoading(true);
-      setError(null); // Reset error on new fetch
-      console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
+      setError(null); 
+      // console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
       try {
         const textbooksCollectionRef = collection(db, "textbooks");
-        // Simplified query: removed orderBy to see if data loads
-        const q = query(textbooksCollectionRef); 
-        console.log("[StudentTextbooksPage] Executing Firestore query for textbooks (simplified):", q);
+        const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title")); 
+        // console.log("[StudentTextbooksPage] Executing Firestore query for textbooks:", q);
         const querySnapshot = await getDocs(q);
         
-        console.log(`[StudentTextbooksPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
+        // console.log(`[StudentTextbooksPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
         
         if (querySnapshot.empty) {
-          console.warn("[StudentTextbooksPage] No textbooks found in the 'textbooks' collection after query execution.");
+          // console.warn("[StudentTextbooksPage] No textbooks found in the 'textbooks' collection after query execution.");
         }
 
         const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
-          console.log(`[StudentTextbooksPage] Mapping document ${doc.id}:`, data);
-          // Basic validation for essential fields before mapping
+          // console.log(`[StudentTextbooksPage] Mapping document ${doc.id}:`, data);
           if (!data.title || !data.subject || !data.grade) {
-            console.warn(`[StudentTextbooksPage] Document ${doc.id} is missing critical fields (title, subject, or grade) and will be skipped.`, data);
-            return null; // Skip this document
+            // console.warn(`[StudentTextbooksPage] Document ${doc.id} is missing critical fields (title, subject, or grade) and will be skipped.`, data);
+            return null; 
           }
           return {
             id: doc.id,
             title: data.title,
             subject: data.subject,
-            fileUrl: data.fileUrl || "", // Default to empty string if undefined
-            coverImageUrl: data.coverImageUrl || undefined, // Default to undefined if missing
-            fileName: data.fileName || "", // Default to empty string
+            fileUrl: data.fileUrl || "", 
+            coverImageUrl: data.coverImageUrl || undefined, 
+            fileName: data.fileName || "", 
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
-            timestamp: data.timestamp as Timestamp, // Assume timestamp exists
+            timestamp: data.timestamp as Timestamp, 
             grade: data.grade,
           };
-        }).filter(Boolean) as Textbook[]; // Filter out any nulls from skipped documents
+        }).filter(Boolean) as Textbook[]; 
         
         setTextbooksList(fetchedTextbooks);
-        console.log(`[StudentTextbooksPage] Successfully mapped ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
+        // console.log(`[StudentTextbooksPage] Successfully mapped ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
 
       } catch (err: any) {
         console.error("[StudentTextbooksPage] Error fetching textbooks from Firestore:", err);
         setError(`Failed to load textbooks: ${err.message}. Please check the browser console for more details, especially for Firestore permission errors or missing index warnings (if orderBy is used).`);
-        setTextbooksList([]); // Clear list on error
+        setTextbooksList([]); 
       } finally {
         setLoading(false);
-        console.log("[StudentTextbooksPage] Finished fetching textbooks. Loading set to false.");
+        // console.log("[StudentTextbooksPage] Finished fetching textbooks. Loading set to false.");
       }
     };
 
     fetchTextbooks();
-  }, []); // Fetch once on component mount
+  }, []); 
 
   if (loading) {
     return (

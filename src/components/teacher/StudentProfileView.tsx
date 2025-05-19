@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X, Briefcase, FileText, Loader2 } from "lucide-react"; 
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X, Briefcase, FileText, Loader2, UserCircle } from "lucide-react"; 
 import type { StudentProfile, LeaveApplication } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -51,17 +51,17 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     }
     setLoadingProfile(true);
     setProfileError(null);
-    console.log("[StudentProfileView] Attempting to fetch profile for studentId:", studentId);
+    // console.log("[StudentProfileView] Attempting to fetch profile for studentId:", studentId);
     try {
       const profileDocRef = doc(db, "studentProfiles", studentId);
       const profileDocSnap = await getDoc(profileDocRef);
       
       if (profileDocSnap.exists()) {
         const fetchedData = profileDocSnap.data();
-        console.log("[StudentProfileView] Fetched data from Firestore for studentId " + studentId + ":", fetchedData); 
+        // console.log("[StudentProfileView] Fetched data from Firestore for studentId " + studentId + ":", fetchedData); 
         setProfile({ uid: profileDocSnap.id, ...fetchedData } as StudentProfile);
       } else {
-        console.warn("[StudentProfileView] No document found for studentId:", studentId);
+        // console.warn("[StudentProfileView] No document found for studentId:", studentId);
         setProfileError("Student profile not found.");
         setProfile(null);
       }
@@ -93,7 +93,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         const fetchedApps = querySnapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data(),
-            applicationDate: doc.data().applicationDate as Timestamp, // Ensure type
+            applicationDate: doc.data().applicationDate as Timestamp, 
         })) as LeaveApplication[];
         setLeaveApplications(fetchedApps);
     } catch (err: any) {
@@ -115,8 +115,8 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
   const handleSaveSuccess = () => {
     setIsEditing(false);
-    fetchProfileData(); // Refetch profile data after edit
-    fetchLeaveApplications(); // Refetch leave apps in case student details affecting them changed
+    fetchProfileData(); 
+    fetchLeaveApplications(); 
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -128,7 +128,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Not Provided";
     try {
-      const date = new Date(dateString + 'T00:00:00'); // Ensure local time for date-only strings
+      const date = new Date(dateString + 'T00:00:00'); 
       if (isNaN(date.getTime())) return "Invalid Date";
       return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch (e) {
@@ -235,7 +235,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
             {profile?.contactNumber && <Badge variant="outline">{profile.contactNumber}</Badge>}
         </div>
       </CardHeader>
-      <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+      <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pb-0">
         <DetailItem icon={User} label="Full Name" value={`${profile?.firstName || ""} ${profile?.middleName || ''} ${profile?.lastName || ''}`.trim()} />
         <DetailItem icon={User} label="Mother's Name" value={profile?.motherName || "Not Provided"} />
         <DetailItem icon={Briefcase} label="Father's Occupation" value={profile?.fatherOccupation || "Not Provided"} />
@@ -246,7 +246,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         <DetailItem icon={Phone} label="Contact Number" value={profile?.contactNumber || "Not Provided"} />
         <DetailItem icon={Award} label="Grade & Division" value={profile ? `Grade ${profile.grade} - ${profile.division}` : "N/A"} />
         <DetailItem icon={CalendarDays} label="Religion" value={profile?.religion || "Not Provided"} />
-        <DetailItem icon={User} label="Caste" value={profile?.caste || "Not Provided"} />
+        <DetailItem icon={UserCircle} label="Caste" value={profile?.caste || "Not Provided"} />
         <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile?.aadharCardNumber || "Not Provided"} />
         <DetailItem icon={BookUser} label="PEN Number" value={profile?.penNumber || "Not Provided"} />
         <DetailItem icon={Hash} label="G.R. Number" value={profile?.grNumber || "Not Provided"} />

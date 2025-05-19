@@ -17,27 +17,26 @@ export default function StudentGalleryPage() {
     const fetchGalleryAlbums = async () => {
       setLoading(true);
       setError(null);
-      console.log("[StudentGalleryPage] Attempting to fetch gallery albums from Firestore...");
+      // console.log("[StudentGalleryPage] Attempting to fetch gallery albums from Firestore...");
       try {
         const albumsCollectionRef = collection(db, "galleryAlbums");
         const q = query(albumsCollectionRef, orderBy("timestamp", "desc"));
-        console.log("[StudentGalleryPage] Executing Firestore query for gallery albums:", q);
+        // console.log("[StudentGalleryPage] Executing Firestore query for gallery albums:", q);
         const querySnapshot = await getDocs(q);
 
-        console.log(`[StudentGalleryPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
+        // console.log(`[StudentGalleryPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
         if (querySnapshot.empty) {
-          console.warn("[StudentGalleryPage] No gallery albums found in the 'galleryAlbums' collection.");
+          // console.warn("[StudentGalleryPage] No gallery albums found in the 'galleryAlbums' collection.");
         }
 
         const fetchedAlbums: PhotoGalleryAlbum[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
-          console.log(`[StudentGalleryPage] Mapping document ${doc.id}:`, data);
+          // console.log(`[StudentGalleryPage] Mapping document ${doc.id}:`, data);
           
-          // Ensure images is an array, even if it's missing or not an array in Firestore.
           const imagesArray = Array.isArray(data.images) ? data.images : [];
 
-          if (!data.title) { // Removed check for data.images here, as it can be empty
-            console.warn(`[StudentGalleryPage] Document ${doc.id} is missing title and will be skipped.`, data);
+          if (!data.title) { 
+            // console.warn(`[StudentGalleryPage] Document ${doc.id} is missing title and will be skipped.`, data);
             return null;
           }
 
@@ -52,10 +51,10 @@ export default function StudentGalleryPage() {
               const defaultPlaceholder = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
 
               if (typeof currentUrl === 'string' && (currentUrl.includes('google.com/imgres') || currentUrl.includes('google.com/search'))) {
-                console.warn(`[StudentGalleryPage] Detected Google Image search/result URL: ${currentUrl}. Replacing with placeholder. Please use direct image URLs.`);
+                // console.warn(`[StudentGalleryPage] Detected Google Image search/result URL: ${currentUrl}. Replacing with placeholder. Please use direct image URLs.`);
                 currentUrl = defaultPlaceholder;
               } else if (!currentUrl || typeof currentUrl !== 'string') {
-                console.warn(`[StudentGalleryPage] Invalid or missing URL for image in album "${data.title}". Using placeholder.`);
+                // console.warn(`[StudentGalleryPage] Invalid or missing URL for image in album "${data.title}". Using placeholder.`);
                 currentUrl = defaultPlaceholder;
               }
               
@@ -72,7 +71,7 @@ export default function StudentGalleryPage() {
         }).filter(Boolean) as PhotoGalleryAlbum[]; 
 
         setGalleryEvents(fetchedAlbums);
-        console.log(`[StudentGalleryPage] Successfully mapped ${fetchedAlbums.length} gallery albums to state:`, fetchedAlbums);
+        // console.log(`[StudentGalleryPage] Successfully mapped ${fetchedAlbums.length} gallery albums to state:`, fetchedAlbums);
 
       } catch (err: any) {
         console.error("[StudentGalleryPage] Error fetching gallery albums from Firestore:", err);
@@ -80,7 +79,7 @@ export default function StudentGalleryPage() {
         setGalleryEvents([]);
       } finally {
         setLoading(false);
-        console.log("[StudentGalleryPage] Finished fetching gallery albums. Loading set to false.");
+        // console.log("[StudentGalleryPage] Finished fetching gallery albums. Loading set to false.");
       }
     };
 
@@ -156,12 +155,11 @@ export default function StudentGalleryPage() {
                         className="w-full h-full object-cover"
                         data-ai-hint={generateAiHint(event.title)} 
                         onError={(e) => {
-                          // Fallback for next/image if the src is still problematic after our initial check
-                          console.warn(`[StudentGalleryPage] NextImage onError for URL: ${img.url}. Replacing with placeholder.`);
+                          // console.warn(`[StudentGalleryPage] NextImage onError for URL: ${img.url}. Replacing with placeholder.`);
                           const target = e.target as HTMLImageElement;
                           const albumTitleForPlaceholders = (event.title || "Photo").toLowerCase().split(/\s+/).slice(0, 2).join(" ") || "Photo";
                           target.src = `https://placehold.co/300x300.png?text=${encodeURIComponent(albumTitleForPlaceholders + ' ' + (idx + 1))}`;
-                          target.srcset = ""; // Clear srcset if it was set
+                          target.srcset = ""; 
                         }}
                       />
                     </div>
