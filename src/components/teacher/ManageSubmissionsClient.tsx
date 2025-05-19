@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MailOpen, AlertTriangle, FileSignature, ArrowRight } from "lucide-react";
+import { MailOpen, ArrowRight } from "lucide-react"; // Kept MailOpen for Leave Applications
 
 interface SubmissionType {
   id: string;
@@ -20,30 +20,13 @@ const submissionTypes: SubmissionType[] = [
   {
     id: "leave-applications",
     title: "Leave Applications",
-    description: "Review and process student requests for leave from school.",
+    description: "Review and process student requests for leave, late arrivals, and other school applications.", // Updated description
     icon: MailOpen,
-    link: "/teacher/leave-applications",
-    buttonText: "Review Leave Apps",
+    link: "/teacher/leave-applications", // This page will now be tabbed
+    buttonText: "Review All Submissions", // Updated button text
     dataAiHint: "mail letter envelope",
   },
-  {
-    id: "late-arrival-requests",
-    title: "Late Arrival / Early Departure",
-    description: "Manage requests for students arriving late or needing to depart early.",
-    icon: AlertTriangle,
-    link: "/teacher/late-arrival-requests",
-    buttonText: "Review Late/Early Apps",
-    dataAiHint: "alert triangle time",
-  },
-  {
-    id: "other-applications",
-    title: "Other School Applications",
-    description: "Review various other student applications like TC, re-exam requests, etc.",
-    icon: FileSignature,
-    link: "/teacher/other-applications-review",
-    buttonText: "Review Other Apps",
-    dataAiHint: "document signature form",
-  },
+  // Removed Late Arrival and Other Applications cards from here
 ];
 
 export function ManageSubmissionsClient() {
@@ -67,8 +50,11 @@ export function ManageSubmissionsClient() {
           </CardContent>
         </Card>
       ))}
+       {submissionTypes.length === 0 && (
+         <p className="text-muted-foreground col-span-full text-center py-8">
+           No submission management areas configured.
+         </p>
+       )}
     </div>
   );
 }
-
-    
