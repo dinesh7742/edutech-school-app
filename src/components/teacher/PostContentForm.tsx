@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,16 +14,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, UploadCloud } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase"; 
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
+import Image from "next/image"; // For image previews
+
+const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB for Firestore field limit
+const MAX_RAW_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB for initial client-side check
 
 // Schemas for different content types
 const noticeSchema = z.object({
   title: z.string().min(3, "Title is required"),
   content: z.string().min(10, "Content is required"),
-  grade: z.string().optional(), 
+  grade: z.string().optional(),
   division: z.string().optional(),
 });
 type NoticeFormValues = z.infer<typeof noticeSchema>;
@@ -37,9 +40,9 @@ const homeworkSchema = z.object({
   division: z.string().min(1, "Division is required"),
   subject: z.string().min(1, "Subject is required"),
   dueDate: z.string().refine((val) => {
-    if (!val) return false; 
+    if (!val) return false;
     const date = new Date(val);
-    return !isNaN(date.getTime()); 
+    return !isNaN(date.getTime());
   }, "Due date is required and must be a valid date"),
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
@@ -49,8 +52,8 @@ const circularSchema = z.object({
   description: z.string().optional(),
   fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")).optional(),
   fileName: z.string().optional(),
-  grade: z.string().optional(), 
-  division: z.string().optional(), 
+  grade: z.string().optional(),
+  division: z.string().optional(),
 });
 type CircularFormValues = z.infer<typeof circularSchema>;
 
@@ -58,7 +61,7 @@ const textbookSchema = z.object({
   title: z.string().min(3, "Textbook Title is required"),
   subject: z.string().min(2, "Subject is required"),
   fileUrl: z.string().url("Please provide a valid URL for the PDF.").or(z.literal("")).optional(),
-  coverImageUrl: z.string().url("Please provide a valid URL for the cover image.").or(z.literal("")).optional(),
+  coverImageUrl: z.string().optional(), // Will store Data URI or be empty
   fileName: z.string().optional(),
   grade: z.string().min(1, "Grade is required"),
 });
@@ -67,18 +70,8 @@ type TextbookFormValues = z.infer<typeof textbookSchema>;
 const photoGallerySchema = z.object({
   title: z.string().min(3, "Event/Album title is required"),
   description: z.string().optional(),
-  eventDate: z.string().optional(), 
-  imageUrls: z.string()
-    .refine(value => {
-      if (!value) return true; 
-      try {
-        const urls = value.split(',').map(url => url.trim());
-        return urls.every(url => url === "" || z.string().url().safeParse(url).success || url.startsWith('https://placehold.co')); 
-      } catch (e) {
-        return false;
-      }
-    }, "Please provide comma-separated, valid URLs (e.g., https://example.com/image.png). Empty input is also allowed.")
-    .optional(),
+  eventDate: z.string().optional(),
+  // imageFiles will be handled by component state, not directly by react-hook-form for this field
 });
 type PhotoGalleryFormValues = z.infer<typeof photoGallerySchema>;
 
@@ -97,15 +90,84 @@ export function PostContentForm() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("notice");
-  
-  const defaultGradeDivision = { grade: user?.grade || "1", division: user?.division || "A"};
 
-  const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division} });
+  const defaultGradeDivision = { grade: user?.grade || "1", division: user?.division || "A" };
+
+  const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
-  const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1" }});
-  const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: { imageUrls: "" }});
-  const formLiveClass = useForm<LiveClassFormValues>({ resolver: zodResolver(liveClassSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division} });
+  
+  // Textbook form state
+  const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1", coverImageUrl: "" } });
+  const [textbookCoverPreview, setTextbookCoverPreview] = useState<string | null>(null);
+  const [selectedTextbookCoverFile, setSelectedTextbookCoverFile] = useState<File | null>(null);
+
+  // Gallery form state
+  const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: {} });
+  const [galleryImagePreviews, setGalleryImagePreviews] = useState<string[]>([]);
+  const [selectedGalleryFiles, setSelectedGalleryFiles] = useState<File[]>([]);
+
+
+  const formLiveClass = useForm<LiveClassFormValues>({ resolver: zodResolver(liveClassSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
+
+  const handleTextbookCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+        toast({
+          title: "Image File Too Large",
+          description: `Please choose an image file smaller than ${MAX_RAW_FILE_SIZE_BYTES / 1024 / 1024}MB.`,
+          variant: "destructive",
+        });
+        event.target.value = "";
+        return;
+      }
+      setSelectedTextbookCoverFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTextbookCoverPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedTextbookCoverFile(null);
+      setTextbookCoverPreview(null);
+    }
+  };
+
+  const handleGalleryFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const filesArray = Array.from(event.target.files);
+      let validFiles: File[] = [];
+      let newPreviews: string[] = [];
+
+      for (const file of filesArray) {
+        if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+          toast({
+            title: "Image File Too Large",
+            description: `${file.name} is too large (max ${MAX_RAW_FILE_SIZE_BYTES / 1024 / 1024}MB). It has been skipped.`,
+            variant: "destructive",
+            duration: 5000,
+          });
+          continue; // Skip this file
+        }
+        validFiles.push(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setGalleryImagePreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
+      setSelectedGalleryFiles(prev => [...prev, ...validFiles]); // Append new valid files
+      // If you want to replace existing files instead of appending:
+      // setSelectedGalleryFiles(validFiles);
+      // setGalleryImagePreviews(newPreviews); // This would require async handling for readers
+    }
+  };
+  
+  const removeGalleryImage = (index: number) => {
+    setSelectedGalleryFiles(prev => prev.filter((_, i) => i !== index));
+    setGalleryImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
 
 
   const handleFormSubmit = async (data: any, type: string) => {
@@ -118,120 +180,179 @@ export function PostContentForm() {
     try {
       let collectionName = "";
       let documentData: any = {
-        ...data, 
+        ...data,
         postedByUid: user.uid,
         postedByName: user.displayName || user.email || "Teacher",
         timestamp: serverTimestamp(),
       };
 
-      switch (type) {
-        case "notice":
-          collectionName = "notices";
-          documentData.grade = data.grade || null; 
-          documentData.division = data.division || null; 
-          break;
-        case "homework":
-          collectionName = "homework";
-          break;
-        case "circular":
-          collectionName = "circulars";
-          documentData.grade = data.grade || null;
-          documentData.division = data.division || null;
-          break;
-        case "textbook":
-          collectionName = "textbooks";
-          break;
-        case "gallery":
-          collectionName = "galleryAlbums";
-          if (data.imageUrls) {
-            const urls = data.imageUrls.split(',').map((url: string) => url.trim()).filter((url: string) => url); 
-            documentData.images = urls.map((url: string, index: number) => ({
-              url: url,
-              alt: `${data.title || 'Gallery Image'} ${index + 1}`
-            }));
+      if (type === "textbook") {
+        collectionName = "textbooks";
+        if (selectedTextbookCoverFile) {
+          const coverDataUri = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(selectedTextbookCoverFile);
+          });
+          if (coverDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
+            toast({
+              title: "Textbook Cover Too Large",
+              description: "The cover image is too large (over 1MB encoded) and was not saved. Please use a smaller image. The textbook details were saved without the cover.",
+              variant: "destructive",
+              duration: 7000,
+            });
+            documentData.coverImageUrl = data.coverImageUrl || ""; // Keep old or empty
           } else {
-            documentData.images = []; 
+            documentData.coverImageUrl = coverDataUri;
           }
-          delete documentData.imageUrls; 
-          break;
-        case "liveClass":
-          collectionName = "liveClasses";
-          documentData.grade = data.grade || null;
-          documentData.division = data.division || null;
-          break;
-        default:
-          toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
-          setIsLoading(false);
-          return;
+        } else {
+           documentData.coverImageUrl = data.coverImageUrl || ""; // Keep existing if not changed
+        }
+      } else if (type === "gallery") {
+        collectionName = "galleryAlbums";
+        const uploadedImages: { url: string; alt?: string }[] = [];
+        if (selectedGalleryFiles.length > 0) {
+          for (let i = 0; i < selectedGalleryFiles.length; i++) {
+            const file = selectedGalleryFiles[i];
+            try {
+              const imageDataUri = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+              });
+
+              if (imageDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
+                toast({
+                  title: "Gallery Image Skipped",
+                  description: `${file.name} is too large (over 1MB encoded) and was not saved.`,
+                  variant: "destructive",
+                  duration: 5000,
+                });
+                continue; // Skip this image
+              }
+              uploadedImages.push({
+                url: imageDataUri,
+                alt: `${data.title || 'Gallery Image'} ${i + 1}`
+              });
+            } catch (fileError) {
+              console.error("Error processing gallery file:", file.name, fileError);
+              toast({
+                title: "File Processing Error",
+                description: `Could not process ${file.name}. It was skipped.`,
+                variant: "destructive",
+              });
+            }
+          }
+        }
+        documentData.images = uploadedImages;
+      } else {
+         switch (type) {
+            case "notice":
+              collectionName = "notices";
+              documentData.grade = data.grade || null;
+              documentData.division = data.division || null;
+              break;
+            case "homework":
+              collectionName = "homework";
+              break;
+            case "circular":
+              collectionName = "circulars";
+              documentData.grade = data.grade || null;
+              documentData.division = data.division || null;
+              break;
+            case "liveClass":
+              collectionName = "liveClasses";
+              documentData.grade = data.grade || null;
+              documentData.division = data.division || null;
+              break;
+            default:
+              toast({ title: "Error", description: "Invalid content type.", variant: "destructive" });
+              setIsLoading(false);
+              return;
+          }
       }
 
+
       await addDoc(collection(db, collectionName), documentData);
-      
+
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Posted Successfully` });
 
       // Reset specific form
-      if (type === 'notice') formNotice.reset({ title: "", content: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
-      if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: ""});
-      if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
-      if (type === 'textbook') formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1"});
-      if (type === 'gallery') formGallery.reset({title: "", description: "", eventDate: "", imageUrls: "" });
-      if (type === 'liveClass') formLiveClass.reset({subject: "", meetingLink: "", description: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division});
-
+      if (type === 'notice') formNotice.reset({ title: "", content: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
+      if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+      if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
+      if (type === 'textbook') {
+        formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1" });
+        setTextbookCoverPreview(null);
+        setSelectedTextbookCoverFile(null);
+        const textbookFileInput = document.getElementById('textbookCoverImageUpload') as HTMLInputElement;
+        if (textbookFileInput) textbookFileInput.value = "";
+      }
+      if (type === 'gallery') {
+        formGallery.reset({ title: "", description: "", eventDate: ""});
+        setGalleryImagePreviews([]);
+        setSelectedGalleryFiles([]);
+        const galleryFileInput = document.getElementById('galleryImageUpload') as HTMLInputElement;
+        if (galleryFileInput) galleryFileInput.value = "";
+      }
+      if (type === 'liveClass') formLiveClass.reset({ subject: "", meetingLink: "", description: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
 
     } catch (e: any) {
       console.error(`Error posting ${type}:`, e);
-      toast({ title: "Error", description: `Failed to post ${type}. ${e.message || 'An unknown error occurred.'}`, variant: "destructive" });
+      toast({ title: "Error", description: `Failed to post ${type}. ${e.message || 'Firestore document might be too large if many/large images were included.'}`, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const renderSharedFields = (formInstance: any, type: 'homework' | 'circular' | 'notice' | 'liveClass') => (
     <>
-       <div>
+      <div>
         <Label htmlFor={`${activeTab}Title`}>{type === 'liveClass' ? 'Subject / Title *' : 'Title *'}</Label>
         <Input id={`${activeTab}Title`} {...formInstance.register(type === 'liveClass' ? "subject" : "title")} />
         {formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] as any).message}</p>}
       </div>
-      
+
       {type === 'notice' ? (
         <div>
-            <Label htmlFor="noticeContent">Content *</Label>
-            <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
-            {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
+          <Label htmlFor="noticeContent">Content *</Label>
+          <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
+          {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
         </div>
       ) : type !== 'liveClass' ? ( // Description for homework, circular
         <div>
-            <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
-            <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
+          <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
+          <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
         </div>
       ) : null}
 
       {type === 'liveClass' && (
-         <>
-            <div>
-                <Label htmlFor="liveClassMeetingLink">Meeting Link *</Label>
-                <Input id="liveClassMeetingLink" {...formInstance.register("meetingLink")} placeholder="https://zoom.us/j/..." />
-                {formInstance.formState.errors.meetingLink && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.meetingLink as any).message}</p>}
-            </div>
-             <div>
-                <Label htmlFor="liveClassDescription">Description (Optional)</Label>
-                <Textarea id="liveClassDescription" {...formInstance.register("description")} placeholder="E.g., Class timing, topics to cover" />
-            </div>
-         </>
+        <>
+          <div>
+            <Label htmlFor="liveClassMeetingLink">Meeting Link *</Label>
+            <Input id="liveClassMeetingLink" {...formInstance.register("meetingLink")} placeholder="https://zoom.us/j/..." />
+            {formInstance.formState.errors.meetingLink && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.meetingLink as any).message}</p>}
+          </div>
+          <div>
+            <Label htmlFor="liveClassDescription">Description (Optional)</Label>
+            <Textarea id="liveClassDescription" {...formInstance.register("description")} placeholder="E.g., Class timing, topics to cover" />
+          </div>
+        </>
       )}
 
-      {type !== 'notice' && type !== 'liveClass' && ( 
+      {type !== 'notice' && type !== 'liveClass' && (
         <>
-            <div>
-                <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the file)</Label>
-                <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
-                {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.fileUrl as any).message}</p>}
-            </div>
-            <div>
-                <Label htmlFor={`${activeTab}FileName`}>File Name (Optional, e.g., chapter5.pdf)</Label>
-                <Input id={`${activeTab}FileName`} {...formInstance.register("fileName")} />
-            </div>
+          <div>
+            <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the PDF/document)</Label>
+            <Input id={`${activeTab}FileUrl`} {...formInstance.register("fileUrl")} placeholder="https://example.com/document.pdf" />
+            {formInstance.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.fileUrl as any).message}</p>}
+          </div>
+          <div>
+            <Label htmlFor={`${activeTab}FileName`}>File Name (Optional, e.g., chapter5.pdf)</Label>
+            <Input id={`${activeTab}FileName`} {...formInstance.register("fileName")} />
+          </div>
         </>
       )}
 
@@ -256,13 +377,13 @@ export function PostContentForm() {
           <Controller
             name="division"
             control={formInstance.control}
-            render={({ field: divisionField }) => ( 
+            render={({ field: divisionField }) => (
               <GradeDivisionSelector
                 grade={gradeField.value || ""}
                 onGradeChange={gradeField.onChange}
-                division={divisionField.value || ""} 
+                division={divisionField.value || ""}
                 onDivisionChange={divisionField.onChange}
-                showDivision={type !== 'textbook'} 
+                showDivision={type !== 'textbook'}
               />
             )}
           />
@@ -270,7 +391,7 @@ export function PostContentForm() {
       />
       {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.grade as any).message}</p>}
       {(type === 'homework' || type === 'liveClass') && formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
-      
+
       {(type === 'circular' || type === 'notice' || type === 'liveClass') && <p className="text-xs text-muted-foreground mt-1">Optionally select grade and division to target specific students. Leave empty for school-wide content.</p>}
     </>
   );
@@ -303,7 +424,7 @@ export function PostContentForm() {
           </TabsContent>
 
           <TabsContent value="homework">
-             <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
+            <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
               {renderSharedFields(formHomework, "homework")}
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Homework
@@ -314,12 +435,12 @@ export function PostContentForm() {
           <TabsContent value="circular">
             <form onSubmit={formCircular.handleSubmit(data => handleFormSubmit(data, "circular"))} className="space-y-4">
               {renderSharedFields(formCircular, "circular")}
-               <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Circular
               </Button>
             </form>
           </TabsContent>
-          
+
           <TabsContent value="textbook">
             <form onSubmit={formTextbook.handleSubmit(data => handleFormSubmit(data, "textbook"))} className="space-y-4">
               <div>
@@ -334,13 +455,26 @@ export function PostContentForm() {
               </div>
               <div>
                 <Label htmlFor="textbookFileUrl">PDF URL (Optional)</Label>
-                <Input id="textbookFileUrl" {...formTextbook.register("fileUrl")} placeholder="https://example.com/textbook.pdf"/>
+                <Input id="textbookFileUrl" {...formTextbook.register("fileUrl")} placeholder="https://example.com/textbook.pdf" />
                 {formTextbook.formState.errors.fileUrl && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.fileUrl.message}</p>}
               </div>
-               <div>
-                <Label htmlFor="textbookCoverImageUrl">Cover Image URL (Optional)</Label>
-                <Input id="textbookCoverImageUrl" {...formTextbook.register("coverImageUrl")} placeholder="https://example.com/cover.png"/>
-                {formTextbook.formState.errors.coverImageUrl && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.coverImageUrl.message}</p>}
+              <div>
+                <Label htmlFor="textbookCoverImageUpload">Cover Image (Optional)</Label>
+                <Input
+                  id="textbookCoverImageUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleTextbookCoverFileChange}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {textbookCoverPreview ? (
+                  <Image src={textbookCoverPreview} alt="Cover Preview" width={100} height={140} className="mt-2 rounded-md object-contain border" data-ai-hint="book cover" />
+                ) : (
+                  <div className="mt-2 flex items-center justify-center h-36 w-28 rounded-md border border-dashed bg-muted/50">
+                    <UploadCloud className="h-10 w-10 text-muted-foreground" data-ai-hint="upload book"/>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">Upload a cover image. (Max 2MB file. Very large images might not save due to database limits).</p>
               </div>
               <div>
                 <Label htmlFor="textbookFileName">File Name (Optional, e.g., math_grade5.pdf)</Label>
@@ -348,22 +482,22 @@ export function PostContentForm() {
               </div>
               <div>
                 <Label htmlFor="textbookGrade">Grade *</Label>
-                 <Controller
-                    name="grade" 
-                    control={formTextbook.control}
-                    render={({ field }) => (
-                       <GradeDivisionSelector
-                        grade={field.value || ""} 
-                        onGradeChange={field.onChange} 
-                        division="" 
-                        onDivisionChange={() => {}} 
-                        showDivision={false} 
-                        />
-                    )}
-                  />
+                <Controller
+                  name="grade"
+                  control={formTextbook.control}
+                  render={({ field }) => (
+                    <GradeDivisionSelector
+                      grade={field.value || ""}
+                      onGradeChange={field.onChange}
+                      division=""
+                      onDivisionChange={() => { }}
+                      showDivision={false}
+                    />
+                  )}
+                />
                 {formTextbook.formState.errors.grade && <p className="text-sm text-destructive mt-1">{formTextbook.formState.errors.grade.message}</p>}
               </div>
-               <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Textbook
               </Button>
             </form>
@@ -385,22 +519,38 @@ export function PostContentForm() {
                 <Input id="galleryEventDate" type="date" {...formGallery.register("eventDate")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="galleryImageUrls">Image URLs (comma-separated, optional)</Label>
-                <Textarea 
-                  id="galleryImageUrls"
-                  {...formGallery.register("imageUrls")}
-                  placeholder="https://example.com/image1.jpg, https://example.com/image2.png"
-                  rows={3}
+                <Label htmlFor="galleryImageUpload">Upload Images (Multiple selection allowed)</Label>
+                <Input
+                  id="galleryImageUpload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryFilesChange}
+                  className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                 />
-                {formGallery.formState.errors.imageUrls && <p className="text-sm text-destructive mt-1">{(formGallery.formState.errors.imageUrls as any)?.message}</p>}
+                {galleryImagePreviews.length > 0 && (
+                  <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                    {galleryImagePreviews.map((previewUrl, index) => (
+                      <div key={index} className="relative group">
+                        <Image src={previewUrl} alt={`Preview ${index + 1}`} width={100} height={100} className="rounded-md object-cover w-full aspect-square border" data-ai-hint="gallery event"/>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeGalleryImage(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                  <p className="text-xs text-muted-foreground mt-1">
-                   Provide direct links to images, separated by commas. 
-                   E.g., <code>https://path.to/image.jpg, https://another.site/pic.png</code>.
-                   Google Drive links or search result links will NOT work directly. 
-                   Ensure image hostnames are configured in <code>next.config.ts</code> if not using common services like placehold.co.
+                   Upload images from your device. (Max 2MB per file. Very large images might not save due to database limits).
                  </p>
               </div>
-               <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Gallery
               </Button>
             </form>
@@ -409,7 +559,7 @@ export function PostContentForm() {
           <TabsContent value="liveClass">
             <form onSubmit={formLiveClass.handleSubmit(data => handleFormSubmit(data, "liveClass"))} className="space-y-4">
               {renderSharedFields(formLiveClass, "liveClass")}
-               <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Live Class
               </Button>
             </form>
@@ -421,3 +571,4 @@ export function PostContentForm() {
   );
 }
 
+    
