@@ -19,14 +19,10 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        console.log('[useRequireAuth] No user found. Redirecting to:', redirectPath);
         router.replace(redirectPath);
       } else if (requiredRole && role !== requiredRole) {
         const targetDashboard = user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard';
-        console.log(`[useRequireAuth] Role mismatch. User role: '${role}', Required role: '${requiredRole}'. Redirecting to user's dashboard: ${targetDashboard}`);
         router.replace(targetDashboard);
-      } else {
-        // console.log('[useRequireAuth] Auth check passed. User is authorized.');
       }
     }
   }, [user, loading, role, requiredRole, router, redirectPath]);
