@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, ChangeEvent } from "react";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { StudentProfile } from "@/types";
-import { Loader2, UploadCloud } from "lucide-react";
+import { Loader2, UploadCloud, UserCircle, Briefcase } from "lucide-react"; // Added UserCircle, Briefcase
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { updateProfile as updateAuthProfile } from "firebase/auth";
@@ -26,6 +26,8 @@ import { updateProfile as updateAuthProfile } from "firebase/auth";
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
 const genderOptions = ["Male", "Female", "Other", "Prefer not to say"];
 
+// Firestore documents have a size limit (around 1MB).
+// Large images converted to Data URIs can exceed this. Encourage users to upload optimized images.
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().optional(),
@@ -47,7 +49,7 @@ const profileSchema = z.object({
   religion: z.string().optional(),
   caste: z.string().optional(),
   fullAddress: z.string().optional(),
-  photoUrl: z.string().url("Must be a valid URL (e.g., https://...).").optional().or(z.literal("")),
+  photoUrl: z.string().optional(), // Will store Data URI or be empty
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -64,10 +66,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
   
-  const defaultPhotoPlaceholder = studentIdForEdit && isTeacherEditing
-    ? `https://placehold.co/128x128.png?text=Edit+Student`
-    : `https://placehold.co/128x128.png?text=My+Photo`;
-  const [photoPreview, setPhotoPreview] = useState<string | null>(defaultPhotoPlaceholder);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
 
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
@@ -94,12 +94,20 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     }
   });
 
+  const defaultPhotoPlaceholder = isTeacherEditing && studentIdForEdit
+    ? `https://placehold.co/128x128.png?text=Edit+Student`
+    : `https://placehold.co/128x128.png?text=My+Photo`;
+
+
   useEffect(() => {
     const profileUidToFetch = studentIdForEdit || loggedInUser?.uid;
 
     if (profileUidToFetch) {
       const fetchProfile = async () => {
         setIsFetchingProfile(true);
+        setPhotoPreview(null); // Reset preview
+        setSelectedFile(null);
+
         const profileDocRef = doc(db, "studentProfiles", profileUidToFetch);
         const profileDoc = await getDoc(profileDocRef);
         
@@ -129,9 +137,13 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             religion: data.religion || "",
             caste: data.caste || "",
             fullAddress: data.fullAddress || "",
-            photoUrl: data.photoUrl || defaultPhotoPlaceholder,
+            photoUrl: data.photoUrl || "", // Keep existing Data URI or empty string
           };
-          setPhotoPreview(data.photoUrl || defaultPhotoPlaceholder);
+          if (data.photoUrl) {
+            setPhotoPreview(data.photoUrl); // Display existing Data URI
+          } else {
+            setPhotoPreview(defaultPhotoPlaceholder);
+          }
         } else {
           const nameParts = userData.displayName?.split(" ") || loggedInUser?.displayName?.split(" ") || [];
           dataToReset = {
@@ -139,7 +151,6 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             lastName: nameParts.length > 1 ? nameParts[nameParts.length -1] : "",
             grade: userData.grade || loggedInUser?.grade || "1",
             division: userData.division || loggedInUser?.division || "A",
-            middleName: "",
             motherName: "",
             fatherOccupation: "",
             motherOccupation: "",
@@ -152,7 +163,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             religion: "",
             caste: "",
             fullAddress: "",
-            photoUrl: defaultPhotoPlaceholder,
+            photoUrl: "",
           };
           setPhotoPreview(defaultPhotoPlaceholder);
         }
@@ -166,8 +177,24 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     } else {
        setIsFetchingProfile(false); 
     }
-  }, [studentIdForEdit, loggedInUser?.uid, loggedInUser?.displayName, loggedInUser?.grade, loggedInUser?.division, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
+  }, [studentIdForEdit, loggedInUser, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedFile(null);
+      // If user cancels file selection, revert to original photo or placeholder
+      const currentPhotoUrlInForm = watch("photoUrl");
+      setPhotoPreview(currentPhotoUrlInForm || defaultPhotoPlaceholder);
+    }
+  };
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     const profileUidToSave = studentIdForEdit || loggedInUser?.uid;
@@ -191,70 +218,39 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         studentEmail = loggedInUser?.email || "";
     }
 
+    // Handle image to Data URI conversion if a new file was selected
+    let photoDataUriToSave = data.photoUrl; // Keep existing if no new file
+    if (selectedFile) {
+      const reader = new FileReader();
+      photoDataUriToSave = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(selectedFile);
+      });
+    }
+    
     try {
-      // Save full profile data to Firestore 'studentProfiles' collection
       const profileDataForFirestore: StudentProfile = {
         uid: profileUidToSave,
         email: studentEmail,
         ...data,
-        photoUrl: (data.photoUrl === defaultPhotoPlaceholder || !data.photoUrl) ? "" : data.photoUrl,
+        photoUrl: photoDataUriToSave, // Save Data URI or existing photoUrl
       };
       await setDoc(doc(db, "studentProfiles", profileUidToSave), profileDataForFirestore, { merge: true });
 
-      // If a student is editing their own profile, attempt to update Firebase Auth profile
+      // Update Firebase Auth displayName (photoURL from Auth will not be updated with Data URI)
       if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave) {
         const newDisplayName = `${data.firstName} ${data.lastName || ''}`.trim();
-        const updatesToAuth: { displayName?: string; photoURL?: string } = {};
+        const updatesToAuth: { displayName?: string } = {};
 
         if (userToUpdateAuth.displayName !== newDisplayName) {
             updatesToAuth.displayName = newDisplayName;
         }
-
-        const MAX_AUTH_PHOTO_URL_LENGTH = 2000; // Firebase's limit is around this for photoURL
-
-        // Determine the photoURL to set for Firebase Auth
-        let authPhotoUrlToSet: string | undefined = undefined;
-
-        if (data.photoUrl && data.photoUrl !== defaultPhotoPlaceholder) { // User provided a new, non-placeholder URL
-            if (data.photoUrl.length <= MAX_AUTH_PHOTO_URL_LENGTH) {
-                if (userToUpdateAuth.photoURL !== data.photoUrl) {
-                    authPhotoUrlToSet = data.photoUrl;
-                }
-            } else {
-                // URL is too long for Firebase Auth profile, inform user
-                toast({
-                    title: "Profile Photo URL Too Long",
-                    description: "Your photo URL is too long for your main avatar. It's saved in your detailed profile.",
-                    variant: "default",
-                    duration: 8000,
-                });
-                // Do not set updatesToAuth.photoURL if it's too long
-            }
-        } else if ((!data.photoUrl || data.photoUrl === defaultPhotoPlaceholder) && userToUpdateAuth.photoURL) {
-            // User cleared the photo URL in the form, or it's the default placeholder, and there was an existing photoURL
-            authPhotoUrlToSet = ""; // Set to empty string to clear in Firebase Auth
-        }
-
-        if (authPhotoUrlToSet !== undefined) {
-            updatesToAuth.photoURL = authPhotoUrlToSet;
-        }
         
         if (Object.keys(updatesToAuth).length > 0) {
             await updateAuthProfile(userToUpdateAuth, updatesToAuth);
-             // Update local auth context
             if (setAuthUser) {
-                setAuthUser(prevUser => {
-                    if (!prevUser) return null;
-                    const updatedContextUser = { ...prevUser };
-                    if (updatesToAuth.displayName !== undefined) {
-                        updatedContextUser.displayName = updatesToAuth.displayName;
-                    }
-                    // Reflect the URL that was actually set (or attempted to be set) in Auth
-                    if (updatesToAuth.photoURL !== undefined) { 
-                        updatedContextUser.photoURL = updatesToAuth.photoURL === "" ? null : updatesToAuth.photoURL;
-                    }
-                    return updatedContextUser;
-                });
+                 setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatesToAuth } : null);
             }
         }
       }
@@ -268,41 +264,17 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
       }
     } catch (error: any) {
       console.error("Profile update error:", error);
-      // Check if it's specifically the auth/invalid-profile-attribute for photoURL
-      if (error.code === 'auth/invalid-profile-attribute' && error.message.includes('photo URL too long')) {
-         toast({
-            title: "Profile Photo URL Too Long",
-            description: "Your photo URL is too long for your main avatar. It's saved in your detailed profile.",
-            variant: "destructive", // Make it more prominent
-            duration: 8000,
-        });
-        // Still consider the Firestore part successful if this was the only error
-        if (onSaveSuccess) onSaveSuccess();
-
-      } else {
-        toast({
+      toast({
             title: "Update Failed",
             description: error.message || "Could not save profile. Please try again.",
             variant: "destructive",
         });
-      }
     } finally {
       setIsLoading(false);
+      setSelectedFile(null); // Clear selected file after submission attempt
     }
   };
   
-  const watchedPhotoUrl = watch("photoUrl");
-  useEffect(() => {
-    if (watchedPhotoUrl && watchedPhotoUrl.startsWith('http')) {
-      setPhotoPreview(watchedPhotoUrl);
-    } else if (watchedPhotoUrl === "") { 
-        setPhotoPreview(defaultPhotoPlaceholder);
-    } else if (!watchedPhotoUrl && !isFetchingProfile) { 
-        setPhotoPreview(defaultPhotoPlaceholder);
-    }
-  }, [watchedPhotoUrl, defaultPhotoPlaceholder, isFetchingProfile]);
-
-
   if (isFetchingProfile && !studentIdForEdit && !loggedInUser?.uid && !isTeacherEditing) { 
       return (
          <Card className="w-full max-w-2xl mx-auto shadow-xl">
@@ -317,7 +289,6 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
       )
   }
 
-
   if (isFetchingProfile) { 
     return (
       <Card className="w-full max-w-2xl mx-auto shadow-xl">
@@ -327,7 +298,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         </CardHeader>
         <CardContent className="space-y-4">
           <Skeleton className="h-32 w-32 rounded-full self-center mb-4" />
-          {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          {[...Array(12)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-10 w-1/3" />
         </CardContent>
@@ -370,7 +341,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
               <Input id="motherName" {...register("motherName")} />
               {errors.motherName && <p className="text-sm text-destructive mt-1">{errors.motherName.message}</p>}
             </div>
-            <div>
+             <div>
               <Label htmlFor="dateOfBirth">Date of Birth</Label>
               <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
               {errors.dateOfBirth && <p className="text-sm text-destructive mt-1">{errors.dateOfBirth.message}</p>}
@@ -389,7 +360,6 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
               {errors.motherOccupation && <p className="text-sm text-destructive mt-1">{errors.motherOccupation.message}</p>}
             </div>
           </div>
-
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
              <div>
@@ -413,21 +383,22 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
               {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender.message}</p>}
             </div>
              <div>
-              <Label htmlFor="photoUrl">Photo URL</Label>
+              <Label htmlFor="photoUpload">Profile Photo</Label>
               <Input 
-                id="photoUrl" 
-                {...register("photoUrl")} 
-                placeholder={defaultPhotoPlaceholder}
+                id="photoUpload" 
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
               />
-               {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
-              {photoPreview && photoPreview.startsWith('http') ? (
+              {photoPreview ? (
                   <Image src={photoPreview} alt="Profile Preview" width={128} height={128} className="mt-2 rounded-md object-cover h-32 w-32 border" data-ai-hint="profile photo"/>
               ) : (
                 <div className="mt-2 flex items-center justify-center h-32 w-32 rounded-md border border-dashed bg-muted/50">
                   <UploadCloud className="h-12 w-12 text-muted-foreground" data-ai-hint="upload cloud icon" />
                 </div>
               )}
-              <p className="text-xs text-muted-foreground mt-1">Enter a direct URL to the photo.</p>
+              <p className="text-xs text-muted-foreground mt-1">Upload a photo from your device.</p>
             </div>
           </div>
           
@@ -520,3 +491,5 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     </Card>
   );
 }
+
+    
