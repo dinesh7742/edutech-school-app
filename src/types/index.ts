@@ -135,7 +135,7 @@ export interface StudentAttendanceRecord {
 
 export interface DailyAttendanceLog {
   id?: string;
-  date: string;
+  date: string; // YYYY-MM-DD
   grade: string;
   division: string;
   studentRecords: StudentAttendanceRecord;
@@ -152,10 +152,10 @@ export interface LeaveApplication {
   studentName: string;
   grade: string;
   division: string;
-  leaveStartDate: string;
-  leaveEndDate: string;
+  leaveStartDate: string; // YYYY-MM-DD
+  leaveEndDate: string; // YYYY-MM-DD
   reason: string;
-  applicationDate: Timestamp | FieldValue;
+  applicationDate: Timestamp | FieldValue; // Changed from string for proper Firestore sorting
   status: LeaveApplicationStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;

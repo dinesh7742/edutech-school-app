@@ -2,16 +2,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X, UserCircle, Briefcase } from "lucide-react"; 
-import type { StudentProfile } from "@/types";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X, Briefcase, FileText, Loader2 } from "lucide-react"; 
+import type { StudentProfile, LeaveApplication } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore"; 
+import { doc, getDoc, collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore"; 
 import { MySelfForm } from "@/components/student/MySelfForm"; 
+import { format, parseISO } from "date-fns";
 
 interface StudentProfileViewProps {
   studentId: string;
@@ -33,18 +35,22 @@ const DetailItem = ({ icon: Icon, label, value }: { icon: React.ElementType, lab
 
 export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false); 
+
+  const [leaveApplications, setLeaveApplications] = useState<LeaveApplication[]>([]);
+  const [loadingLeaveApps, setLoadingLeaveApps] = useState(true);
+  const [leaveAppsError, setLeaveAppsError] = useState<string | null>(null);
 
   const fetchProfileData = useCallback(async () => {
     if (!studentId) {
-      setError("No student ID provided.");
-      setLoading(false);
+      setProfileError("No student ID provided.");
+      setLoadingProfile(false);
       return;
     }
-    setLoading(true);
-    setError(null);
+    setLoadingProfile(true);
+    setProfileError(null);
     console.log("[StudentProfileView] Attempting to fetch profile for studentId:", studentId);
     try {
       const profileDocRef = doc(db, "studentProfiles", studentId);
@@ -56,25 +62,61 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         setProfile({ uid: profileDocSnap.id, ...fetchedData } as StudentProfile);
       } else {
         console.warn("[StudentProfileView] No document found for studentId:", studentId);
-        setError("Student profile not found.");
+        setProfileError("Student profile not found.");
         setProfile(null);
       }
     } catch (err: any) {
       console.error("[StudentProfileView] Error fetching student profile for studentId " + studentId + ":", err);
-      setError("Failed to load student profile. Please try again later.");
+      setProfileError("Failed to load student profile. Please try again later.");
       setProfile(null);
     } finally {
-      setLoading(false);
+      setLoadingProfile(false);
     }
   }, [studentId]);
 
+  const fetchLeaveApplications = useCallback(async () => {
+    if (!studentId) {
+        setLeaveAppsError("Student ID missing for fetching leave applications.");
+        setLoadingLeaveApps(false);
+        return;
+    }
+    setLoadingLeaveApps(true);
+    setLeaveAppsError(null);
+    try {
+        const leaveAppsCollectionRef = collection(db, "leaveApplications");
+        const q = query(
+            leaveAppsCollectionRef,
+            where("studentUid", "==", studentId),
+            orderBy("applicationDate", "desc")
+        );
+        const querySnapshot = await getDocs(q);
+        const fetchedApps = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            applicationDate: doc.data().applicationDate as Timestamp, // Ensure type
+        })) as LeaveApplication[];
+        setLeaveApplications(fetchedApps);
+    } catch (err: any) {
+        console.error("Error fetching leave applications for student " + studentId + ":", err);
+        setLeaveAppsError("Failed to load leave application history. " + (err.message || ""));
+         if (err.code === 'failed-precondition' && err.message.includes('index')) {
+          setLeaveAppsError("A Firestore index might be required for fetching leave applications. Please check the console for a link to create it.");
+        }
+    } finally {
+        setLoadingLeaveApps(false);
+    }
+  }, [studentId]);
+
+
   useEffect(() => {
     fetchProfileData();
-  }, [fetchProfileData]);
+    fetchLeaveApplications();
+  }, [fetchProfileData, fetchLeaveApplications]);
 
   const handleSaveSuccess = () => {
     setIsEditing(false);
-    fetchProfileData(); 
+    fetchProfileData(); // Refetch profile data after edit
+    fetchLeaveApplications(); // Refetch leave apps in case student details affecting them changed
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -86,7 +128,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Not Provided";
     try {
-      const date = new Date(dateString + 'T00:00:00'); 
+      const date = new Date(dateString + 'T00:00:00'); // Ensure local time for date-only strings
       if (isNaN(date.getTime())) return "Invalid Date";
       return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch (e) {
@@ -94,7 +136,24 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     }
   };
 
-  if (loading) {
+  const formatFirestoreTimestamp = (timestamp?: Timestamp | unknown): string => {
+    if (timestamp instanceof Timestamp) {
+      return format(timestamp.toDate(), "dd MMM yyyy");
+    }
+    return "N/A";
+  };
+  
+  const statusBadgeVariant = (status: LeaveApplication['status']) => {
+    switch (status) {
+      case "Pending": return "default";
+      case "Approved": return "accent";
+      case "Rejected": return "destructive";
+      default: return "outline";
+    }
+  };
+
+
+  if (loadingProfile) {
     return (
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader className="items-center text-center pb-6">
@@ -109,14 +168,14 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     );
   }
 
-  if (error && !isEditing) { 
+  if (profileError && !isEditing) { 
     return (
       <Card className="w-full max-w-3xl mx-auto shadow-xl border-destructive">
         <CardHeader>
           <CardTitle className="text-center text-destructive">Error</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground">{error}</p>
+          <p className="text-center text-muted-foreground">{profileError}</p>
         </CardContent>
       </Card>
     );
@@ -143,7 +202,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
           onSaveSuccess={handleSaveSuccess}
           isTeacherEditing={true}
         />
-        <div className="max-w-2xl mx-auto mt-4 flex justify-end">
+        <div className="max-w-3xl mx-auto mt-4 flex justify-end">
             <Button variant="outline" onClick={() => setIsEditing(false)}>
                 <X className="mr-2 h-4 w-4" /> Cancel Edit
             </Button>
@@ -187,12 +246,58 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         <DetailItem icon={Phone} label="Contact Number" value={profile?.contactNumber || "Not Provided"} />
         <DetailItem icon={Award} label="Grade & Division" value={profile ? `Grade ${profile.grade} - ${profile.division}` : "N/A"} />
         <DetailItem icon={CalendarDays} label="Religion" value={profile?.religion || "Not Provided"} />
-        <DetailItem icon={UserCircle} label="Caste" value={profile?.caste || "Not Provided"} />
+        <DetailItem icon={User} label="Caste" value={profile?.caste || "Not Provided"} />
         <DetailItem icon={ShieldCheck} label="Aadhar Card Number" value={profile?.aadharCardNumber || "Not Provided"} />
         <DetailItem icon={BookUser} label="PEN Number" value={profile?.penNumber || "Not Provided"} />
         <DetailItem icon={Hash} label="G.R. Number" value={profile?.grNumber || "Not Provided"} />
         <DetailItem icon={MapPin} label="Full Address" value={profile?.fullAddress || "Not Provided"} />
       </CardContent>
+
+      <CardFooter className="flex-col items-start p-6 mt-4 border-t">
+        <h3 className="text-xl font-semibold text-primary mb-4 flex items-center gap-2">
+          <FileText className="h-6 w-6" />
+          Leave Application History
+        </h3>
+        {loadingLeaveApps ? (
+          <div className="flex items-center justify-center w-full py-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2">Loading leave history...</p>
+          </div>
+        ) : leaveAppsError ? (
+          <p className="text-destructive">{leaveAppsError}</p>
+        ) : leaveApplications.length === 0 ? (
+          <p className="text-muted-foreground">No leave applications found for this student.</p>
+        ) : (
+          <div className="w-full overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Applied On</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Teacher Comment</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {leaveApplications.map((app) => (
+                  <TableRow key={app.id}>
+                    <TableCell>{formatFirestoreTimestamp(app.applicationDate)}</TableCell>
+                    <TableCell>{formatDate(app.leaveStartDate)}</TableCell>
+                    <TableCell>{formatDate(app.leaveEndDate)}</TableCell>
+                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reason}</TableCell>
+                    <TableCell>
+                      <Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge>
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardFooter>
     </Card>
   );
 }
