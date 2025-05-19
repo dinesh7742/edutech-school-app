@@ -2,7 +2,7 @@
 import type { User as FirebaseUser } from "firebase/auth";
 import type { Timestamp, FieldValue } from "firebase/firestore";
 
-export type UserRole = "student" | "teacher";
+export type UserRole = "student" | "teacher" | "admin"; // Added "admin"
 
 export interface AppUser extends FirebaseUser {
   role?: UserRole;

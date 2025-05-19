@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -17,7 +18,10 @@ export default function HomePage() {
           router.replace("/student/dashboard");
         } else if (role === "teacher") {
           router.replace("/teacher/dashboard");
-        } else {
+        } else if (role === "admin") { // Added admin redirection
+          router.replace("/admin/dashboard");
+        }
+         else {
           // If role is not defined yet (e.g. during signup), stay or redirect to a pending page
           // For now, redirect to login if role is unknown after loading
           router.replace("/login"); 

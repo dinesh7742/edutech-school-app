@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Info, Building, MapPin } from "lucide-react";
+import { LogOut, User, LayoutDashboard, Menu as MenuIcon, School, Phone, Mail, Info, Building, MapPin, ShieldAlert } from "lucide-react"; // Added ShieldAlert for Admin
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -41,20 +41,30 @@ export function Navbar() {
     }
   };
 
+  const getDashboardPath = () => {
+    if (role === 'student') return '/student/dashboard';
+    if (role === 'teacher') return '/teacher/dashboard';
+    if (role === 'admin') return '/admin/dashboard';
+    return '/'; // Fallback
+  };
+
+  const getProfilePath = () => {
+    if (role === 'student') return '/student/profile';
+    if (role === 'teacher') return '/teacher/profile';
+    // Admins might have a different profile page or none if their details are managed elsewhere
+    if (role === 'admin') return '/admin/dashboard'; // Or a specific admin profile page if created
+    return '/';
+  };
+
+
   const commonLinks = user ? (
     <>
-      <DropdownMenuItem onSelect={() => router.push(role === 'student' ? '/student/dashboard' : '/teacher/dashboard')}>
-        <LayoutDashboard className="mr-2 h-4 w-4" />
+      <DropdownMenuItem onSelect={() => router.push(getDashboardPath())}>
+        {role === 'admin' ? <ShieldAlert className="mr-2 h-4 w-4" /> : <LayoutDashboard className="mr-2 h-4 w-4" /> }
         Dashboard
       </DropdownMenuItem>
-      {role === 'student' && (
-        <DropdownMenuItem onSelect={() => router.push('/student/profile')}>
-          <User className="mr-2 h-4 w-4" />
-          My Profile
-        </DropdownMenuItem>
-      )}
-      {role === 'teacher' && (
-        <DropdownMenuItem onSelect={() => router.push('/teacher/profile')}>
+      {(role === 'student' || role === 'teacher') && (
+        <DropdownMenuItem onSelect={() => router.push(getProfilePath())}>
           <User className="mr-2 h-4 w-4" />
           My Profile
         </DropdownMenuItem>
@@ -65,7 +75,10 @@ export function Navbar() {
   const navLinks = user ? (
     <>
       <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
-        <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'}>Dashboard</Link>
+        <Link href={getDashboardPath()}>
+          {role === 'admin' ? <ShieldAlert className="mr-2 h-4 w-4" /> : null }
+          Dashboard
+        </Link>
       </Button>
       {role === 'student' && (
         <Button variant="ghost" asChild className="text-base text-primary-foreground hover:text-primary-foreground/80">
@@ -85,6 +98,7 @@ export function Navbar() {
           </Button>
          </>
       )}
+      {/* Add admin-specific nav links here if needed */}
     </>
   ) : (
     <>
@@ -101,7 +115,10 @@ export function Navbar() {
     <div className="flex flex-col space-y-2 pt-2">
       {user ? (
         <>
-          <Link href={role === 'student' ? '/student/dashboard' : '/teacher/dashboard'} className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>Dashboard</Link>
+          <Link href={getDashboardPath()} className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>
+            {role === 'admin' ? <ShieldAlert className="inline-block mr-2 h-5 w-5" /> : null }
+            Dashboard
+          </Link>
           {role === 'student' && <Link href="/student/profile" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>}
           {role === 'teacher' && (
             <>
@@ -110,6 +127,7 @@ export function Navbar() {
               <Link href="/teacher/profile" className="block px-4 py-2 text-base hover:bg-accent rounded-md" onClick={() => setMobileMenuOpen(false)}>My Profile</Link>
             </>
           )}
+          {/* Add admin-specific mobile nav links here if needed */}
           <Button variant="ghost" onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full justify-start px-4 py-2 text-base">
             <LogOut className="mr-2 h-4 w-4" /> Logout
           </Button>

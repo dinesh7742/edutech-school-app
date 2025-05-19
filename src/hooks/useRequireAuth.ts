@@ -21,7 +21,16 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
       if (!user) {
         router.replace(redirectPath);
       } else if (requiredRole && role !== requiredRole) {
-        const targetDashboard = user.role === 'student' ? '/student/dashboard' : '/teacher/dashboard';
+        // If a required role is specified and the user's role doesn't match,
+        // redirect them to their own default dashboard or to the login page if no role.
+        let targetDashboard = "/login";
+        if (user.role === 'student') {
+          targetDashboard = '/student/dashboard';
+        } else if (user.role === 'teacher') {
+          targetDashboard = '/teacher/dashboard';
+        } else if (user.role === 'admin') {
+          targetDashboard = '/admin/dashboard';
+        }
         router.replace(targetDashboard);
       }
     }
