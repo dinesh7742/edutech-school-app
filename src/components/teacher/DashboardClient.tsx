@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare, MailOpen } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare, MailOpen, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -253,12 +253,12 @@ export function TeacherDashboardClient() {
      {
       id: "upcomingEvents", // Kept for structure, can be implemented later
       title: "Upcoming Events",
-      icon: BarChart3, 
+      icon: BarChart3,
       dataAiHint: "calendar event",
       description: "School events and important dates this month.",
       content: (
         <>
-          <div className="text-3xl font-bold">0</div> 
+          <div className="text-3xl font-bold">0</div>
           <p className="text-xs text-muted-foreground">School events this month</p>
           <p className="text-xs text-muted-foreground mt-2">(Feature to be implemented)</p>
         </>
@@ -267,7 +267,7 @@ export function TeacherDashboardClient() {
     {
       id: "profileSettings",
       title: "Profile Settings",
-      icon: UserCog, 
+      icon: UserCog,
       description: "Update your account and display information.",
       dataAiHint: "user settings",
       content: (
@@ -322,6 +322,14 @@ export function TeacherDashboardClient() {
       link: "/teacher/leave-applications",
       buttonText: "Manage Leave",
       dataAiHint: "mail open letter"
+    },
+    {
+      title: "Late Arrival Requests",
+      icon: AlertTriangle,
+      description: "Review late arrival / early departure requests.",
+      link: "/teacher/late-arrival-requests",
+      buttonText: "Manage Requests",
+      dataAiHint: "alert triangle time"
     },
      {
       title: "Download Class Data",
@@ -389,4 +397,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-

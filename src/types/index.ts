@@ -13,22 +13,22 @@ export interface AppUser extends FirebaseUser {
 }
 
 export interface Notice {
-  id: string; 
+  id: string;
   title: string;
   content: string;
   postedByUid: string;
   postedByName: string;
-  timestamp: Timestamp | FieldValue; 
-  displayDate?: string; 
-  grade?: string | null; 
-  division?: string | null; 
+  timestamp: Timestamp | FieldValue;
+  displayDate?: string;
+  grade?: string | null;
+  division?: string | null;
 }
 
 export interface Homework {
   id: string;
   title: string;
   description?: string;
-  fileUrl?: string; 
+  fileUrl?: string;
   fileName?: string;
   postedByUid: string;
   postedByName: string;
@@ -41,15 +41,15 @@ export interface Homework {
 }
 
 export interface HomeworkSubmission {
-  id?: string; 
+  id?: string;
   homeworkId: string;
   studentId: string;
-  studentName: string; 
+  studentName: string;
   grade: string;
   division: string;
-  homeworkTitle: string; 
+  homeworkTitle: string;
   completedAt: Timestamp | FieldValue;
-  status: 'completed'; 
+  status: 'completed';
 }
 
 
@@ -71,7 +71,7 @@ export interface Textbook {
   id: string;
   title: string;
   subject: string;
-  fileUrl: string; 
+  fileUrl: string;
   coverImageUrl?: string;
   fileName?: string;
   postedByUid: string;
@@ -97,7 +97,7 @@ export interface StudentProfile {
   middleName?: string;
   lastName: string;
   motherName?: string;
-  dateOfBirth?: string; 
+  dateOfBirth?: string;
   gender?: string;
   grade: string;
   division: string;
@@ -132,8 +132,8 @@ export interface StudentAttendanceRecord {
 }
 
 export interface DailyAttendanceLog {
-  id?: string; 
-  date: string; 
+  id?: string;
+  date: string;
   grade: string;
   division: string;
   studentRecords: StudentAttendanceRecord;
@@ -145,27 +145,27 @@ export interface DailyAttendanceLog {
 export type LeaveApplicationStatus = "Pending" | "Approved" | "Rejected";
 
 export interface LeaveApplication {
-  id?: string; 
+  id?: string;
   studentUid: string;
   studentName: string;
   grade: string;
   division: string;
-  leaveStartDate: string; 
-  leaveEndDate: string;   
+  leaveStartDate: string;
+  leaveEndDate: string;
   reason: string;
   applicationDate: Timestamp | FieldValue;
   status: LeaveApplicationStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
   reviewTimestamp?: Timestamp | FieldValue;
-  teacherComments?: string; 
+  teacherComments?: string;
 }
 
 export interface SchoolForm {
   id: string;
   title: string;
   description: string;
-  pdfUrl: string; 
+  pdfUrl: string;
   dataAiHint: string;
 }
 
