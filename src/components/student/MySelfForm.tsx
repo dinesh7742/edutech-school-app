@@ -47,7 +47,7 @@ const profileSchema = z.object({
   religion: z.string().optional(),
   caste: z.string().optional(),
   fullAddress: z.string().optional(),
-  photoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  photoUrl: z.string().url("Must be a valid URL (e.g., https://...).").optional().or(z.literal("")),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -160,11 +160,11 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         setIsFetchingProfile(false);
       };
       fetchProfile();
-    } else if (!isTeacherEditing) { // Only show toast if student is viewing their own profile and UID is missing
-        setIsFetchingProfile(false); // Stop fetching state
+    } else if (!isTeacherEditing) { 
+        setIsFetchingProfile(false); 
         toast({title: "Error", description: "Could not load user information. Please ensure you are logged in.", variant: "destructive"});
     } else {
-       setIsFetchingProfile(false); // Stop fetching if it's teacher editing but no studentIdForEdit
+       setIsFetchingProfile(false); 
     }
   }, [studentIdForEdit, loggedInUser?.uid, loggedInUser?.displayName, loggedInUser?.grade, loggedInUser?.division, reset, defaultPhotoPlaceholder, isTeacherEditing, toast]);
 
@@ -192,34 +192,72 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     }
 
     try {
-      const profileData: StudentProfile = {
+      // Save full profile data to Firestore 'studentProfiles' collection
+      const profileDataForFirestore: StudentProfile = {
         uid: profileUidToSave,
         email: studentEmail,
         ...data,
-        photoUrl: data.photoUrl === defaultPhotoPlaceholder ? "" : data.photoUrl || "",
+        photoUrl: (data.photoUrl === defaultPhotoPlaceholder || !data.photoUrl) ? "" : data.photoUrl,
       };
+      await setDoc(doc(db, "studentProfiles", profileUidToSave), profileDataForFirestore, { merge: true });
 
-      await setDoc(doc(db, "studentProfiles", profileUidToSave), profileData, { merge: true });
-
-      // If a student is editing their own profile
+      // If a student is editing their own profile, attempt to update Firebase Auth profile
       if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave) {
         const newDisplayName = `${data.firstName} ${data.lastName || ''}`.trim();
         const updatesToAuth: { displayName?: string; photoURL?: string } = {};
+
         if (userToUpdateAuth.displayName !== newDisplayName) {
             updatesToAuth.displayName = newDisplayName;
         }
-        if (data.photoUrl && data.photoUrl !== defaultPhotoPlaceholder && userToUpdateAuth.photoURL !== data.photoUrl) {
-             updatesToAuth.photoURL = data.photoUrl;
+
+        const MAX_AUTH_PHOTO_URL_LENGTH = 2000; // Firebase's limit is around this for photoURL
+
+        // Determine the photoURL to set for Firebase Auth
+        let authPhotoUrlToSet: string | undefined = undefined;
+
+        if (data.photoUrl && data.photoUrl !== defaultPhotoPlaceholder) { // User provided a new, non-placeholder URL
+            if (data.photoUrl.length <= MAX_AUTH_PHOTO_URL_LENGTH) {
+                if (userToUpdateAuth.photoURL !== data.photoUrl) {
+                    authPhotoUrlToSet = data.photoUrl;
+                }
+            } else {
+                // URL is too long for Firebase Auth profile, inform user
+                toast({
+                    title: "Profile Photo URL Too Long",
+                    description: "Your photo URL is too long for your main avatar. It's saved in your detailed profile.",
+                    variant: "default",
+                    duration: 8000,
+                });
+                // Do not set updatesToAuth.photoURL if it's too long
+            }
+        } else if ((!data.photoUrl || data.photoUrl === defaultPhotoPlaceholder) && userToUpdateAuth.photoURL) {
+            // User cleared the photo URL in the form, or it's the default placeholder, and there was an existing photoURL
+            authPhotoUrlToSet = ""; // Set to empty string to clear in Firebase Auth
         }
 
+        if (authPhotoUrlToSet !== undefined) {
+            updatesToAuth.photoURL = authPhotoUrlToSet;
+        }
+        
         if (Object.keys(updatesToAuth).length > 0) {
             await updateAuthProfile(userToUpdateAuth, updatesToAuth);
+             // Update local auth context
             if (setAuthUser) {
-                setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatesToAuth } : null);
+                setAuthUser(prevUser => {
+                    if (!prevUser) return null;
+                    const updatedContextUser = { ...prevUser };
+                    if (updatesToAuth.displayName !== undefined) {
+                        updatedContextUser.displayName = updatesToAuth.displayName;
+                    }
+                    // Reflect the URL that was actually set (or attempted to be set) in Auth
+                    if (updatesToAuth.photoURL !== undefined) { 
+                        updatedContextUser.photoURL = updatesToAuth.photoURL === "" ? null : updatesToAuth.photoURL;
+                    }
+                    return updatedContextUser;
+                });
             }
         }
       }
-
 
       toast({
         title: isTeacherEditing ? "Student Profile Updated" : "Profile Updated",
@@ -230,11 +268,24 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
       }
     } catch (error: any) {
       console.error("Profile update error:", error);
-      toast({
-        title: "Update Failed",
-        description: error.message || "Could not save profile. Please try again.",
-        variant: "destructive",
-      });
+      // Check if it's specifically the auth/invalid-profile-attribute for photoURL
+      if (error.code === 'auth/invalid-profile-attribute' && error.message.includes('photo URL too long')) {
+         toast({
+            title: "Profile Photo URL Too Long",
+            description: "Your photo URL is too long for your main avatar. It's saved in your detailed profile.",
+            variant: "destructive", // Make it more prominent
+            duration: 8000,
+        });
+        // Still consider the Firestore part successful if this was the only error
+        if (onSaveSuccess) onSaveSuccess();
+
+      } else {
+        toast({
+            title: "Update Failed",
+            description: error.message || "Could not save profile. Please try again.",
+            variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -369,11 +420,11 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
                 placeholder={defaultPhotoPlaceholder}
               />
                {errors.photoUrl && <p className="text-sm text-destructive mt-1">{errors.photoUrl.message}</p>}
-              {photoPreview ? (
+              {photoPreview && photoPreview.startsWith('http') ? (
                   <Image src={photoPreview} alt="Profile Preview" width={128} height={128} className="mt-2 rounded-md object-cover h-32 w-32 border" data-ai-hint="profile photo"/>
               ) : (
                 <div className="mt-2 flex items-center justify-center h-32 w-32 rounded-md border border-dashed bg-muted/50">
-                  <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                  <UploadCloud className="h-12 w-12 text-muted-foreground" data-ai-hint="upload cloud icon" />
                 </div>
               )}
               <p className="text-xs text-muted-foreground mt-1">Enter a direct URL to the photo.</p>
