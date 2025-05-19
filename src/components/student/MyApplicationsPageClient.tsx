@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CalendarPlus, AlertTriangle, Edit, FileText, Award, Shield, Download, FileArchive } from "lucide-react";
+import { CalendarPlus, AlertTriangle, Edit, FileText, Award, Shield, Download, FileArchive, FileBadge } from "lucide-react"; // Added FileBadge
 import type { OtherApplicationType } from "@/types";
 
 interface ApplicationItem {
@@ -43,7 +43,7 @@ const onlineApplications: ApplicationItem[] = [
     id: "progress-report",
     title: "Progress Report Request",
     description: "Request a duplicate or special issuance of your progress report.",
-    icon: FileText, // Using FileText, could be Activity
+    icon: FileText, 
     actionType: "online",
     link: "/student/other-applications/submit?formType=ProgressReportRequest",
     buttonText: "Apply Online",
@@ -53,11 +53,21 @@ const onlineApplications: ApplicationItem[] = [
     id: "re-exam",
     title: "Re-exam / Re-test Request",
     description: "Apply to appear for a re-exam or re-test, subject to school policy.",
-    icon: Edit, // Using Edit, could be FileText
+    icon: Edit, 
     actionType: "online",
     link: "/student/other-applications/submit?formType=ReExamRequest",
     buttonText: "Apply Online",
     dataAiHint: "exam paper test",
+  },
+  {
+    id: "bonafide-certificate",
+    title: "Bonafide Certificate Request",
+    description: "Apply for a Bonafide Certificate for official purposes.",
+    icon: FileBadge, // Using FileBadge icon
+    actionType: "online",
+    link: "/student/other-applications/submit?formType=BonafideCertificateRequest",
+    buttonText: "Apply Online",
+    dataAiHint: "certificate document official",
   },
   {
     id: "tc-application",
@@ -73,7 +83,7 @@ const onlineApplications: ApplicationItem[] = [
     id: "duplicate-tc",
     title: "Duplicate TC Request",
     description: "Request a duplicate Transfer Certificate if the original is lost or damaged.",
-    icon: Award, // Could be a specific 'copy' or 'duplicate' icon if available
+    icon: Award, 
     actionType: "online",
     link: "/student/other-applications/submit?formType=DuplicateTCRequest",
     buttonText: "Apply Online",
@@ -143,6 +153,3 @@ export function MyApplicationsPageClient() {
     </div>
   );
 }
-
-
-    

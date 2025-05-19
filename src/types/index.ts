@@ -10,8 +10,8 @@ export interface AppUser extends FirebaseUser {
   division?: string;
   displayName?: string | null;
   photoURL?: string | null;
-  email?: string | null; // Made optional
-  phoneNumber?: string | null; // Added
+  email?: string | null;
+  phoneNumber?: string | null;
 }
 
 export interface Notice {
@@ -73,8 +73,8 @@ export interface Textbook {
   id: string;
   title: string;
   subject: string;
-  fileUrl: string; // This will store the Data URI or be empty
-  coverImageUrl?: string; // This will store the Data URI or be empty
+  fileUrl: string; 
+  coverImageUrl?: string; 
   fileName?: string;
   postedByUid: string;
   postedByName: string;
@@ -86,7 +86,7 @@ export interface PhotoGalleryAlbum {
   id: string;
   title: string;
   description?: string;
-  images: { url: string; alt?: string }[]; // url will store Data URI
+  images: { url: string; alt?: string }[]; 
   postedByUid: string;
   postedByName: string;
   eventDate?: string; // YYYY-MM-DD
@@ -112,7 +112,7 @@ export interface StudentProfile {
   religion?: string;
   caste?: string;
   fullAddress?: string;
-  photoUrl?: string; // Will store Data URI
+  photoUrl?: string; // Can store Data URI
   email?: string; // Student's email
 }
 
@@ -199,13 +199,15 @@ export type OtherApplicationType =
   | "ProgressReportRequest"
   | "ReExamRequest"
   | "TCApplication"
-  | "DuplicateTCRequest";
+  | "DuplicateTCRequest"
+  | "BonafideCertificateRequest"; // Added new type
 
 export const otherApplicationTypeLabels: Record<OtherApplicationType, string> = {
   ProgressReportRequest: "Progress Report Request",
   ReExamRequest: "Re-exam / Re-test Request",
   TCApplication: "Transfer Certificate (TC) Application",
   DuplicateTCRequest: "Duplicate TC Request",
+  BonafideCertificateRequest: "Bonafide Certificate Request", // Added label
 };
 
 export interface OtherStudentApplication {

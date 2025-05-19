@@ -196,7 +196,7 @@ export function OtherApplicationsReviewTable() {
             <SelectContent>
               <SelectItem value="All">All Form Types</SelectItem>
               {Object.entries(otherApplicationTypeLabels).map(([typeKey, typeLabel]) => (
-                <SelectItem key={typeKey} value={typeKey}>{typeLabel}</SelectItem>
+                <SelectItem key={typeKey} value={typeKey as OtherApplicationType}>{typeLabel}</SelectItem>
               ))}
             </SelectContent>
           </Select>
