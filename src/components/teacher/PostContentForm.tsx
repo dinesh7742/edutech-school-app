@@ -16,7 +16,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase"; 
+import { db, storage } from "@/lib/firebase"; 
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 // Schemas for different content types
 const noticeSchema = z.object({
@@ -283,13 +284,13 @@ export function PostContentForm() {
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-6">
-            <TabsTrigger value="notice">Notices</TabsTrigger>
-            <TabsTrigger value="homework">Homework</TabsTrigger>
-            <TabsTrigger value="circular">Circulars</TabsTrigger>
-            <TabsTrigger value="textbook">Textbooks</TabsTrigger>
-            <TabsTrigger value="gallery">Gallery</TabsTrigger>
-            <TabsTrigger value="liveClass">Live Class</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1 mb-6">
+            <TabsTrigger value="notice" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Notices</TabsTrigger>
+            <TabsTrigger value="homework" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Homework</TabsTrigger>
+            <TabsTrigger value="circular" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Circulars</TabsTrigger>
+            <TabsTrigger value="textbook" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Textbooks</TabsTrigger>
+            <TabsTrigger value="gallery" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Gallery</TabsTrigger>
+            <TabsTrigger value="liveClass" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Live Class</TabsTrigger>
           </TabsList>
 
           <TabsContent value="notice">
