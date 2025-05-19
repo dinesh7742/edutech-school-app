@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass, FileArchive, AlertTriangle, Edit } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CalendarPlus, Hourglass, AlertTriangle, FileSignature, Edit } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -182,11 +182,10 @@ export function StudentDashboardClient() {
     };
     fetchLatestHomework();
 
-    // Fetch latest leave application status
-    const fetchLatestApplication = async <T extends { studentUid: string; applicationTimestamp?: Timestamp; applicationDate?: Timestamp }>(
+    const fetchLatestApplicationStatus = async <T extends { studentUid: string; applicationDate?: Timestamp; applicationTimestamp?: Timestamp }>(
         collectionName: string,
         setter: React.Dispatch<React.SetStateAction<LatestContent<T>>>,
-        timestampField: keyof T = "applicationTimestamp" as keyof T // Default for most, but leaveApp uses applicationDate
+        timestampField: keyof T // 'applicationDate' for leave, 'applicationTimestamp' for late arrival
       ) => {
         if (!user?.uid) {
           setter({ item: null, loading: false });
@@ -218,8 +217,8 @@ export function StudentDashboardClient() {
         }
       };
 
-    fetchLatestApplication<LeaveApplication>("leaveApplications", setLatestLeaveApplication, "applicationDate");
-    fetchLatestApplication<LateArrivalApplication>("lateArrivalRequests", setLatestLateArrivalRequest, "applicationTimestamp");
+    fetchLatestApplicationStatus<LeaveApplication>("leaveApplications", setLatestLeaveApplication, "applicationDate");
+    fetchLatestApplicationStatus<LateArrivalApplication>("lateArrivalRequests", setLatestLateArrivalRequest, "applicationTimestamp");
 
 
   }, [user, toast]);
@@ -251,7 +250,6 @@ export function StudentDashboardClient() {
         title: "Homework Marked!",
         description: `"${homeworkItem.title}" marked as completed.`,
       });
-      // TODO: Implement teacher notification system here (e.g., using Cloud Functions)
       console.log("TODO: Notify teacher about homework completion for homeworkId:", homeworkItem.id, "by studentId:", user.uid);
     } catch (error: any) {
       console.error("Error marking homework as completed:", error);
@@ -396,84 +394,16 @@ export function StudentDashboardClient() {
       emptyMessage: "No live classes scheduled for you."
     },
     {
-      id: "applyLeave",
-      title: "Leave Application Status",
-      icon: CalendarPlus,
-      link: "/student/apply-leave",
-      buttonText: "Apply or View History",
-      dataAiHint: "calendar plus",
-      description: "Submit leave requests and check their status.",
-      contentData: latestLeaveApplication,
-      renderContent: (data: LeaveApplication | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-md truncate">Latest Application Status</h3>
-            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Applied: {data.applicationDate ? formatDateDisplay( (data.applicationDate as Timestamp).toDate().toISOString().split('T')[0]) : 'N/A'}
-          </div>
-          <p className="text-sm">
-            <strong>Dates:</strong> {formatDateDisplay(data.leaveStartDate)} to {formatDateDisplay(data.leaveEndDate)}
-          </p>
-          <p className="text-sm line-clamp-2"><strong>Reason:</strong> {data.reason}</p>
-          {data.teacherComments && (data.status === "Approved" || data.status === "Rejected") && (
-            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher Comments:</strong> {data.teacherComments}</p>
-          )}
-        </div>
-      ) : null,
-      emptyMessage: "You haven't applied for leave recently."
-    },
-    {
-      id: "lateArrivalRequest",
-      title: "Late Arrival / Early Departure",
-      icon: AlertTriangle,
-      link: "/student/late-arrival",
-      buttonText: "Submit New Request",
-      dataAiHint: "alert triangle time",
-      description: "Request permission for late arrival or early departure.",
-      contentData: latestLateArrivalRequest,
-      renderContent: (data: LateArrivalApplication | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-md truncate">Latest Request Status</h3>
-            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Requested for: {data.requestDate ? formatDateDisplay(data.requestDate) : 'N/A'}
-          </div>
-          <p className="text-sm"><strong>Type:</strong> {data.type} at {data.time}</p>
-          <p className="text-sm line-clamp-2"><strong>Reason:</strong> {data.reason}</p>
-          {data.teacherComments && (data.status === "Approved" || data.status === "Rejected") && (
-            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher Comments:</strong> {data.teacherComments}</p>
-          )}
-        </div>
-      ) : null,
-      emptyMessage: "No recent late arrival/early departure requests."
-    },
-     {
-      id: "otherSchoolApplications", 
-      title: "Other School Applications",
-      icon: Edit, 
-      link: "/student/other-applications", 
-      buttonText: "View Application Types",
-      dataAiHint: "edit form document",
-      description: "Access and submit various other school application forms like Progress Report, TC, etc.",
+      id: "mySchoolApplications",
+      title: "My School Applications",
+      icon: FileSignature,
+      link: "/student/my-applications",
+      buttonText: "Access Forms & Applications",
+      dataAiHint: "form signature document",
+      description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
       contentData: null, 
       renderContent: null,
-      emptyMessage: ""
-    },
-    {
-      id: "schoolFormsDownload",
-      title: "New Leave Request",
-      icon: CalendarPlus,
-      link: "/student/apply-leave",
-      buttonText: "Open Leave Form",
-      dataAiHint: "calendar add event",
-      description: "Submit a new application for leave from school.",
-      contentData: null,
-      renderContent: null,
-      emptyMessage: ""
+      emptyMessage: "" 
     },
     {
       id: "textbooks",
@@ -509,11 +439,9 @@ export function StudentDashboardClient() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
-          <Card key={card.id} className="text-center">
+          <Card key={card.id} className="text-center flex flex-col">
             <CardHeader className="pb-2 pt-4 items-center">
-              <div className="flex justify-center mb-3">
-                 <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint}/>
-              </div>
+               <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint}/>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
@@ -555,11 +483,9 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
-         <Card className="text-center">
+         <Card className="text-center flex flex-col">
             <CardHeader className="pb-2 pt-4 items-center">
-                <div className="flex justify-center mb-3">
-                    <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
-                </div>
+                <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm h-12 line-clamp-2 px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
@@ -570,11 +496,9 @@ export function StudentDashboardClient() {
               </Button>
             </CardContent>
           </Card>
-        <Card className="text-center">
+        <Card className="text-center flex flex-col">
             <CardHeader className="pb-2 pt-4 items-center">
-                <div className="flex justify-center mb-3">
-                     <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
-                </div>
+                 <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm h-12 line-clamp-2 px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
@@ -589,3 +513,5 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
+    
