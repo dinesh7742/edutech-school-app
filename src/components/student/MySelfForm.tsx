@@ -31,6 +31,8 @@ const profileSchema = z.object({
   middleName: z.string().optional(),
   lastName: z.string().min(1, "Last name is required"),
   motherName: z.string().optional(),
+  fatherOccupation: z.string().optional(),
+  motherOccupation: z.string().optional(),
   dateOfBirth: z.string().optional().refine((val) => {
     if (!val) return true; // Optional field
     return /^\d{4}-\d{2}-\d{2}$/.test(val);
@@ -61,11 +63,12 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
-  const defaultPhotoPlaceholder = studentIdForEdit
+  const defaultPhotoPlaceholder = studentIdForEdit && isTeacherEditing
     ? `https://placehold.co/128x128.png?text=Edit+Student`
     : `https://placehold.co/128x128.png?text=My+Photo`;
+  const [photoPreview, setPhotoPreview] = useState<string | null>(defaultPhotoPlaceholder);
+
 
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -74,6 +77,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         middleName: "",
         lastName: "",
         motherName: "",
+        fatherOccupation: "",
+        motherOccupation: "",
         dateOfBirth: "",
         gender: "",
         grade: "", 
@@ -111,6 +116,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             middleName: data.middleName || "",
             lastName: data.lastName || "",
             motherName: data.motherName || "",
+            fatherOccupation: data.fatherOccupation || "",
+            motherOccupation: data.motherOccupation || "",
             dateOfBirth: data.dateOfBirth || "",
             gender: data.gender || "",
             grade: data.grade || userData.grade || "1",
@@ -134,6 +141,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             division: userData.division || loggedInUser?.division || "A",
             middleName: "",
             motherName: "",
+            fatherOccupation: "",
+            motherOccupation: "",
             dateOfBirth: "",
             gender: "",
             contactNumber: "",
@@ -192,23 +201,21 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
 
       await setDoc(doc(db, "studentProfiles", profileUidToSave), profileData, { merge: true });
 
-      // If a teacher is not editing (i.e., student is editing their own profile)
-      // AND the current auth user matches the profile being saved
-      // AND a photoUrl is provided, update the Firebase Auth user's photoURL
-      if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave && data.photoUrl && data.photoUrl !== defaultPhotoPlaceholder) {
-        await updateAuthProfile(userToUpdateAuth, { photoURL: data.photoUrl });
-        // Update AuthContext user state if setAuthUser is available
-        if (setAuthUser) {
-           setAuthUser(prevUser => prevUser ? { ...prevUser, photoURL: data.photoUrl } : null);
-        }
-      }
-      // Also update displayName on Firebase Auth user if student is editing their own
+      // If a student is editing their own profile
       if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave) {
         const newDisplayName = `${data.firstName} ${data.lastName || ''}`.trim();
+        const updatesToAuth: { displayName?: string; photoURL?: string } = {};
         if (userToUpdateAuth.displayName !== newDisplayName) {
-            await updateAuthProfile(userToUpdateAuth, { displayName: newDisplayName });
+            updatesToAuth.displayName = newDisplayName;
+        }
+        if (data.photoUrl && data.photoUrl !== defaultPhotoPlaceholder && userToUpdateAuth.photoURL !== data.photoUrl) {
+             updatesToAuth.photoURL = data.photoUrl;
+        }
+
+        if (Object.keys(updatesToAuth).length > 0) {
+            await updateAuthProfile(userToUpdateAuth, updatesToAuth);
             if (setAuthUser) {
-                setAuthUser(prevUser => prevUser ? { ...prevUser, displayName: newDisplayName } : null);
+                setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatesToAuth } : null);
             }
         }
       }
@@ -268,7 +275,8 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
           <CardDescription>Loading information...</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+          <Skeleton className="h-32 w-32 rounded-full self-center mb-4" />
+          {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-10 w-1/3" />
         </CardContent>
@@ -316,7 +324,21 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
               <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
               {errors.dateOfBirth && <p className="text-sm text-destructive mt-1">{errors.dateOfBirth.message}</p>}
             </div>
-           </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="fatherOccupation">Father's Occupation</Label>
+              <Input id="fatherOccupation" {...register("fatherOccupation")} />
+              {errors.fatherOccupation && <p className="text-sm text-destructive mt-1">{errors.fatherOccupation.message}</p>}
+            </div>
+            <div>
+              <Label htmlFor="motherOccupation">Mother's Occupation</Label>
+              <Input id="motherOccupation" {...register("motherOccupation")} />
+              {errors.motherOccupation && <p className="text-sm text-destructive mt-1">{errors.motherOccupation.message}</p>}
+            </div>
+          </div>
+
 
            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
              <div>

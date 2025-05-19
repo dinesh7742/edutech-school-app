@@ -97,6 +97,8 @@ export interface StudentProfile {
   middleName?: string;
   lastName: string;
   motherName?: string;
+  fatherOccupation?: string;
+  motherOccupation?: string;
   dateOfBirth?: string;
   gender?: string;
   grade: string;
