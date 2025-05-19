@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass, FileArchive, AlertTriangle } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass, FileArchive, AlertTriangle, Edit } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -432,18 +432,6 @@ export function StudentDashboardClient() {
       emptyMessage: "You haven't applied for leave recently."
     },
     {
-      id: "newLeaveApplication",
-      title: "New Leave Request",
-      icon: CalendarPlus,
-      link: "/student/apply-leave",
-      buttonText: "Open Leave Form",
-      dataAiHint: "calendar new",
-      description: "Submit a new leave application for teacher approval.",
-      contentData: null,
-      renderContent: null,
-      emptyMessage: ""
-    },
-    {
       id: "lateArrivalRequest",
       title: "Late Arrival / Early Departure",
       icon: AlertTriangle,
@@ -471,7 +459,19 @@ export function StudentDashboardClient() {
       emptyMessage: "No recent late arrival/early departure requests."
     },
      {
-      id: "schoolFormsDownload",
+      id: "otherSchoolApplications", // New Card ID
+      title: "Other School Applications",
+      icon: Edit, // Using Edit icon, can be changed
+      link: "/student/other-applications", // New page link
+      buttonText: "View Application Types",
+      dataAiHint: "edit form document",
+      description: "Access and submit various other school application forms like Progress Report, TC, etc.",
+      contentData: null, // No dynamic content preview on this card for now
+      renderContent: null,
+      emptyMessage: ""
+    },
+    {
+      id: "downloadableSchoolForms",
       title: "Downloadable School Forms",
       icon: FileArchive,
       link: "/student/school-forms",
@@ -596,4 +596,3 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-

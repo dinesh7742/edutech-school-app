@@ -170,7 +170,7 @@ export interface SchoolForm {
 }
 
 export type LateArrivalRequestType = "Late Arrival" | "Early Departure";
-export type RequestStatus = "Pending" | "Approved" | "Rejected";
+export type RequestStatus = "Pending" | "Approved" | "Rejected"; // Generic status for applications
 
 export interface LateArrivalApplication {
   id?: string;
@@ -184,6 +184,36 @@ export interface LateArrivalApplication {
   reason: string;
   applicationTimestamp: Timestamp | FieldValue; // When the request was submitted
   status: RequestStatus;
+  reviewedByTeacherId?: string;
+  reviewedByTeacherName?: string;
+  reviewTimestamp?: Timestamp | FieldValue;
+  teacherComments?: string;
+}
+
+// New types for "Other School Applications"
+export type OtherApplicationType = 
+  | "ProgressReportRequest"
+  | "ReExamRequest"
+  | "TCApplication"
+  | "DuplicateTCRequest";
+
+export const otherApplicationTypeLabels: Record<OtherApplicationType, string> = {
+  ProgressReportRequest: "Progress Report Request",
+  ReExamRequest: "Re-exam / Re-test Request",
+  TCApplication: "Transfer Certificate (TC) Application",
+  DuplicateTCRequest: "Duplicate TC Request",
+};
+
+export interface OtherStudentApplication {
+  id?: string;
+  studentUid: string;
+  studentName: string;
+  grade: string;
+  division: string;
+  formType: OtherApplicationType;
+  reasonOrDetails: string;
+  applicationTimestamp: Timestamp | FieldValue;
+  status: RequestStatus; // "Pending", "Approved", "Rejected"
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
   reviewTimestamp?: Timestamp | FieldValue;
