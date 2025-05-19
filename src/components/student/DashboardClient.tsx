@@ -51,7 +51,7 @@ const formatDateDisplay = (dateString?: string) => {
       return format(parseISO(dateString), "dd MMM yyyy");
     } catch (e) {
       // Fallback if parseISO fails (e.g., dateString is not in expected format)
-      return dateString; 
+      return dateString;
     }
 };
 
@@ -155,7 +155,7 @@ export function StudentDashboardClient() {
             timestamp: hwData.timestamp as Timestamp,
             displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
             // Ensure dueDate is handled correctly, even if it's just a date string from Firestore
-            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', 
+            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
           } as Homework;
           setLatestHomework({ item: currentHomeworkItem, loading: false });
 
@@ -397,8 +397,8 @@ export function StudentDashboardClient() {
     },
     {
       id: "applyLeave",
-      title: "Leave Application Status", // Renamed slightly to differentiate from "New Leave Request"
-      icon: CalendarPlus, // Could use History icon here too
+      title: "Leave Application Status",
+      icon: CalendarPlus,
       link: "/student/apply-leave",
       buttonText: "Apply or View History",
       dataAiHint: "calendar plus",
@@ -420,26 +420,33 @@ export function StudentDashboardClient() {
           {data.teacherComments && (data.status === "Approved" || data.status === "Rejected") && (
             <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher Comments:</strong> {data.teacherComments}</p>
           )}
+           {data.status !== "Pending" && ( // Show download button if not pending
+            <Button asChild variant="outline" size="sm" className="mt-2 w-full">
+              <a href="/forms/leave_application_form.pdf" download target="_blank" rel="noopener noreferrer">
+                <Download className="mr-2 h-4 w-4" /> Download Application (PDF)
+              </a>
+            </Button>
+          )}
         </div>
       ) : null,
       emptyMessage: "You haven't applied for leave recently."
     },
     {
-      id: "newLeaveApplication", // Changed from schoolFormsDownload
+      id: "newLeaveApplication",
       title: "New Leave Request",
       icon: CalendarPlus,
       link: "/student/apply-leave",
       buttonText: "Open Leave Form",
       dataAiHint: "calendar new",
       description: "Submit a new leave application for teacher approval.",
-      contentData: null, // This card doesn't show status, the other one does
+      contentData: null,
       renderContent: null,
-      emptyMessage: "" // Not applicable as it's an action card
+      emptyMessage: ""
     },
     {
       id: "lateArrivalRequest",
       title: "Late Arrival / Early Departure",
-      icon: AlertTriangle, 
+      icon: AlertTriangle,
       link: "/student/late-arrival",
       buttonText: "Submit New Request",
       dataAiHint: "alert triangle time",
@@ -462,6 +469,18 @@ export function StudentDashboardClient() {
         </div>
       ) : null,
       emptyMessage: "No recent late arrival/early departure requests."
+    },
+     {
+      id: "schoolFormsDownload",
+      title: "Downloadable School Forms",
+      icon: FileArchive,
+      link: "/student/school-forms",
+      buttonText: "View All Forms",
+      dataAiHint: "archive document",
+      description: "Download various blank school forms and applications in PDF format.",
+      contentData: null,
+      renderContent: null,
+      emptyMessage: ""
     },
     {
       id: "textbooks",
@@ -498,15 +517,15 @@ export function StudentDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
           <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
-            <CardHeader className="pb-2 items-center">
-              <div className="flex justify-center mb-4">
-                 <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint}/>
+            <CardHeader className="pb-2 pt-4 items-center">
+              <div className="flex justify-center mb-3">
+                 <card.icon className="h-12 w-12 text-foreground" data-ai-hint={card.dataAiHint}/>
               </div>
-              <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+              <CardTitle className="text-lg font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
-                    (card.contentData.item as any).timestamp || 
-                    (card.contentData.item as LeaveApplication).applicationDate || 
+                    (card.contentData.item as any).timestamp ||
+                    (card.contentData.item as LeaveApplication).applicationDate ||
                     (card.contentData.item as LateArrivalApplication).applicationTimestamp
                     ) && (
                   <Badge variant="accent" className="animate-pulse">New</Badge>
@@ -518,11 +537,11 @@ export function StudentDashboardClient() {
                     <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
                  )}
               </CardTitle>
-               <CardDescription className="text-sm h-12 line-clamp-2">{card.description}</CardDescription>
+               <CardDescription className="text-xs h-10 line-clamp-2 px-2">{card.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-4 space-y-3 px-4">
               {card.renderContent && card.contentData?.loading && (
-                <div className="flex flex-col items-center justify-center flex-grow">
+                <div className="flex flex-col items-center justify-center flex-grow py-4">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
@@ -531,7 +550,7 @@ export function StudentDashboardClient() {
                 card.renderContent(card.contentData.item as any)
               )}
               {card.renderContent && !card.contentData?.loading && !card.contentData?.item && (
-                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center">{card.emptyMessage}</p>
+                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center py-4">{card.emptyMessage}</p>
               )}
               {!card.renderContent && (
                  <div className="flex-grow flex items-center justify-center">
@@ -544,14 +563,14 @@ export function StudentDashboardClient() {
           </Card>
         ))}
          <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader className="pb-2 items-center">
-                <div className="flex justify-center mb-4">
-                    <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
+            <CardHeader className="pb-2 pt-4 items-center">
+                <div className="flex justify-center mb-3">
+                    <ListChecks className="h-12 w-12 text-foreground" data-ai-hint="attendance list" />
                 </div>
-                <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
-                <CardDescription className="text-sm h-12 line-clamp-2">View your detailed attendance records.</CardDescription>
+                <CardTitle className="text-lg font-semibold">My Attendance</CardTitle>
+                <CardDescription className="text-xs h-10 line-clamp-2 px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-4 space-y-3 px-4">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/attendance">View Detailed Attendance</Link>
@@ -559,21 +578,20 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         <Card className="shadow-lg rounded-lg text-center flex flex-col">
-            <CardHeader className="pb-2 items-center">
-                <div className="flex justify-center mb-4">
-                     <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
+            <CardHeader className="pb-2 pt-4 items-center">
+                <div className="flex justify-center mb-3">
+                     <UserCircle className="h-12 w-12 text-foreground" data-ai-hint="user profile" />
                 </div>
-                <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
-                <CardDescription className="text-sm h-12 line-clamp-2">Manage your personal information and settings.</CardDescription>
+                <CardTitle className="text-lg font-semibold">My Profile</CardTitle>
+                <CardDescription className="text-xs h-10 line-clamp-2 px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-4 space-y-3 px-4">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/profile">Go to Profile</Link>
               </Button>
             </CardContent>
           </Card>
-           {/* The Downloadable School Forms card will be linked here if needed, or managed separately */}
       </div>
     </div>
   );
