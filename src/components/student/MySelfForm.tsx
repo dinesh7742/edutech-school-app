@@ -17,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { StudentProfile } from "@/types";
-import { Loader2, UploadCloud, UserCircle, Briefcase } from "lucide-react"; // Added UserCircle, Briefcase
+import { Loader2, UploadCloud, UserCircle, Briefcase } from "lucide-react";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { updateProfile as updateAuthProfile } from "firebase/auth";
@@ -25,9 +25,8 @@ import { updateProfile as updateAuthProfile } from "firebase/auth";
 
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
 const genderOptions = ["Male", "Female", "Other", "Prefer not to say"];
+const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB, slightly less than Firestore's limit for safety
 
-// Firestore documents have a size limit (around 1MB).
-// Large images converted to Data URIs can exceed this. Encourage users to upload optimized images.
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   middleName: z.string().optional(),
@@ -36,7 +35,7 @@ const profileSchema = z.object({
   fatherOccupation: z.string().optional(),
   motherOccupation: z.string().optional(),
   dateOfBirth: z.string().optional().refine((val) => {
-    if (!val) return true; // Optional field
+    if (!val) return true; 
     return /^\d{4}-\d{2}-\d{2}$/.test(val);
   }, "Invalid date format. Use YYYY-MM-DD"),
   gender: z.string().optional(),
@@ -69,7 +68,6 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-
   const { register, handleSubmit, setValue, watch, reset, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: { 
@@ -93,7 +91,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         photoUrl: "",
     }
   });
-
+  
   const defaultPhotoPlaceholder = isTeacherEditing && studentIdForEdit
     ? `https://placehold.co/128x128.png?text=Edit+Student`
     : `https://placehold.co/128x128.png?text=My+Photo`;
@@ -105,7 +103,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     if (profileUidToFetch) {
       const fetchProfile = async () => {
         setIsFetchingProfile(true);
-        setPhotoPreview(null); // Reset preview
+        setPhotoPreview(null);
         setSelectedFile(null);
 
         const profileDocRef = doc(db, "studentProfiles", profileUidToFetch);
@@ -137,10 +135,10 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             religion: data.religion || "",
             caste: data.caste || "",
             fullAddress: data.fullAddress || "",
-            photoUrl: data.photoUrl || "", // Keep existing Data URI or empty string
+            photoUrl: data.photoUrl || "",
           };
           if (data.photoUrl) {
-            setPhotoPreview(data.photoUrl); // Display existing Data URI
+            setPhotoPreview(data.photoUrl);
           } else {
             setPhotoPreview(defaultPhotoPlaceholder);
           }
@@ -148,7 +146,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
           const nameParts = userData.displayName?.split(" ") || loggedInUser?.displayName?.split(" ") || [];
           dataToReset = {
             firstName: nameParts[0] || "",
-            lastName: nameParts.length > 1 ? nameParts[nameParts.length -1] : "",
+            lastName: nameParts.length > 1 ? nameParts[nameParts.length - 1] : "",
             grade: userData.grade || loggedInUser?.grade || "1",
             division: userData.division || loggedInUser?.division || "A",
             motherName: "",
@@ -182,6 +180,16 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      // Basic client-side size check (e.g., 2MB limit for the file itself before Data URI conversion)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: "Image Too Large",
+          description: "Please choose an image file smaller than 2MB.",
+          variant: "destructive",
+        });
+        event.target.value = ""; // Reset file input
+        return;
+      }
       setSelectedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -190,7 +198,6 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
       reader.readAsDataURL(file);
     } else {
       setSelectedFile(null);
-      // If user cancels file selection, revert to original photo or placeholder
       const currentPhotoUrlInForm = watch("photoUrl");
       setPhotoPreview(currentPhotoUrlInForm || defaultPhotoPlaceholder);
     }
@@ -218,15 +225,37 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         studentEmail = loggedInUser?.email || "";
     }
 
-    // Handle image to Data URI conversion if a new file was selected
-    let photoDataUriToSave = data.photoUrl; // Keep existing if no new file
+    let finalPhotoUrlToSave = data.photoUrl; // Keep existing if no new file or new file is too large
+
     if (selectedFile) {
-      const reader = new FileReader();
-      photoDataUriToSave = await new Promise<string>((resolve, reject) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(selectedFile);
-      });
+      try {
+        const generatedDataUri = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(selectedFile);
+        });
+
+        if (generatedDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
+          toast({
+            title: "Image File Too Large",
+            description: "The selected image is too large to save directly (over 1MB after encoding). Please use a smaller image. Your previous photo (if any) is kept.",
+            variant: "destructive",
+            duration: 7000,
+          });
+          // finalPhotoUrlToSave remains as the old data.photoUrl
+        } else {
+          finalPhotoUrlToSave = generatedDataUri; // Use new, valid-sized Data URI
+        }
+      } catch (error) {
+        console.error("Error processing image file:", error);
+        toast({
+          title: "Image Processing Error",
+          description: "Could not process the selected image file. Your previous photo (if any) is kept.",
+          variant: "destructive",
+        });
+        // finalPhotoUrlToSave remains as the old data.photoUrl
+      }
     }
     
     try {
@@ -234,23 +263,17 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         uid: profileUidToSave,
         email: studentEmail,
         ...data,
-        photoUrl: photoDataUriToSave, // Save Data URI or existing photoUrl
+        photoUrl: finalPhotoUrlToSave,
       };
       await setDoc(doc(db, "studentProfiles", profileUidToSave), profileDataForFirestore, { merge: true });
 
       // Update Firebase Auth displayName (photoURL from Auth will not be updated with Data URI)
       if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave) {
         const newDisplayName = `${data.firstName} ${data.lastName || ''}`.trim();
-        const updatesToAuth: { displayName?: string } = {};
-
         if (userToUpdateAuth.displayName !== newDisplayName) {
-            updatesToAuth.displayName = newDisplayName;
-        }
-        
-        if (Object.keys(updatesToAuth).length > 0) {
-            await updateAuthProfile(userToUpdateAuth, updatesToAuth);
+            await updateAuthProfile(userToUpdateAuth, { displayName: newDisplayName });
             if (setAuthUser) {
-                 setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatesToAuth } : null);
+                 setAuthUser(prevUser => prevUser ? { ...prevUser, displayName: newDisplayName } : null);
             }
         }
       }
@@ -264,11 +287,19 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
       }
     } catch (error: any) {
       console.error("Profile update error:", error);
-      toast({
+      if (error.code === 'permission-denied') {
+        toast({
+            title: "Permission Denied",
+            description: "You do not have permission to save this profile. Please check Firestore rules.",
+            variant: "destructive",
+        });
+      } else {
+        toast({
             title: "Update Failed",
             description: error.message || "Could not save profile. Please try again.",
             variant: "destructive",
         });
+      }
     } finally {
       setIsLoading(false);
       setSelectedFile(null); // Clear selected file after submission attempt
@@ -398,7 +429,7 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
                   <UploadCloud className="h-12 w-12 text-muted-foreground" data-ai-hint="upload cloud icon" />
                 </div>
               )}
-              <p className="text-xs text-muted-foreground mt-1">Upload a photo from your device.</p>
+              <p className="text-xs text-muted-foreground mt-1">Upload a photo from your device. (Max 2MB file, will be resized for profile if too large).</p>
             </div>
           </div>
           
