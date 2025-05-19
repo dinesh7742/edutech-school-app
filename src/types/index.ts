@@ -10,6 +10,8 @@ export interface AppUser extends FirebaseUser {
   division?: string;
   displayName?: string | null;
   photoURL?: string | null;
+  email?: string | null; // Made optional
+  phoneNumber?: string | null; // Added
 }
 
 export interface Notice {
@@ -71,8 +73,8 @@ export interface Textbook {
   id: string;
   title: string;
   subject: string;
-  fileUrl: string;
-  coverImageUrl?: string;
+  fileUrl: string; // This will store the Data URI or be empty
+  coverImageUrl?: string; // This will store the Data URI or be empty
   fileName?: string;
   postedByUid: string;
   postedByName: string;
@@ -84,10 +86,10 @@ export interface PhotoGalleryAlbum {
   id: string;
   title: string;
   description?: string;
-  images: { url: string; alt?: string }[];
+  images: { url: string; alt?: string }[]; // url will store Data URI
   postedByUid: string;
   postedByName: string;
-  eventDate?: string;
+  eventDate?: string; // YYYY-MM-DD
   timestamp: Timestamp | FieldValue;
 }
 
@@ -99,7 +101,7 @@ export interface StudentProfile {
   motherName?: string;
   fatherOccupation?: string;
   motherOccupation?: string;
-  dateOfBirth?: string;
+  dateOfBirth?: string; // YYYY-MM-DD
   gender?: string;
   grade: string;
   division: string;
@@ -110,8 +112,8 @@ export interface StudentProfile {
   religion?: string;
   caste?: string;
   fullAddress?: string;
-  photoUrl?: string;
-  email?: string;
+  photoUrl?: string; // Will store Data URI
+  email?: string; // Student's email
 }
 
 export interface LiveClass {
@@ -155,7 +157,7 @@ export interface LeaveApplication {
   leaveStartDate: string; // YYYY-MM-DD
   leaveEndDate: string; // YYYY-MM-DD
   reason: string;
-  applicationDate: Timestamp | FieldValue; // Changed from string for proper Firestore sorting
+  applicationDate: Timestamp | FieldValue;
   status: LeaveApplicationStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
