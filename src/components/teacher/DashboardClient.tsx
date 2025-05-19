@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare, MailOpen, AlertTriangle, FileSignature } from "lucide-react";
+import { Users, Loader2, UserCheck, UserX, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, CheckSquare, ClipboardCheck } from "lucide-react"; // Changed MailOpen, AlertTriangle, FileSignature to ClipboardCheck
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -250,20 +250,6 @@ export function TeacherDashboardClient() {
         </ul>
       )
     },
-     {
-      id: "upcomingEvents", 
-      title: "Upcoming Events",
-      icon: BarChart3,
-      dataAiHint: "calendar event",
-      description: "School events and important dates this month.",
-      content: (
-        <>
-          <div className="text-3xl font-bold">0</div>
-          <p className="text-xs text-muted-foreground">School events this month</p>
-          <p className="text-xs text-muted-foreground mt-2">(Feature to be implemented)</p>
-        </>
-      )
-    },
     {
       id: "profileSettings",
       title: "Profile Settings",
@@ -284,7 +270,7 @@ export function TeacherDashboardClient() {
   const mainActionItems = [
      {
       title: "Manage Content",
-      icon: UploadCloud,
+      icon: ClipboardList, // Using ClipboardList as a more general content icon
       description: (
         <ul className="space-y-1 text-left text-xs sm:text-sm text-muted-foreground px-2 sm:px-4">
           <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" /> Notices</li>
@@ -297,7 +283,7 @@ export function TeacherDashboardClient() {
       ),
       link: "/teacher/post-content",
       buttonText: "Post Content",
-      dataAiHint: "cloud upload"
+      dataAiHint: "cloud upload" // Changed to match icon if needed, or kept general
     },
     {
       title: "Student Data",
@@ -316,28 +302,12 @@ export function TeacherDashboardClient() {
       dataAiHint: "calendar check attendance"
     },
     {
-      title: "Leave Applications",
-      icon: MailOpen,
-      description: "Review and process student leave applications.",
-      link: "/teacher/leave-applications",
-      buttonText: "Manage Leave",
-      dataAiHint: "mail open letter"
-    },
-    {
-      title: "Late Arrival Requests",
-      icon: AlertTriangle,
-      description: "Review late arrival / early departure requests.",
-      link: "/teacher/late-arrival-requests",
-      buttonText: "Manage Requests",
-      dataAiHint: "alert triangle time"
-    },
-    {
-      title: "Other Applications",
-      icon: FileSignature,
-      description: "Review various other student applications like TC, re-exam, etc.",
-      link: "/teacher/other-applications-review",
-      buttonText: "Review Other Apps",
-      dataAiHint: "document signature"
+      title: "Manage Student Submissions",
+      icon: ClipboardCheck, // New general icon for submissions
+      description: "Review leave requests, late arrivals, and other student applications.",
+      link: "/teacher/manage-submissions", // New Hub Page
+      buttonText: "Review Submissions",
+      dataAiHint: "clipboard check task"
     },
      {
       title: "Download Class Data",
@@ -385,7 +355,7 @@ export function TeacherDashboardClient() {
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
                     <div className="text-sm text-muted-foreground px-4 flex-grow flex items-center justify-center">
-                        {item.description}
+                        {typeof item.description === 'string' ? <p>{item.description}</p> : item.description}
                     </div>
                     {item.link ? (
                         <Button asChild className="w-full mt-auto">
@@ -405,3 +375,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    
