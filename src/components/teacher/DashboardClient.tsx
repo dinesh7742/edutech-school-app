@@ -5,11 +5,12 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Loader2, UserCheck, UserX, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, CheckSquare, ClipboardCheck } from "lucide-react"; // Changed MailOpen, AlertTriangle, FileSignature to ClipboardCheck
+import { Badge } from "@/components/ui/badge";
+import { Users, Loader2, UserCheck, UserX, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, CheckSquare, ClipboardCheck, MailOpen, AlertTriangle, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy, limit, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, limit, Timestamp,getCountFromServer } from "firebase/firestore";
 import type { StudentProfile, HomeworkSubmission } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,11 @@ export function TeacherDashboardClient() {
   const [recentSubmissions, setRecentSubmissions] = useState<HomeworkSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(true);
   const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+
+  const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
+  const [pendingLateArrivalCount, setPendingLateArrivalCount] = useState(0);
+  const [pendingOtherAppsCount, setPendingOtherAppsCount] = useState(0);
+  const [loadingPendingCounts, setLoadingPendingCounts] = useState(true);
 
 
   useEffect(() => {
@@ -97,7 +103,7 @@ export function TeacherDashboardClient() {
             where("grade", "==", teacherUser.grade),
             where("division", "==", teacherUser.division),
             orderBy("completedAt", "desc"),
-            limit(5) // Show latest 5 submissions
+            limit(5) 
           );
           const querySnapshot = await getDocs(q);
           const fetchedSubmissions = querySnapshot.docs.map(doc => {
@@ -105,7 +111,7 @@ export function TeacherDashboardClient() {
             return {
               id: doc.id,
               ...data,
-              completedAt: data.completedAt as Timestamp, // Ensure type
+              completedAt: data.completedAt as Timestamp, 
             } as HomeworkSubmission;
           });
           setRecentSubmissions(fetchedSubmissions);
@@ -129,9 +135,36 @@ export function TeacherDashboardClient() {
       }
     };
 
+    const fetchPendingCounts = async () => {
+      if (!teacherUser) return;
+      setLoadingPendingCounts(true);
+      try {
+        const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
+        const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
+        const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
+
+        const [leaveSnapshot, lateArrivalSnapshot, otherAppsSnapshot] = await Promise.all([
+          getCountFromServer(leaveQuery),
+          getCountFromServer(lateArrivalQuery),
+          getCountFromServer(otherAppsQuery),
+        ]);
+
+        setPendingLeaveCount(leaveSnapshot.data().count);
+        setPendingLateArrivalCount(lateArrivalSnapshot.data().count);
+        setPendingOtherAppsCount(otherAppsSnapshot.data().count);
+
+      } catch (err: any) {
+        console.error("Error fetching pending submission counts:", err);
+        toast({ title: "Error", description: "Could not fetch pending submission counts.", variant: "destructive" });
+      } finally {
+        setLoadingPendingCounts(false);
+      }
+    };
+
     fetchStudentData();
     fetchRecentSubmissions();
-  }, [teacherUser]);
+    fetchPendingCounts();
+  }, [teacherUser, toast]);
 
   const handleDownloadStudentData = async () => {
     setIsDownloadingStudentData(true);
@@ -195,6 +228,8 @@ export function TeacherDashboardClient() {
       setIsDownloadingStudentData(false);
     }
   };
+  
+  const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
 
   const quickStatsItems = [
     {
@@ -215,10 +250,10 @@ export function TeacherDashboardClient() {
           <p className="text-xs text-muted-foreground">Total students.</p>
           <div className="mt-2 space-y-1 text-xs">
               <div className="flex items-center justify-center text-muted-foreground">
-                  <UserCheck className="h-4 w-4 mr-1 text-blue-500"/> Boys: {maleStudents}
+                  <UserCheck className="mr-1 h-4 w-4 text-blue-500"/> Boys: {maleStudents}
               </div>
               <div className="flex items-center justify-center text-muted-foreground">
-                  <UserX className="h-4 w-4 mr-1 text-pink-500"/> Girls: {femaleStudents}
+                  <UserX className="mr-1 h-4 w-4 text-pink-500"/> Girls: {femaleStudents}
               </div>
           </div>
         </>
@@ -267,10 +302,35 @@ export function TeacherDashboardClient() {
     },
   ];
 
+  const manageSubmissionsCard = {
+    title: "Manage Student Submissions",
+    icon: ClipboardCheck,
+    description: (
+      loadingPendingCounts ? (
+        <div className="flex items-center justify-center space-x-2 h-full">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Loading pending counts...</span>
+        </div>
+      ) : totalPendingSubmissions > 0 ? (
+        <ul className="space-y-1 text-left text-sm text-muted-foreground px-2 sm:px-4">
+          {pendingLeaveCount > 0 && <li className="flex items-center"><MailOpen className="mr-2 h-4 w-4 text-primary" /> Pending Leave: <Badge variant="destructive" className="ml-2">{pendingLeaveCount}</Badge></li>}
+          {pendingLateArrivalCount > 0 && <li className="flex items-center"><AlertTriangle className="mr-2 h-4 w-4 text-primary" /> Pending Late Arrival: <Badge variant="destructive" className="ml-2">{pendingLateArrivalCount}</Badge></li>}
+          {pendingOtherAppsCount > 0 && <li className="flex items-center"><FileSignature className="mr-2 h-4 w-4 text-primary" /> Pending Other Requests: <Badge variant="destructive" className="ml-2">{pendingOtherAppsCount}</Badge></li>}
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center">No new submissions to review.</p>
+      )
+    ),
+    link: "/teacher/manage-submissions",
+    buttonText: "Review Submissions",
+    dataAiHint: "clipboard check task"
+  };
+
+
   const mainActionItems = [
      {
       title: "Manage Content",
-      icon: ClipboardList, // Using ClipboardList as a more general content icon
+      icon: ClipboardList, 
       description: (
         <ul className="space-y-1 text-left text-xs sm:text-sm text-muted-foreground px-2 sm:px-4">
           <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" /> Notices</li>
@@ -283,7 +343,7 @@ export function TeacherDashboardClient() {
       ),
       link: "/teacher/post-content",
       buttonText: "Post Content",
-      dataAiHint: "cloud upload" // Changed to match icon if needed, or kept general
+      dataAiHint: "cloud upload"
     },
     {
       title: "Student Data",
@@ -301,13 +361,8 @@ export function TeacherDashboardClient() {
       buttonText: "Mark Attendance",
       dataAiHint: "calendar check attendance"
     },
-    {
-      title: "Manage Student Submissions",
-      icon: ClipboardCheck, // New general icon for submissions
-      description: "Review leave requests, late arrivals, and other student applications.",
-      link: "/teacher/manage-submissions", // New Hub Page
-      buttonText: "Review Submissions",
-      dataAiHint: "clipboard check task"
+     { // Manage Submissions Card
+      ...manageSubmissionsCard
     },
      {
       title: "Download Class Data",
@@ -330,15 +385,15 @@ export function TeacherDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {quickStatsItems.map((item) => (
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center">
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 pt-4">
                  <div className="flex items-center justify-center mb-3">
                     <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
                 {item.description && <CardDescription className="text-sm h-10 line-clamp-2">{item.description}</CardDescription>}
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
-             <div className="flex-grow flex flex-col justify-center items-center"> {item.content} </div>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 px-4">
+             <div className="flex-grow flex flex-col justify-center items-center w-full"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
@@ -347,14 +402,19 @@ export function TeacherDashboardClient() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
          {mainActionItems.map((item) => (
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-2 pt-4">
                     <div className="flex items-center justify-center mb-3">
                         <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
                     </div>
-                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
+                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+                        {item.title}
+                        {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
+                           <Badge variant="destructive" className="animate-pulse">New!</Badge>
+                        )}
+                    </CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4">
-                    <div className="text-sm text-muted-foreground px-4 flex-grow flex items-center justify-center">
+                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 px-4">
+                    <div className="text-sm text-muted-foreground px-4 flex-grow flex items-center justify-center w-full">
                         {typeof item.description === 'string' ? <p>{item.description}</p> : item.description}
                     </div>
                     {item.link ? (
@@ -375,5 +435,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    
