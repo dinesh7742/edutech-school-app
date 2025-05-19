@@ -154,112 +154,101 @@ export function OtherApplicationsReviewTable() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Loading applications...</p>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Loading applications...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="shadow-lg border-destructive">
-        <CardHeader><CardTitle className="text-destructive">Error Loading Applications</CardTitle></CardHeader>
-        <CardContent><p>{error}</p></CardContent>
-      </Card>
+      <div className="p-4 rounded-md border border-destructive bg-destructive/10">
+        <p className="text-destructive text-sm font-medium">Error Loading Applications</p>
+        <p className="text-destructive/80 text-xs mt-1">{error}</p>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-xl">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                <FileSignature className="h-10 w-10 text-primary" />
-                <CardTitle className="text-3xl font-bold text-primary">Review Other School Applications</CardTitle>
-            </div>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <Label htmlFor="statusFilterOther" className="text-sm font-medium shrink-0">Filter by Status:</Label>
+          <Select onValueChange={(value) => setFilterStatus(value as RequestStatus | "All")} defaultValue="Pending">
+            <SelectTrigger id="statusFilterOther" className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Statuses</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <CardDescription>Review and process various student requests.</CardDescription>
-        <div className="flex flex-wrap items-center gap-4 pt-4">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="statusFilter" className="text-sm font-medium">Filter by Status:</Label>
-            <Select onValueChange={(value) => setFilterStatus(value as RequestStatus | "All")} defaultValue="Pending">
-              <SelectTrigger id="statusFilter" className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Statuses</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="formTypeFilter" className="text-sm font-medium">Filter by Type:</Label>
-            <Select onValueChange={(value) => setFilterFormType(value as OtherApplicationType | "All")} defaultValue="All">
-              <SelectTrigger id="formTypeFilter" className="w-full sm:w-[220px]">
-                <SelectValue placeholder="Select form type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Form Types</SelectItem>
-                {Object.entries(otherApplicationTypeLabels).map(([typeKey, typeLabel]) => (
-                  <SelectItem key={typeKey} value={typeKey}>{typeLabel}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+          <Label htmlFor="formTypeFilterOther" className="text-sm font-medium shrink-0">Filter by Type:</Label>
+          <Select onValueChange={(value) => setFilterFormType(value as OtherApplicationType | "All")} defaultValue="All">
+            <SelectTrigger id="formTypeFilterOther" className="w-full sm:w-[220px]">
+              <SelectValue placeholder="Select form type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Form Types</SelectItem>
+              {Object.entries(otherApplicationTypeLabels).map(([typeKey, typeLabel]) => (
+                <SelectItem key={typeKey} value={typeKey}>{typeLabel}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </CardHeader>
-      <CardContent>
-        {applications.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No applications found matching your filters.</p>
-        ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Form Type</TableHead>
-                  <TableHead>Submitted On</TableHead>
-                  <TableHead>Reason/Details</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Comments</TableHead>
+      </div>
+      {applications.length === 0 ? (
+        <p className="text-center text-muted-foreground py-6">No applications found matching your filters.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student</TableHead>
+                <TableHead>Grade</TableHead>
+                <TableHead>Form Type</TableHead>
+                <TableHead>Submitted On</TableHead>
+                <TableHead>Reason/Details</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+                <TableHead>Comments</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map((app) => (
+                <TableRow key={app.id}>
+                  <TableCell>{app.studentName}</TableCell>
+                  <TableCell>{app.grade}{app.division}</TableCell>
+                  <TableCell>{otherApplicationTypeLabels[app.formType] || app.formType}</TableCell>
+                  <TableCell>{formatDateDisplay(app.applicationTimestamp)}</TableCell>
+                  <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reasonOrDetails}</TableCell>
+                  <TableCell><Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge></TableCell>
+                  <TableCell>
+                    {app.status === "Pending" ? (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Approved")} className="bg-green-500 hover:bg-green-600 text-white">
+                          <CheckCircle className="mr-1 h-4 w-4" /> Approve
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Rejected")} className="bg-red-500 hover:bg-red-600 text-white">
+                          <XCircle className="mr-1 h-4 w-4" /> Reject
+                        </Button>
+                      </div>
+                    ) : (
+                       <span className="text-xs text-muted-foreground">Processed</span>
+                    )}
+                  </TableCell>
+                   <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {applications.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell>{app.studentName}</TableCell>
-                    <TableCell>{app.grade}{app.division}</TableCell>
-                    <TableCell>{otherApplicationTypeLabels[app.formType] || app.formType}</TableCell>
-                    <TableCell>{formatDateDisplay(app.applicationTimestamp)}</TableCell>
-                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reasonOrDetails}</TableCell>
-                    <TableCell><Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge></TableCell>
-                    <TableCell>
-                      {app.status === "Pending" ? (
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Approved")} className="bg-green-500 hover:bg-green-600 text-white">
-                            <CheckCircle className="mr-1 h-4 w-4" /> Approve
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Rejected")} className="bg-red-500 hover:bg-red-600 text-white">
-                            <XCircle className="mr-1 h-4 w-4" /> Reject
-                          </Button>
-                        </div>
-                      ) : (
-                         <span className="text-xs text-muted-foreground">Processed</span>
-                      )}
-                    </TableCell>
-                     <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
       <AlertDialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -285,6 +274,6 @@ export function OtherApplicationsReviewTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
 }

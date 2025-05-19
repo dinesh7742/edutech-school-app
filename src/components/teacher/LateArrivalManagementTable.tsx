@@ -56,8 +56,7 @@ export function LateArrivalManagementTable() {
         } else {
           q = query(appsCollectionRef, where("status", "==", filterStatus), orderBy("applicationTimestamp", "desc"));
         }
-        // TODO: Further filter by teacher's assigned grade/division if necessary
-
+        
         const querySnapshot = await getDocs(q);
         const fetchedApps = querySnapshot.docs.map(doc => ({
           id: doc.id,
@@ -139,98 +138,87 @@ export function LateArrivalManagementTable() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Loading requests...</p>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Loading requests...</p>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <Card className="shadow-lg border-destructive">
-        <CardHeader><CardTitle className="text-destructive">Error Loading Requests</CardTitle></CardHeader>
-        <CardContent><p>{error}</p></CardContent>
-      </Card>
+     return (
+      <div className="p-4 rounded-md border border-destructive bg-destructive/10">
+        <p className="text-destructive text-sm font-medium">Error Loading Requests</p>
+        <p className="text-destructive/80 text-xs mt-1">{error}</p>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-xl">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-                <AlertTriangle className="h-10 w-10 text-primary" />
-                <CardTitle className="text-3xl font-bold text-primary">Manage Late Arrival / Early Departure Requests</CardTitle>
-            </div>
-        </div>
-        <CardDescription>Review and process student requests.</CardDescription>
-        <div className="flex items-center space-x-2 pt-4">
-          <Label htmlFor="statusFilter" className="text-sm font-medium">Filter by Status:</Label>
-          <Select onValueChange={(value) => setFilterStatus(value as RequestStatus | "All")} defaultValue="Pending">
-            <SelectTrigger id="statusFilter" className="w-[180px]">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {applications.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No {filterStatus !== "All" ? filterStatus.toLowerCase() : ""} requests found.</p>
-        ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student</TableHead>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Request Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Comments</TableHead>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2">
+        <Label htmlFor="statusFilterLateArrival" className="text-sm font-medium shrink-0">Filter by Status:</Label>
+        <Select onValueChange={(value) => setFilterStatus(value as RequestStatus | "All")} defaultValue="Pending">
+          <SelectTrigger id="statusFilterLateArrival" className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All</SelectItem>
+            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="Approved">Approved</SelectItem>
+            <SelectItem value="Rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {applications.length === 0 ? (
+        <p className="text-center text-muted-foreground py-6">No {filterStatus !== "All" ? filterStatus.toLowerCase() : ""} requests found.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student</TableHead>
+                <TableHead>Grade</TableHead>
+                <TableHead>Request Date</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+                <TableHead>Comments</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map((app) => (
+                <TableRow key={app.id}>
+                  <TableCell>{app.studentName}</TableCell>
+                  <TableCell>{app.grade}{app.division}</TableCell>
+                  <TableCell>{formatDateDisplay(app.requestDate)}</TableCell>
+                  <TableCell>{app.type}</TableCell>
+                  <TableCell>{app.time}</TableCell>
+                  <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reason}</TableCell>
+                  <TableCell><Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge></TableCell>
+                  <TableCell>
+                    {app.status === "Pending" ? (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Approved")} className="bg-green-500 hover:bg-green-600 text-white">
+                          <CheckCircle className="mr-1 h-4 w-4" /> Approve
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Rejected")} className="bg-red-500 hover:bg-red-600 text-white">
+                          <XCircle className="mr-1 h-4 w-4" /> Reject
+                        </Button>
+                      </div>
+                    ) : (
+                       <span className="text-xs text-muted-foreground">Processed</span>
+                    )}
+                  </TableCell>
+                   <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {applications.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell>{app.studentName}</TableCell>
-                    <TableCell>{app.grade}{app.division}</TableCell>
-                    <TableCell>{formatDateDisplay(app.requestDate)}</TableCell>
-                    <TableCell>{app.type}</TableCell>
-                    <TableCell>{app.time}</TableCell>
-                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reason}</TableCell>
-                    <TableCell><Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge></TableCell>
-                    <TableCell>
-                      {app.status === "Pending" ? (
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Approved")} className="bg-green-500 hover:bg-green-600 text-white">
-                            <CheckCircle className="mr-1 h-4 w-4" /> Approve
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Rejected")} className="bg-red-500 hover:bg-red-600 text-white">
-                            <XCircle className="mr-1 h-4 w-4" /> Reject
-                          </Button>
-                        </div>
-                      ) : (
-                         <span className="text-xs text-muted-foreground">Processed</span>
-                      )}
-                    </TableCell>
-                     <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
       <AlertDialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -256,6 +244,6 @@ export function LateArrivalManagementTable() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
 }

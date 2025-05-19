@@ -25,8 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label"; // Added import
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added import
+import { Label } from "@/components/ui/label"; 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 
 export function LeaveManagementTable() {
   const { user: teacherUser } = useAuth();
@@ -58,14 +58,11 @@ export function LeaveManagementTable() {
         } else {
           q = query(appsCollectionRef, where("status", "==", filterStatus), orderBy("applicationDate", "desc"));
         }
-        // TODO: In a larger system, filter by teacher's assigned grade/division or other criteria.
-        // For now, fetching all applications or filtered by status for simplicity.
-
+        
         const querySnapshot = await getDocs(q);
         const fetchedApps = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          // Ensure dates are strings for consistent handling if they come from Firestore
           leaveStartDate: doc.data().leaveStartDate as string,
           leaveEndDate: doc.data().leaveEndDate as string,
         })) as LeaveApplication[];
@@ -105,7 +102,6 @@ export function LeaveManagementTable() {
       console.error("Error updating application status:", error);
       toast({ title: "Error", description: "Could not update application status. " + error.message, variant: "destructive" });
     }
-    // Reset comment dialog states
     setShowCommentDialog(false);
     setCurrentAppForComment(null);
     setComment("");
@@ -115,7 +111,7 @@ export function LeaveManagementTable() {
   const openCommentDialog = (app: LeaveApplication, action: "Approved" | "Rejected") => {
     setCurrentAppForComment(app);
     setActionToConfirm(action);
-    setComment(app.teacherComments || ""); // Pre-fill if existing comment
+    setComment(app.teacherComments || ""); 
     setShowCommentDialog(true);
   };
 
@@ -129,7 +125,7 @@ export function LeaveManagementTable() {
     try {
       return format(parseISO(dateString), "dd MMM yyyy");
     } catch (e) {
-      return dateString; // Fallback if parsing fails
+      return dateString; 
     }
   };
   
@@ -145,135 +141,113 @@ export function LeaveManagementTable() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[300px]">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Loading leave applications...</p>
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Loading leave applications...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <Card className="shadow-lg border-destructive">
-        <CardHeader>
-          <CardTitle className="text-destructive">Error Loading Applications</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p>{error}</p>
-        </CardContent>
-      </Card>
+      <div className="p-4 rounded-md border border-destructive bg-destructive/10">
+        <p className="text-destructive text-sm font-medium">Error Loading Applications</p>
+        <p className="text-destructive/80 text-xs mt-1">{error}</p>
+      </div>
     );
   }
 
   return (
-    <Card className="shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-3xl font-bold text-primary">Manage Leave Applications</CardTitle>
-        <CardDescription>Review and process student leave requests.</CardDescription>
-         <div className="flex items-center space-x-2 pt-4">
-          <Label htmlFor="statusFilter" className="text-sm font-medium">Filter by Status:</Label>
-          <Select onValueChange={(value) => setFilterStatus(value as LeaveApplicationStatus | "All")} defaultValue="Pending">
-            <SelectTrigger id="statusFilter" className="w-[180px]">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-              <SelectItem value="Approved">Approved</SelectItem>
-              <SelectItem value="Rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {applications.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">No {filterStatus !== "All" ? filterStatus.toLowerCase() : ""} leave applications found.</p>
-        ) : (
-          <div className="overflow-x-auto rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Grade</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                  <TableHead>Teacher Comment</TableHead>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 pt-2">
+        <Label htmlFor="statusFilterLeave" className="text-sm font-medium shrink-0">Filter by Status:</Label>
+        <Select onValueChange={(value) => setFilterStatus(value as LeaveApplicationStatus | "All")} defaultValue="Pending">
+          <SelectTrigger id="statusFilterLeave" className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All</SelectItem>
+            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="Approved">Approved</SelectItem>
+            <SelectItem value="Rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      {applications.length === 0 ? (
+        <p className="text-center text-muted-foreground py-6">No {filterStatus !== "All" ? filterStatus.toLowerCase() : ""} leave applications found.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Student Name</TableHead>
+                <TableHead>Grade</TableHead>
+                <TableHead>Start Date</TableHead>
+                <TableHead>End Date</TableHead>
+                <TableHead>Reason</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+                <TableHead>Teacher Comment</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {applications.map((app) => (
+                <TableRow key={app.id}>
+                  <TableCell>{app.studentName}</TableCell>
+                  <TableCell>{app.grade}{app.division}</TableCell>
+                  <TableCell>{formatDateDisplay(app.leaveStartDate)}</TableCell>
+                  <TableCell>{formatDateDisplay(app.leaveEndDate)}</TableCell>
+                  <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reason}</TableCell>
+                  <TableCell>
+                    <Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {app.status === "Pending" ? (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Approved")} className="bg-green-500 hover:bg-green-600 text-white">
+                          <CheckCircle className="mr-1 h-4 w-4" /> Approve
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Rejected")} className="bg-red-500 hover:bg-red-600 text-white">
+                          <XCircle className="mr-1 h-4 w-4" /> Reject
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Processed</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {applications.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell>{app.studentName}</TableCell>
-                    <TableCell>{app.grade}{app.division}</TableCell>
-                    <TableCell>{formatDateDisplay(app.leaveStartDate)}</TableCell>
-                    <TableCell>{formatDateDisplay(app.leaveEndDate)}</TableCell>
-                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reason}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusBadgeVariant(app.status)}>{app.status}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {app.status === "Pending" ? (
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Approved")} className="bg-green-500 hover:bg-green-600 text-white">
-                            <CheckCircle className="mr-1 h-4 w-4" /> Approve
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => openCommentDialog(app, "Rejected")} className="bg-red-500 hover:bg-red-600 text-white">
-                            <XCircle className="mr-1 h-4 w-4" /> Reject
-                          </Button>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Processed</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-        <AlertDialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>Review Leave Application</AlertDialogTitle>
-                <AlertDialogDescription>
-                    Reviewing application for {currentAppForComment?.studentName} for action: 
-                    <span className={`font-semibold ${actionToConfirm === 'Approved' ? 'text-green-600' : 'text-red-600'}`}>
-                        {actionToConfirm}
-                    </span>. 
-                    Add any comments below (optional).
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <Textarea
-                placeholder="Add comments for the student/record..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
-                />
-                <AlertDialogFooter>
-                <AlertDialogCancel onClick={() => {setCurrentAppForComment(null); setActionToConfirm(null);}}>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmActionWithComment}>
-                    Confirm {actionToConfirm}
-                </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-    </Card>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      <AlertDialog open={showCommentDialog} onOpenChange={setShowCommentDialog}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+              <AlertDialogTitle>Review Leave Application</AlertDialogTitle>
+              <AlertDialogDescription>
+                  Reviewing application for {currentAppForComment?.studentName} for action: 
+                  <span className={`font-semibold ${actionToConfirm === 'Approved' ? 'text-green-600' : 'text-red-600'}`}>
+                      {actionToConfirm}
+                  </span>. 
+                  Add any comments below (optional).
+              </AlertDialogDescription>
+              </AlertDialogHeader>
+              <Textarea
+              placeholder="Add comments for the student/record..."
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+              />
+              <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => {setCurrentAppForComment(null); setActionToConfirm(null); setShowCommentDialog(false);}}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmActionWithComment}>
+                  Confirm {actionToConfirm}
+              </AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
-
-// Removed placeholder component definitions that were causing the issue
-// const Label = ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement> & { htmlFor: string }) => <label {...props}>{children}</label>;
-// const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { onValueChange: (value: string) => void, defaultValue: string }) => (
-//   <select onChange={(e) => props.onValueChange(e.target.value)} defaultValue={props.defaultValue} {...props}>
-//     {children}
-//   </select>
-// );
-// const SelectTrigger = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>;
-// const SelectValue = ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>;
-// const SelectContent = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>;
-// const SelectItem = ({ children, value, ...props }: React.HTMLAttributes<HTMLOptionElement> & { value: string }) => <option value={value} {...props}>{children}</option>;
