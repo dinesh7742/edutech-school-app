@@ -26,6 +26,7 @@ export function StudentAttendanceSummary() {
       setError("User details incomplete for fetching attendance.");
       return;
     }
+    console.log("[StudentAttendanceSummary] User for summary:", user);
 
     const fetchAttendanceData = async () => {
       setIsLoading(true);
@@ -51,14 +52,14 @@ export function StudentAttendanceSummary() {
             }
           }
         });
+        
+        console.log(`[StudentAttendanceSummary] Calculation: Present Days: ${presentDays}, Total Marked Days: ${totalMarkedDays} for student ${user.uid}`);
 
         if (totalMarkedDays > 0) {
           const percentage = Math.round((presentDays / totalMarkedDays) * 100);
           setAttendancePercentage(percentage);
-          console.log(`[StudentAttendanceSummary] Attendance for ${user.displayName} (${user.uid}): ${percentage}%, based on ${presentDays} present days out of ${totalMarkedDays} marked daily logs.`);
         } else {
           setAttendancePercentage(null); 
-          console.log(`[StudentAttendanceSummary] No attendance marked for ${user.displayName} (${user.uid}) in class ${user.grade}${user.division}.`);
         }
       } catch (err: any) {
         console.error("Error fetching attendance data for summary:", err);

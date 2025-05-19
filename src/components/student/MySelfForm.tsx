@@ -15,11 +15,13 @@ import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import type { StudentProfile } from "@/types";
 import { Loader2, UploadCloud } from "lucide-react";
 import Image from "next/image";
-import { Skeleton } from "@/components/ui/skeleton"; // Added Skeleton import
+import { Skeleton } from "@/components/ui/skeleton";
+import { updateProfile as updateAuthProfile } from "firebase/auth";
+
 
 const religionOptions = ["Hindu", "Muslim", "Christian", "Sikh", "Buddhist", "Jain", "Other"];
 const genderOptions = ["Male", "Female", "Other", "Prefer not to say"];
@@ -55,7 +57,7 @@ interface MySelfFormProps {
 }
 
 export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing = false }: MySelfFormProps) {
-  const { user: loggedInUser } = useAuth();
+  const { user: loggedInUser, setUser: setAuthUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingProfile, setIsFetchingProfile] = useState(true);
@@ -168,7 +170,9 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
     setIsLoading(true);
 
     let studentEmail = "";
-    if (isTeacherEditing || !loggedInUser?.email) { // Fetch email if teacher is editing OR if student's own email isn't in context (unlikely)
+    const userToUpdateAuth = auth.currentUser;
+
+    if (isTeacherEditing || !loggedInUser?.email) { 
         const userDocRef = doc(db, "users", profileUidToSave);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
@@ -187,6 +191,28 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
       };
 
       await setDoc(doc(db, "studentProfiles", profileUidToSave), profileData, { merge: true });
+
+      // If a teacher is not editing (i.e., student is editing their own profile)
+      // AND the current auth user matches the profile being saved
+      // AND a photoUrl is provided, update the Firebase Auth user's photoURL
+      if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave && data.photoUrl && data.photoUrl !== defaultPhotoPlaceholder) {
+        await updateAuthProfile(userToUpdateAuth, { photoURL: data.photoUrl });
+        // Update AuthContext user state if setAuthUser is available
+        if (setAuthUser) {
+           setAuthUser(prevUser => prevUser ? { ...prevUser, photoURL: data.photoUrl } : null);
+        }
+      }
+      // Also update displayName on Firebase Auth user if student is editing their own
+      if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave) {
+        const newDisplayName = `${data.firstName} ${data.lastName || ''}`.trim();
+        if (userToUpdateAuth.displayName !== newDisplayName) {
+            await updateAuthProfile(userToUpdateAuth, { displayName: newDisplayName });
+            if (setAuthUser) {
+                setAuthUser(prevUser => prevUser ? { ...prevUser, displayName: newDisplayName } : null);
+            }
+        }
+      }
+
 
       toast({
         title: isTeacherEditing ? "Student Profile Updated" : "Profile Updated",
@@ -209,16 +235,13 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
   
   const watchedPhotoUrl = watch("photoUrl");
   useEffect(() => {
-    // This effect updates photoPreview based on the current form value of photoUrl
     if (watchedPhotoUrl && watchedPhotoUrl.startsWith('http')) {
       setPhotoPreview(watchedPhotoUrl);
-    } else if (watchedPhotoUrl === "") { // If form field is empty after reset or user clears it
+    } else if (watchedPhotoUrl === "") { 
         setPhotoPreview(defaultPhotoPlaceholder);
-    } else if (!watchedPhotoUrl && !isFetchingProfile) { // Initially, if no URL and not fetching, show default
+    } else if (!watchedPhotoUrl && !isFetchingProfile) { 
         setPhotoPreview(defaultPhotoPlaceholder);
     }
-    // Avoid setting to defaultPhotoPlaceholder if watchedPhotoUrl is non-empty but not http (e.g. invalid user input)
-    // In that case, photoPreview might remain as is or clear, letting validation handle the input field.
   }, [watchedPhotoUrl, defaultPhotoPlaceholder, isFetchingProfile]);
 
 
