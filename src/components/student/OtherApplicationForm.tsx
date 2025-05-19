@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Send, Download } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { OtherStudentApplication, StudentProfile, OtherApplicationType } from "@/types";
@@ -31,14 +31,6 @@ interface OtherApplicationFormProps {
   formType: OtherApplicationType;
   formTitle: string;
 }
-
-const blankFormPdfUrls: Partial<Record<OtherApplicationType, string>> = {
-    ProgressReportRequest: "/forms/progress_report_request_form.pdf",
-    ReExamRequest: "/forms/re_exam_request_form.pdf",
-    TCApplication: "/forms/transfer_certificate_application_form.pdf",
-    DuplicateTCRequest: "/forms/duplicate_tc_request_form.pdf",
-};
-
 
 export function OtherApplicationForm({ formType, formTitle }: OtherApplicationFormProps) {
   const { user } = useAuth();
@@ -122,8 +114,6 @@ export function OtherApplicationForm({ formType, formTitle }: OtherApplicationFo
     }
   };
   
-  const blankPdfUrl = blankFormPdfUrls[formType];
-
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
@@ -131,16 +121,6 @@ export function OtherApplicationForm({ formType, formTitle }: OtherApplicationFo
         <CardDescription>Please fill out the details below for your application.</CardDescription>
       </CardHeader>
       <CardContent>
-        {blankPdfUrl && (
-          <div className="mb-6">
-            <Button asChild variant="outline">
-              <a href={blankPdfUrl} download target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-4 w-4" />
-                Download Blank Form (PDF)
-              </a>
-            </Button>
-          </div>
-        )}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>

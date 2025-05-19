@@ -420,13 +420,6 @@ export function StudentDashboardClient() {
           {data.teacherComments && (data.status === "Approved" || data.status === "Rejected") && (
             <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher Comments:</strong> {data.teacherComments}</p>
           )}
-           {data.status !== "Pending" && ( // Show download button if not pending
-            <Button asChild variant="outline" size="sm" className="mt-2 w-full">
-              <a href="/forms/leave_application_form.pdf" download target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-4 w-4" /> Download Application (PDF)
-              </a>
-            </Button>
-          )}
         </div>
       ) : null,
       emptyMessage: "You haven't applied for leave recently."
@@ -459,25 +452,25 @@ export function StudentDashboardClient() {
       emptyMessage: "No recent late arrival/early departure requests."
     },
      {
-      id: "otherSchoolApplications", // New Card ID
+      id: "otherSchoolApplications", 
       title: "Other School Applications",
-      icon: Edit, // Using Edit icon, can be changed
-      link: "/student/other-applications", // New page link
+      icon: Edit, 
+      link: "/student/other-applications", 
       buttonText: "View Application Types",
       dataAiHint: "edit form document",
       description: "Access and submit various other school application forms like Progress Report, TC, etc.",
-      contentData: null, // No dynamic content preview on this card for now
+      contentData: null, 
       renderContent: null,
       emptyMessage: ""
     },
     {
-      id: "downloadableSchoolForms",
-      title: "Downloadable School Forms",
-      icon: FileArchive,
-      link: "/student/school-forms",
-      buttonText: "View All Forms",
-      dataAiHint: "archive document",
-      description: "Download various blank school forms and applications in PDF format.",
+      id: "schoolFormsDownload",
+      title: "New Leave Request",
+      icon: CalendarPlus,
+      link: "/student/apply-leave",
+      buttonText: "Open Leave Form",
+      dataAiHint: "calendar add event",
+      description: "Submit a new application for leave from school.",
       contentData: null,
       renderContent: null,
       emptyMessage: ""
@@ -516,12 +509,12 @@ export function StudentDashboardClient() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
-          <Card key={card.id} className="shadow-lg rounded-lg flex flex-col text-center">
+          <Card key={card.id} className="text-center">
             <CardHeader className="pb-2 pt-4 items-center">
               <div className="flex justify-center mb-3">
-                 <card.icon className="h-12 w-12 text-foreground" data-ai-hint={card.dataAiHint}/>
+                 <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint}/>
               </div>
-              <CardTitle className="text-lg font-semibold flex items-center justify-center gap-2">
+              <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
                     (card.contentData.item as any).timestamp ||
@@ -537,9 +530,9 @@ export function StudentDashboardClient() {
                     <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
                  )}
               </CardTitle>
-               <CardDescription className="text-xs h-10 line-clamp-2 px-2">{card.description}</CardDescription>
+               <CardDescription className="text-sm h-12 line-clamp-2 px-2">{card.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-4 space-y-3 px-4">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               {card.renderContent && card.contentData?.loading && (
                 <div className="flex flex-col items-center justify-center flex-grow py-4">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -562,30 +555,30 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
-         <Card className="shadow-lg rounded-lg text-center flex flex-col">
+         <Card className="text-center">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="flex justify-center mb-3">
-                    <ListChecks className="h-12 w-12 text-foreground" data-ai-hint="attendance list" />
+                    <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
                 </div>
-                <CardTitle className="text-lg font-semibold">My Attendance</CardTitle>
-                <CardDescription className="text-xs h-10 line-clamp-2 px-2">View your detailed attendance records.</CardDescription>
+                <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
+                <CardDescription className="text-sm h-12 line-clamp-2 px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-4 space-y-3 px-4">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/attendance">View Detailed Attendance</Link>
               </Button>
             </CardContent>
           </Card>
-        <Card className="shadow-lg rounded-lg text-center flex flex-col">
+        <Card className="text-center">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="flex justify-center mb-3">
-                     <UserCircle className="h-12 w-12 text-foreground" data-ai-hint="user profile" />
+                     <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
                 </div>
-                <CardTitle className="text-lg font-semibold">My Profile</CardTitle>
-                <CardDescription className="text-xs h-10 line-clamp-2 px-2">Manage your personal information and settings.</CardDescription>
+                <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
+                <CardDescription className="text-sm h-12 line-clamp-2 px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-4 space-y-3 px-4">
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/profile">Go to Profile</Link>

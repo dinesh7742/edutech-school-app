@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CalendarIcon, Send, Clock, Download } from "lucide-react"; // Added Download icon
+import { Loader2, CalendarIcon, Send, Clock } from "lucide-react";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { LateArrivalApplication, StudentProfile, LateArrivalRequestType } from "@/types";
@@ -124,18 +124,9 @@ export function LateArrivalForm() {
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
         <CardTitle>Request Form</CardTitle>
-        <CardDescription>Please fill out the details for your late arrival or early departure. You can also download a blank PDF form for offline submission if needed.</CardDescription>
+        <CardDescription>Please fill out the details for your late arrival or early departure.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="mb-6">
-            <Button asChild variant="outline">
-              <a href="/forms/late_arrival_early_departure_form.pdf" download target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-4 w-4" />
-                Download Blank Form (PDF)
-              </a>
-            </Button>
-        </div>
-
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -227,5 +218,3 @@ export function LateArrivalForm() {
     </Card>
   );
 }
-
-    

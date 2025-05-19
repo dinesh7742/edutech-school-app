@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, XCircle, MessageSquare, Download, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, MessageSquare, AlertTriangle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp } from "firebase/firestore";
 import type { LateArrivalApplication, RequestStatus } from "@/types";
@@ -220,11 +220,7 @@ export function LateArrivalManagementTable() {
                           </Button>
                         </div>
                       ) : (
-                         <Button variant="outline" size="sm" asChild>
-                           <a href={`/forms/late_arrival_early_departure_form.pdf`} download target="_blank" rel="noopener noreferrer">
-                             <Download className="mr-2 h-4 w-4" /> Download Form
-                           </a>
-                         </Button>
+                         <span className="text-xs text-muted-foreground">Processed</span>
                       )}
                     </TableCell>
                      <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
