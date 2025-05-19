@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,10 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud } from "lucide-react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video } from "lucide-react";
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import Image from "next/image"; // For image previews
+import Image from "next/image";
+import type { Notice, Homework } from "@/types"; // Import Notice and Homework types
 
 const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB for Firestore field limit
 const MAX_RAW_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB for initial client-side check
@@ -97,18 +98,55 @@ export function PostContentForm() {
   const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   
-  // Textbook form state
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1", coverImageUrl: "" } });
   const [textbookCoverPreview, setTextbookCoverPreview] = useState<string | null>(null);
   const [selectedTextbookCoverFile, setSelectedTextbookCoverFile] = useState<File | null>(null);
 
-  // Gallery form state
   const formGallery = useForm<PhotoGalleryFormValues>({ resolver: zodResolver(photoGallerySchema), defaultValues: {} });
   const [galleryImagePreviews, setGalleryImagePreviews] = useState<string[]>([]);
   const [selectedGalleryFiles, setSelectedGalleryFiles] = useState<File[]>([]);
 
-
   const formLiveClass = useForm<LiveClassFormValues>({ resolver: zodResolver(liveClassSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
+
+  const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
+  const [loadingRecentNotices, setLoadingRecentNotices] = useState(true);
+  const [recentHomework, setRecentHomework] = useState<Homework[]>([]);
+  const [loadingRecentHomework, setLoadingRecentHomework] = useState(true);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const fetchRecentContent = async () => {
+      // Fetch Recent Notices
+      setLoadingRecentNotices(true);
+      try {
+        const noticesRef = collection(db, "notices");
+        const noticesQuery = query(noticesRef, where("postedByUid", "==", user.uid), orderBy("timestamp", "desc"), limit(3));
+        const noticeSnapshot = await getDocs(noticesQuery);
+        setRecentNotices(noticeSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notice)));
+      } catch (error) {
+        console.error("Error fetching recent notices:", error);
+        toast({ title: "Error", description: "Could not load your recent notices.", variant: "destructive" });
+      }
+      setLoadingRecentNotices(false);
+
+      // Fetch Recent Homework
+      setLoadingRecentHomework(true);
+      try {
+        const homeworkRef = collection(db, "homework");
+        const homeworkQuery = query(homeworkRef, where("postedByUid", "==", user.uid), orderBy("timestamp", "desc"), limit(3));
+        const homeworkSnapshot = await getDocs(homeworkQuery);
+        setRecentHomework(homeworkSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Homework)));
+      } catch (error) {
+        console.error("Error fetching recent homework:", error);
+        toast({ title: "Error", description: "Could not load your recent homework.", variant: "destructive" });
+      }
+      setLoadingRecentHomework(false);
+    };
+
+    fetchRecentContent();
+  }, [user, toast]);
+
 
   const handleTextbookCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -148,7 +186,7 @@ export function PostContentForm() {
             variant: "destructive",
             duration: 5000,
           });
-          continue; // Skip this file
+          continue; 
         }
         validFiles.push(file);
         const reader = new FileReader();
@@ -157,10 +195,7 @@ export function PostContentForm() {
         };
         reader.readAsDataURL(file);
       }
-      setSelectedGalleryFiles(prev => [...prev, ...validFiles]); // Append new valid files
-      // If you want to replace existing files instead of appending:
-      // setSelectedGalleryFiles(validFiles);
-      // setGalleryImagePreviews(newPreviews); // This would require async handling for readers
+      setSelectedGalleryFiles(prev => [...prev, ...validFiles]); 
     }
   };
   
@@ -202,12 +237,12 @@ export function PostContentForm() {
               variant: "destructive",
               duration: 7000,
             });
-            documentData.coverImageUrl = data.coverImageUrl || ""; // Keep old or empty
+            documentData.coverImageUrl = data.coverImageUrl || "";
           } else {
             documentData.coverImageUrl = coverDataUri;
           }
         } else {
-           documentData.coverImageUrl = data.coverImageUrl || ""; // Keep existing if not changed
+           documentData.coverImageUrl = data.coverImageUrl || "";
         }
       } else if (type === "gallery") {
         collectionName = "galleryAlbums";
@@ -230,7 +265,7 @@ export function PostContentForm() {
                   variant: "destructive",
                   duration: 5000,
                 });
-                continue; // Skip this image
+                continue; 
               }
               uploadedImages.push({
                 url: imageDataUri,
@@ -279,9 +314,14 @@ export function PostContentForm() {
 
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Posted Successfully` });
 
-      // Reset specific form
-      if (type === 'notice') formNotice.reset({ title: "", content: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
-      if (type === 'homework') formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+      if (type === 'notice') {
+        formNotice.reset({ title: "", content: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
+        setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
+      }
+      if (type === 'homework') {
+        formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+        setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
+      }
       if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
       if (type === 'textbook') {
         formTextbook.reset({ title: "", subject: "", fileUrl: "", coverImageUrl: "", fileName: "", grade: user?.grade || "1" });
@@ -321,7 +361,7 @@ export function PostContentForm() {
           <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
           {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
         </div>
-      ) : type !== 'liveClass' ? ( // Description for homework, circular
+      ) : type !== 'liveClass' ? ( 
         <div>
           <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
           <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
@@ -398,6 +438,7 @@ export function PostContentForm() {
 
 
   return (
+    <>
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-primary">Post Content</CardTitle>
@@ -568,7 +609,59 @@ export function PostContentForm() {
         </Tabs>
       </CardContent>
     </Card>
+
+    <Card className="w-full max-w-2xl mx-auto shadow-xl mt-8">
+        <CardHeader>
+            <CardTitle className="text-2xl font-semibold text-primary">My Recent Posts</CardTitle>
+            <CardDescription>Quick overview of your last few posts.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+            <section>
+                <h3 className="text-lg font-medium mb-2 flex items-center gap-2"><FileText className="h-5 w-5 text-primary"/>Recent Notices</h3>
+                {loadingRecentNotices ? (
+                    <p className="text-muted-foreground">Loading recent notices...</p>
+                ) : recentNotices.length === 0 ? (
+                    <p className="text-muted-foreground">No notices posted by you recently.</p>
+                ) : (
+                    <ul className="space-y-2">
+                        {recentNotices.map(notice => (
+                            <li key={notice.id} className="p-3 border rounded-md bg-muted/30">
+                                <p className="font-semibold">{notice.title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Posted: {notice.timestamp instanceof Timestamp ? notice.timestamp.toDate().toLocaleDateString() : 'Just now'}
+                                    {notice.grade && ` | For: Grade ${notice.grade}${notice.division ? ` Div ${notice.division}` : ' (All Div)'}`}
+                                </p>
+                                <p className="text-sm mt-1 line-clamp-2 whitespace-pre-wrap">{notice.content}</p>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+            <section>
+                <h3 className="text-lg font-medium mb-2 flex items-center gap-2"><ClipboardList className="h-5 w-5 text-primary"/>Recent Homework</h3>
+                {loadingRecentHomework ? (
+                     <p className="text-muted-foreground">Loading recent homework...</p>
+                ) : recentHomework.length === 0 ? (
+                    <p className="text-muted-foreground">No homework posted by you recently.</p>
+                ) : (
+                    <ul className="space-y-2">
+                        {recentHomework.map(hw => (
+                            <li key={hw.id} className="p-3 border rounded-md bg-muted/30">
+                                <p className="font-semibold">{hw.title}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Subject: {hw.subject} | Due: {hw.dueDate ? new Date(hw.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A'}
+                                    <br/>
+                                    For: Grade {hw.grade} Div {hw.division} | Posted: {hw.timestamp instanceof Timestamp ? hw.timestamp.toDate().toLocaleDateString() : 'Just now'}
+                                </p>
+                                {hw.description && <p className="text-sm mt-1 line-clamp-2 whitespace-pre-wrap">{hw.description}</p>}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </section>
+             {/* TODO: Add sections for recent Circulars, Textbooks, Gallery Albums, Live Classes similarly */}
+        </CardContent>
+    </Card>
+    </>
   );
 }
-
-    
