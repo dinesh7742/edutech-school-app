@@ -6,12 +6,12 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass, FileArchive } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CheckCircle, CalendarPlus, Hourglass, FileArchive, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, LeaveApplication } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, LeaveApplication, LateArrivalApplication } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
 import { useToast } from "@/hooks/use-toast";
@@ -30,7 +30,7 @@ const isNew = (timestamp: Timestamp | undefined): boolean => {
   return itemDate > twentyFourHoursAgo;
 };
 
-const getLeaveStatusBadgeVariant = (status?: LeaveApplication['status']) => {
+const getStatusBadgeVariant = (status?: LeaveApplication['status'] | LateArrivalApplication['status']) => {
   if (!status) return "default";
   switch (status) {
     case "Pending":
@@ -49,7 +49,7 @@ const formatDateDisplay = (dateString?: string) => {
     try {
       return format(parseISO(dateString), "dd MMM yyyy");
     } catch (e) {
-      return dateString; // Fallback if parsing fails
+      return dateString; 
     }
 };
 
@@ -62,6 +62,8 @@ export function StudentDashboardClient() {
   const [latestCircular, setLatestCircular] = useState<LatestContent<Circular>>({ item: null, loading: true });
   const [latestLiveClass, setLatestLiveClass] = useState<LatestContent<LiveClass>>({ item: null, loading: true });
   const [latestLeaveApplication, setLatestLeaveApplication] = useState<LatestContent<LeaveApplication>>({ item: null, loading: true });
+  const [latestLateArrivalRequest, setLatestLateArrivalRequest] = useState<LatestContent<LateArrivalApplication>>({ item: null, loading: true });
+
 
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
   const [completingHomework, setCompletingHomework] = useState(false);
@@ -73,20 +75,18 @@ export function StudentDashboardClient() {
     const fetchGenericLatestItem = async <T extends { grade?: string | null; division?: string | null; timestamp?: Timestamp }>(
       collectionName: string,
       setter: React.Dispatch<React.SetStateAction<LatestContent<T>>>,
-      dataMapper: (doc: any) => T
+      dataMapper: (doc: any) => T,
+      useTimestampField: keyof T = "timestamp" as keyof T
     ) => {
       setter(prev => ({ ...prev, loading: true }));
       try {
         const ref = collection(db, collectionName);
-        // Fetch a few recent items for client-side filtering
-        const q = query(ref, orderBy("timestamp", "desc"), limit(5));
+        const q = query(ref, orderBy(useTimestampField as string, "desc"), limit(5));
         const snapshot = await getDocs(q);
         const allRecentItems = snapshot.docs.map(doc => dataMapper({ id: doc.id, ...doc.data() }));
 
-        // Find the most recent relevant item
         const relevantItem = allRecentItems.find(item => {
           if (!user.grade || !user.division) {
-             // If student has no grade/division, only show school-wide items
              return !item.grade && !item.division;
           }
           const isSchoolWide = !item.grade || item.grade === "";
@@ -148,7 +148,7 @@ export function StudentDashboardClient() {
             ...hwData,
             timestamp: hwData.timestamp as Timestamp,
             displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', // Corrected dueDate parsing
+            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A', 
           } as Homework;
           setLatestHomework({ item: currentHomeworkItem, loading: false });
 
@@ -173,37 +173,44 @@ export function StudentDashboardClient() {
     };
     fetchLatestHomework();
 
-    const fetchLatestLeaveApplication = async () => {
-      if (!user?.uid) {
-        setLatestLeaveApplication({ item: null, loading: false });
-        return;
-      }
-      setLatestLeaveApplication(prev => ({ ...prev, loading: true }));
-      try {
-        const leaveAppsRef = collection(db, "leaveApplications");
-        const q = query(
-          leaveAppsRef,
-          where("studentUid", "==", user.uid),
-          orderBy("applicationDate", "desc"),
-          limit(1)
-        );
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const appDoc = snapshot.docs[0];
-          setLatestLeaveApplication({ item: { id: appDoc.id, ...appDoc.data() } as LeaveApplication, loading: false });
-        } else {
-          setLatestLeaveApplication({ item: null, loading: false });
+    const fetchLatestApplication = async <T extends { studentUid: string; applicationTimestamp?: Timestamp }>(
+        collectionName: string,
+        setter: React.Dispatch<React.SetStateAction<LatestContent<T>>>,
+        timestampField: keyof T = "applicationTimestamp" as keyof T
+      ) => {
+        if (!user?.uid) {
+          setter({ item: null, loading: false });
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching latest leave application:", error);
-        setLatestLeaveApplication({ item: null, loading: false });
-        if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
-          console.error("Firestore index required for leave application query. Collection: 'leaveApplications', Fields: studentUid (ASC), applicationDate (DESC).");
-          toast({title: "Error", description: "Database setup needed for leave status. Please contact admin.", variant: "destructive"});
+        setter(prev => ({ ...prev, loading: true }));
+        try {
+          const appsRef = collection(db, collectionName);
+          const q = query(
+            appsRef,
+            where("studentUid", "==", user.uid),
+            orderBy(timestampField as string, "desc"),
+            limit(1)
+          );
+          const snapshot = await getDocs(q);
+          if (!snapshot.empty) {
+            const appDoc = snapshot.docs[0];
+            setter({ item: { id: appDoc.id, ...appDoc.data() } as T, loading: false });
+          } else {
+            setter({ item: null, loading: false });
+          }
+        } catch (error: any) {
+          console.error(`Error fetching latest ${collectionName}:`, error);
+          setter({ item: null, loading: false });
+          if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
+            console.error(`Firestore index required for ${collectionName} query. Collection: '${collectionName}', Fields: studentUid (ASC), ${timestampField as string} (DESC).`);
+            toast({title: "Error", description: `Database setup needed for ${collectionName} status. Contact admin.`, variant: "destructive"});
+          }
         }
-      }
-    };
-    fetchLatestLeaveApplication();
+      };
+
+    fetchLatestApplication<LeaveApplication>("leaveApplications", setLatestLeaveApplication, "applicationDate");
+    fetchLatestApplication<LateArrivalApplication>("lateArrivalRequests", setLatestLateArrivalRequest, "applicationTimestamp");
+
 
   }, [user, toast]);
 
@@ -234,7 +241,6 @@ export function StudentDashboardClient() {
         title: "Homework Marked!",
         description: `"${homeworkItem.title}" marked as completed.`,
       });
-      // TODO: Implement teacher notification (e.g., via Cloud Functions)
       console.log("TODO: Notify teacher about homework completion for homeworkId:", homeworkItem.id, "by studentId:", user.uid);
     } catch (error: any) {
       console.error("Error marking homework as completed:", error);
@@ -391,7 +397,7 @@ export function StudentDashboardClient() {
         <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
           <div className="flex justify-between items-center">
             <h3 className="font-semibold text-md truncate">Latest Application Status</h3>
-            <Badge variant={getLeaveStatusBadgeVariant(data.status)}>{data.status}</Badge>
+            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
           </div>
           <div className="text-xs text-muted-foreground">
             Applied: {data.applicationDate ? formatDateDisplay( (data.applicationDate as Timestamp).toDate().toISOString().split('T')[0]) : 'N/A'}
@@ -406,6 +412,33 @@ export function StudentDashboardClient() {
         </div>
       ) : null,
       emptyMessage: "You haven't applied for leave recently."
+    },
+    {
+      id: "lateArrivalRequest",
+      title: "Late Arrival / Early Departure",
+      icon: AlertTriangle, 
+      link: "/student/late-arrival",
+      buttonText: "Submit New Request",
+      dataAiHint: "alert triangle time",
+      description: "Request permission for late arrival or early departure.",
+      contentData: latestLateArrivalRequest,
+      renderContent: (data: LateArrivalApplication | null) => data ? (
+        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-md truncate">Latest Request Status</h3>
+            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Requested for: {data.requestDate ? formatDateDisplay(data.requestDate) : 'N/A'}
+          </div>
+          <p className="text-sm"><strong>Type:</strong> {data.type} at {data.time}</p>
+          <p className="text-sm line-clamp-2"><strong>Reason:</strong> {data.reason}</p>
+          {data.teacherComments && (data.status === "Approved" || data.status === "Rejected") && (
+            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher Comments:</strong> {data.teacherComments}</p>
+          )}
+        </div>
+      ) : null,
+      emptyMessage: "No recent late arrival/early departure requests."
     },
     {
       id: "textbooks",
@@ -431,14 +464,14 @@ export function StudentDashboardClient() {
       renderContent: null,
       emptyMessage: ""
     },
-    {
-      id: "schoolForms",
-      title: "School Forms",
+     {
+      id: "schoolFormsDownload", // Differentiate from the new online form request
+      title: "Downloadable School Forms",
       icon: FileArchive,
-      link: "/student/school-forms",
-      buttonText: "Download Forms",
+      link: "/student/school-forms", // Link to the existing PDF download page
+      buttonText: "Access PDF Forms",
       dataAiHint: "file archive documents",
-      description: "Access various school application forms and consents.",
+      description: "Download various school application forms and consents in PDF format.",
       contentData: null,
       renderContent: null,
       emptyMessage: ""
@@ -458,10 +491,17 @@ export function StudentDashboardClient() {
               <card.icon className="h-16 w-16 text-foreground mb-3" data-ai-hint={card.dataAiHint} />
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
-                {card.contentData?.item && isNew((card.contentData.item as any).timestamp || (card.contentData.item as LeaveApplication).applicationDate) && (
+                {card.contentData?.item && isNew(
+                    (card.contentData.item as any).timestamp || 
+                    (card.contentData.item as LeaveApplication).applicationDate || 
+                    (card.contentData.item as LateArrivalApplication).applicationTimestamp
+                    ) && (
                   <Badge variant="accent" className="animate-pulse">New</Badge>
                 )}
-                 {card.id === 'applyLeave' && latestLeaveApplication.item?.status === "Pending" && (
+                 {(card.id === 'applyLeave' && latestLeaveApplication.item?.status === "Pending") && (
+                    <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
+                 )}
+                 {(card.id === 'lateArrivalRequest' && latestLateArrivalRequest.item?.status === "Pending") && (
                     <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
                  )}
               </CardTitle>
