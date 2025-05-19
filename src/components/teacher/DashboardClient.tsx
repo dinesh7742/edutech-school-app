@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare, MailOpen, AlertTriangle } from "lucide-react";
+import { Edit3, Users, BarChart3, Settings, Loader2, UserCheck, UserX, Download, UploadCloud, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, Tv2, CheckSquare, MailOpen, AlertTriangle, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -227,7 +227,7 @@ export function TeacherDashboardClient() {
     {
       id: "recentSubmissions",
       title: "Recent Homework Submissions",
-      icon: CheckSquare, // Changed icon
+      icon: CheckSquare, 
       dataAiHint: "homework check",
       content: loadingSubmissions ? (
          <div className="flex items-center justify-center space-x-2 h-full">
@@ -251,7 +251,7 @@ export function TeacherDashboardClient() {
       )
     },
      {
-      id: "upcomingEvents", // Kept for structure, can be implemented later
+      id: "upcomingEvents", 
       title: "Upcoming Events",
       icon: BarChart3,
       dataAiHint: "calendar event",
@@ -330,6 +330,14 @@ export function TeacherDashboardClient() {
       link: "/teacher/late-arrival-requests",
       buttonText: "Manage Requests",
       dataAiHint: "alert triangle time"
+    },
+    {
+      title: "Other Applications",
+      icon: FileSignature,
+      description: "Review various other student applications like TC, re-exam, etc.",
+      link: "/teacher/other-applications-review",
+      buttonText: "Review Other Apps",
+      dataAiHint: "document signature"
     },
      {
       title: "Download Class Data",
