@@ -15,58 +15,39 @@ export default function AllSubmissionsReviewPage() {
         <h1 className="text-3xl font-bold text-primary">Review Student Submissions</h1>
       </div>
       <CardDescription>
-        Manage and process various applications submitted by students. Select a category below to view and take action on the requests.
+        Manage and process various applications submitted by students. Review each category below.
       </CardDescription>
 
-      <div className="space-y-10">
-        {/* Leave Applications Card */}
-        <Card className="shadow-xl bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700/50">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-primary flex items-center gap-2">
-              <MailOpen className="h-6 w-6" />
-              Leave Applications
-            </CardTitle>
-            <CardDescription className="text-blue-700 dark:text-blue-300">
-              Review and process student requests for leave.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Card className="shadow-xl">
+        <CardContent className="space-y-10 p-4 md:p-6">
+          {/* Section 1: Leave Applications */}
+          <section className="p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/30 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <MailOpen className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+              <h2 className="text-2xl font-semibold text-blue-700 dark:text-blue-300">Leave Applications</h2>
+            </div>
             <LeaveManagementTable />
-          </CardContent>
-        </Card>
+          </section>
 
-        {/* Late Arrival / Early Departure Card */}
-        <Card className="shadow-xl bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-2">
-              <AlertTriangle className="h-6 w-6" />
-              Late Arrival / Early Departure
-            </CardTitle>
-            <CardDescription className="text-amber-600 dark:text-amber-400">
-              Manage student requests for late arrivals or early departures.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          {/* Section 2: Late Arrival / Early Departure */}
+          <section className="p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="h-7 w-7 text-amber-600 dark:text-amber-400" />
+              <h2 className="text-2xl font-semibold text-amber-700 dark:text-amber-300">Late Arrival / Early Departure</h2>
+            </div>
             <LateArrivalManagementTable />
-          </CardContent>
-        </Card>
+          </section>
 
-        {/* Other School Applications Card */}
-        <Card className="shadow-xl bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700/50">
-          <CardHeader>
-            <CardTitle className="text-2xl font-semibold text-green-700 dark:text-green-300 flex items-center gap-2">
-              <FileSignature className="h-6 w-6" />
-              Other School Applications
-            </CardTitle>
-            <CardDescription className="text-green-600 dark:text-green-400">
-              Review other miscellaneous applications like TC, report requests, etc.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          {/* Section 3: Other School Applications */}
+          <section className="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/30 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <FileSignature className="h-7 w-7 text-green-600 dark:text-green-400" />
+              <h2 className="text-2xl font-semibold text-green-700 dark:text-green-300">Other School Applications</h2>
+            </div>
             <OtherApplicationsReviewTable />
-          </CardContent>
-        </Card>
-      </div>
+          </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }
