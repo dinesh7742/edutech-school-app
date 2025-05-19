@@ -239,14 +239,14 @@ export function TeacherDashboardClient() {
       dataAiHint: "group users",
       content: loadingStudentCount ? (
         <div className="flex items-center justify-center space-x-2 h-full">
-          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-muted-foreground">Loading...</span>
         </div>
       ) : studentCountError ? (
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
         <>
-          <div className="text-3xl font-bold">{totalStudentsInClass ?? 0}</div>
+          <div className="text-3xl font-bold text-primary">{totalStudentsInClass ?? 0}</div>
           <p className="text-xs text-muted-foreground">Total students.</p>
           <div className="mt-2 space-y-1 text-xs">
               <div className="flex items-center justify-center text-muted-foreground">
@@ -266,7 +266,7 @@ export function TeacherDashboardClient() {
       dataAiHint: "homework check",
       content: loadingSubmissions ? (
          <div className="flex items-center justify-center space-x-2 h-full">
-          <Loader2 className="h-6 w-6 animate-spin text-foreground" />
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-muted-foreground">Loading...</span>
         </div>
       ) : submissionsError ? (
@@ -313,9 +313,9 @@ export function TeacherDashboardClient() {
         </div>
       ) : totalPendingSubmissions > 0 ? (
         <ul className="space-y-1 text-left text-sm text-muted-foreground px-2 sm:px-4">
-          {pendingLeaveCount > 0 && <li className="flex items-center"><MailOpen className="mr-2 h-4 w-4 text-primary" /> Pending Leave: <Badge variant="destructive" className="ml-2">{pendingLeaveCount}</Badge></li>}
-          {pendingLateArrivalCount > 0 && <li className="flex items-center"><AlertTriangle className="mr-2 h-4 w-4 text-primary" /> Pending Late Arrival: <Badge variant="destructive" className="ml-2">{pendingLateArrivalCount}</Badge></li>}
-          {pendingOtherAppsCount > 0 && <li className="flex items-center"><FileSignature className="mr-2 h-4 w-4 text-primary" /> Pending Other Requests: <Badge variant="destructive" className="ml-2">{pendingOtherAppsCount}</Badge></li>}
+          {pendingLeaveCount > 0 && <li className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><MailOpen className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Pending Leave: <Badge variant="destructive" className="ml-auto sm:ml-2">{pendingLeaveCount}</Badge></li>}
+          {pendingLateArrivalCount > 0 && <li className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><AlertTriangle className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Pending Late Arrival: <Badge variant="destructive" className="ml-auto sm:ml-2">{pendingLateArrivalCount}</Badge></li>}
+          {pendingOtherAppsCount > 0 && <li className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><FileSignature className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Pending Other Requests: <Badge variant="destructive" className="ml-auto sm:ml-2">{pendingOtherAppsCount}</Badge></li>}
         </ul>
       ) : (
         <p className="text-sm text-muted-foreground text-center">No new submissions to review.</p>
@@ -361,7 +361,7 @@ export function TeacherDashboardClient() {
       buttonText: "Mark Attendance",
       dataAiHint: "calendar check attendance"
     },
-     { // Manage Submissions Card
+     { 
       ...manageSubmissionsCard
     },
      {
@@ -387,10 +387,10 @@ export function TeacherDashboardClient() {
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center">
             <CardHeader className="pb-2 pt-4">
                  <div className="flex items-center justify-center mb-3">
-                    <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
+                    <item.icon className="h-16 w-16 text-primary" data-ai-hint={item.dataAiHint}/>
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-                {item.description && <CardDescription className="text-sm h-10 line-clamp-2">{item.description}</CardDescription>}
+                {item.description && <CardDescription className="text-sm min-h-[2.5rem] px-2">{item.description}</CardDescription>}
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 px-4">
              <div className="flex-grow flex flex-col justify-center items-center w-full"> {item.content} </div>
@@ -404,18 +404,18 @@ export function TeacherDashboardClient() {
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col">
                 <CardHeader className="pb-2 pt-4">
                     <div className="flex items-center justify-center mb-3">
-                        <item.icon className="h-16 w-16 text-foreground" data-ai-hint={item.dataAiHint}/>
+                        <item.icon className="h-16 w-16 text-primary" data-ai-hint={item.dataAiHint}/>
                     </div>
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
                         {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
-                           <Badge variant="destructive" className="animate-pulse">New!</Badge>
+                           <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-4 px-4">
-                    <div className="text-sm text-muted-foreground px-4 flex-grow flex items-center justify-center w-full">
-                        {typeof item.description === 'string' ? <p>{item.description}</p> : item.description}
+                    <div className="text-sm text-muted-foreground min-h-[4rem] px-4 flex-grow flex flex-col items-center justify-center w-full">
+                         {typeof item.description === 'string' ? <p>{item.description}</p> : item.description}
                     </div>
                     {item.link ? (
                         <Button asChild className="w-full mt-auto">
@@ -435,3 +435,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    

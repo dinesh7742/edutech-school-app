@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CalendarPlus, Hourglass, AlertTriangle, FileSignature, Edit, FileArchive, CheckCircle } from "lucide-react";
+import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CalendarPlus, Hourglass, AlertTriangle, FileSignature, Edit, FileArchive, CheckCircle, MailOpen } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -275,8 +275,8 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md truncate">{data.title}</h3>
+        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
+          <h3 className="font-semibold text-md">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
@@ -298,8 +298,8 @@ export function StudentDashboardClient() {
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data ? (
-        <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md truncate">{data.title}</h3>
+        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
+          <h3 className="font-semibold text-md">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
             Posted: {data.displayDate} by {data.postedByName}
@@ -345,8 +345,8 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data ? (
-         <div className="text-left w-full space-y-1 p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md truncate">{data.title}</h3>
+         <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
+          <h3 className="font-semibold text-md">{data.title}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
@@ -375,8 +375,8 @@ export function StudentDashboardClient() {
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data ? (
-        <div className="text-left w-full space-y-2 p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md truncate">{data.subject}</h3>
+        <div className="text-left w-full space-y-2 p-1 sm:p-2 border-primary rounded-md bg-background">
+          <h3 className="font-semibold text-md">{data.subject}</h3>
           <div className="text-xs text-muted-foreground">
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
@@ -392,6 +392,56 @@ export function StudentDashboardClient() {
         </div>
       ) : null,
       emptyMessage: "No live classes scheduled for you."
+    },
+     {
+      id: "applyLeave",
+      title: "Leave Application Status",
+      icon: MailOpen,
+      link: "/student/apply-leave",
+      buttonText: "Apply or View History",
+      dataAiHint: "mail letter envelope",
+      description: "View the status of your recent leave application or submit a new one.",
+      contentData: latestLeaveApplication,
+      renderContent: (data: LeaveApplication | null) => data ? (
+        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
+          <p className="text-sm"><strong>Applied:</strong> {data.applicationDate ? format(data.applicationDate.toDate(), "PP") : "N/A"}</p>
+          <p className="text-sm"><strong>Dates:</strong> {formatDateDisplay(data.leaveStartDate)} - {formatDateDisplay(data.leaveEndDate)}</p>
+          <p className="text-sm"><strong>Reason:</strong> {data.reason}</p>
+          <div className="flex items-center gap-2">
+             <p className="text-sm font-medium">Status:</p>
+            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
+          </div>
+          {data.teacherComments && (
+            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher's Comment:</strong> <span className="whitespace-pre-wrap">{data.teacherComments}</span></p>
+          )}
+        </div>
+      ) : null,
+      emptyMessage: "You haven't applied for leave recently."
+    },
+    {
+      id: "lateArrivalRequest",
+      title: "Late Arrival / Early Departure",
+      icon: AlertTriangle,
+      link: "/student/late-arrival",
+      buttonText: "Submit or View History",
+      dataAiHint: "alert triangle time",
+      description: "Request permission for late arrival or early departure. View status of recent requests.",
+      contentData: latestLateArrivalRequest,
+      renderContent: (data: LateArrivalApplication | null) => data ? (
+        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
+          <p className="text-sm"><strong>Requested for:</strong> {formatDateDisplay(data.requestDate)} at {data.time}</p>
+          <p className="text-sm"><strong>Type:</strong> {data.type}</p>
+          <p className="text-sm"><strong>Reason:</strong> {data.reason}</p>
+           <div className="flex items-center gap-2">
+             <p className="text-sm font-medium">Status:</p>
+            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
+          </div>
+          {data.teacherComments && (
+            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher's Comment:</strong> <span className="whitespace-pre-wrap">{data.teacherComments}</span></p>
+          )}
+        </div>
+      ) : null,
+      emptyMessage: "No recent late arrival or early departure requests."
     },
     {
       id: "mySchoolApplications",
@@ -441,7 +491,7 @@ export function StudentDashboardClient() {
         {dashboardCards.map((card) => (
           <Card key={card.id} className="text-center flex flex-col">
             <CardHeader className="pb-2 pt-4 items-center">
-               <card.icon className="h-16 w-16 text-foreground" data-ai-hint={card.dataAiHint}/>
+               <card.icon className="h-16 w-16 text-primary" data-ai-hint={card.dataAiHint}/>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
@@ -458,7 +508,7 @@ export function StudentDashboardClient() {
                     <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
                  )}
               </CardTitle>
-               <CardDescription className="text-sm h-12 line-clamp-2 px-2">{card.description}</CardDescription>
+               <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               {card.renderContent && card.contentData?.loading && (
@@ -485,9 +535,9 @@ export function StudentDashboardClient() {
         ))}
          <Card className="text-center flex flex-col">
             <CardHeader className="pb-2 pt-4 items-center">
-                <ListChecks className="h-16 w-16 text-foreground" data-ai-hint="attendance list" />
+                <ListChecks className="h-16 w-16 text-primary" data-ai-hint="attendance list" />
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
-                <CardDescription className="text-sm h-12 line-clamp-2 px-2">View your detailed attendance records.</CardDescription>
+                <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               <div className="flex-grow"></div>
@@ -498,9 +548,9 @@ export function StudentDashboardClient() {
           </Card>
         <Card className="text-center flex flex-col">
             <CardHeader className="pb-2 pt-4 items-center">
-                 <UserCircle className="h-16 w-16 text-foreground" data-ai-hint="user profile" />
+                 <UserCircle className="h-16 w-16 text-primary" data-ai-hint="user profile" />
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
-                <CardDescription className="text-sm h-12 line-clamp-2 px-2">Manage your personal information and settings.</CardDescription>
+                <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               <div className="flex-grow"></div>
@@ -513,6 +563,7 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-
     
+    
+
     
