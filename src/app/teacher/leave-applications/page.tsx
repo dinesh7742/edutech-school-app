@@ -15,7 +15,7 @@ export default function AllSubmissionsReviewPage() {
         <h1 className="text-3xl font-bold text-primary">Review Student Submissions</h1>
       </div>
       <Tabs defaultValue="leave-applications" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 md:grid-cols-3">
           <TabsTrigger value="leave-applications" className="flex items-center gap-2">
             <MailOpen className="h-5 w-5" /> Leave Applications
           </TabsTrigger>
