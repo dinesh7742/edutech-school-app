@@ -8,20 +8,34 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Eye, UserCircle, Filter, Loader2 } from "lucide-react";
+import { Eye, UserCircle, Trash2, Loader2 } from "lucide-react";
 import type { StudentProfile } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, orderBy, doc, deleteDoc } from "firebase/firestore";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export function StudentDataList() {
-  const { user: teacherUser } = useAuth(); // Teacher's context
+  const { user: teacherUser } = useAuth();
+  const { toast } = useToast();
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<StudentProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Store UID of student being deleted
 
   useEffect(() => {
     const fetchStudentProfiles = async () => {
@@ -29,14 +43,12 @@ export function StudentDataList() {
       setError(null);
       try {
         const profilesCollectionRef = collection(db, "studentProfiles");
-        // TODO: Implement filtering based on teacher's assigned classes/grades in a real scenario.
-        // For now, fetching all profiles and ordering by grade, then division, then firstName.
         const q = query(profilesCollectionRef, orderBy("grade"), orderBy("division"), orderBy("firstName"));
         const querySnapshot = await getDocs(q);
         
         const fetchedProfiles: StudentProfile[] = querySnapshot.docs.map(doc => {
           return {
-            uid: doc.id, // Use doc.id as uid for the profile
+            uid: doc.id,
             ...doc.data()
           } as StudentProfile;
         });
@@ -46,33 +58,29 @@ export function StudentDataList() {
       } catch (err: any) {
         console.error("Error fetching student profiles:", err);
         setError("Failed to load student data. Please try again later.");
+        if (err.code === 'failed-precondition' && err.message.includes('index')) {
+            setError("A Firestore index is required to sort students. Please check the console for a link to create it.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    // Only fetch if teacherUser is loaded (though we don't use teacherUser for filtering yet)
     if (teacherUser) {
       fetchStudentProfiles();
-    } else {
-      // If teacherUser is not yet available (e.g. initial load), wait for AuthContext.
-      // This prevents fetching before auth state is clear.
-      // Alternatively, if teacherUser might be null for an extended period, handle accordingly.
-      // For now, assuming teacherUser will be available once auth is settled.
-      // setLoading(false); // Or keep loading until teacherUser is confirmed.
     }
-  }, [teacherUser]); // Re-fetch if teacherUser changes (e.g. for future filtering logic)
+  }, [teacherUser]);
 
   useEffect(() => {
     const lowercasedFilter = searchTerm.toLowerCase();
     const filteredData = students.filter(item => {
-      const fullName = `${item.firstName.toLowerCase()} ${item.lastName ? item.lastName.toLowerCase() : ''}`;
+      const fullName = `${item.firstName?.toLowerCase() || ''} ${item.lastName?.toLowerCase() || ''}`;
       return (
         fullName.includes(lowercasedFilter) ||
-        item.firstName.toLowerCase().includes(lowercasedFilter) ||
+        (item.firstName && item.firstName.toLowerCase().includes(lowercasedFilter)) ||
         (item.lastName && item.lastName.toLowerCase().includes(lowercasedFilter)) ||
-        item.email?.toLowerCase().includes(lowercasedFilter) ||
-        `${item.grade}${item.division}`.toLowerCase().includes(lowercasedFilter)
+        (item.email && item.email.toLowerCase().includes(lowercasedFilter)) ||
+        (item.grade && item.division && `${item.grade}${item.division}`.toLowerCase().includes(lowercasedFilter))
       );
     });
     setFilteredStudents(filteredData);
@@ -82,6 +90,40 @@ export function StudentDataList() {
     const firstInitial = firstName ? firstName[0] : "";
     const lastInitial = lastName ? lastName[0] : "";
     return `${firstInitial}${lastInitial}`.toUpperCase() || "??";
+  };
+
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!studentId) return;
+    setIsDeleting(studentId);
+    try {
+      // Delete from studentProfiles collection
+      const studentProfileDocRef = doc(db, "studentProfiles", studentId);
+      await deleteDoc(studentProfileDocRef);
+
+      // Delete from users collection
+      const userDocRef = doc(db, "users", studentId);
+      await deleteDoc(userDocRef);
+
+      // TODO: Implement Firebase Authentication user deletion (requires Admin SDK on backend/Cloud Function)
+      // Example: await deleteUser(auth, studentId); - THIS WILL NOT WORK CLIENT-SIDE FOR OTHER USERS
+
+      setStudents(prevStudents => prevStudents.filter(student => student.uid !== studentId));
+      setFilteredStudents(prevFiltered => prevFiltered.filter(student => student.uid !== studentId));
+      
+      toast({
+        title: "Student Deleted",
+        description: `${studentName} has been removed successfully.`,
+      });
+    } catch (error: any) {
+      console.error("Error deleting student:", error);
+      toast({
+        title: "Error Deleting Student",
+        description: `Could not remove ${studentName}. ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(null);
+    }
   };
   
 
@@ -112,7 +154,7 @@ export function StudentDataList() {
           <p>{error}</p>
            <p className="mt-2 text-sm text-muted-foreground">
               Please check your internet connection or Firestore security rules.
-              The console might have more details (e.g. missing Firestore indexes for sorting).
+              The console might have more details.
             </p>
         </CardContent>
       </Card>
@@ -133,8 +175,6 @@ export function StudentDataList() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
           />
-          {/* Placeholder for advanced filters - can be implemented later */}
-          {/* <Button variant="outline"><Filter className="mr-2 h-4 w-4" /> Filter Options</Button>  */}
         </div>
 
         {filteredStudents.length === 0 ? (
@@ -171,12 +211,42 @@ export function StudentDataList() {
                   <TableCell>{student.grade}</TableCell>
                   <TableCell>{student.division}</TableCell>
                   <TableCell>{student.email || 'N/A'}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-2">
                     <Button variant="ghost" size="sm" asChild>
                       <Link href={`/teacher/student-data/${student.uid}`}>
                         <Eye className="mr-2 h-4 w-4" /> View
                       </Link>
                     </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" disabled={isDeleting === student.uid}>
+                          {isDeleting === student.uid ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="mr-2 h-4 w-4" />
+                          )}
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the student's profile ({student.firstName} {student.lastName || ''}) and their user record from Firestore.
+                            It will NOT delete their Firebase Authentication account (login credentials).
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteStudent(student.uid, `${student.firstName} ${student.lastName || ''}`)}
+                            className={isDeleting === student.uid ? "bg-destructive/80" : "bg-destructive hover:bg-destructive/90"}
+                          >
+                            {isDeleting === student.uid ? "Deleting..." : "Yes, delete student"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </TableCell>
                 </TableRow>
               ))}
