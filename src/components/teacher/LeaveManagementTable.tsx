@@ -25,6 +25,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label"; // Added import
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Added import
 
 export function LeaveManagementTable() {
   const { user: teacherUser } = useAuth();
@@ -98,7 +100,7 @@ export function LeaveManagementTable() {
         teacherComments: teacherComment || null, 
       });
       toast({ title: "Success", description: `Application ${newStatus.toLowerCase()}.` });
-      setApplications(prevApps => prevApps.map(app => app.id === appId ? { ...app, status: newStatus } : app));
+      setApplications(prevApps => prevApps.map(app => app.id === appId ? { ...app, status: newStatus, teacherComments: teacherComment } : app));
     } catch (error: any) {
       console.error("Error updating application status:", error);
       toast({ title: "Error", description: "Could not update application status. " + error.message, variant: "destructive" });
@@ -198,6 +200,7 @@ export function LeaveManagementTable() {
                   <TableHead>Reason</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
+                  <TableHead>Teacher Comment</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -225,6 +228,7 @@ export function LeaveManagementTable() {
                         <span className="text-xs text-muted-foreground">Processed</span>
                       )}
                     </TableCell>
+                    <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.teacherComments || "N/A"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -262,16 +266,14 @@ export function LeaveManagementTable() {
   );
 }
 
-// Minimal Select component structure to satisfy the compiler for now. 
-// In a real app, you'd use the full ShadCN Select.
-const Label = ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement> & { htmlFor: string }) => <label {...props}>{children}</label>;
-const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { onValueChange: (value: string) => void, defaultValue: string }) => (
-  <select onChange={(e) => props.onValueChange(e.target.value)} defaultValue={props.defaultValue} {...props}>
-    {children}
-  </select>
-);
-const SelectTrigger = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>;
-const SelectValue = ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>;
-const SelectContent = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>;
-const SelectItem = ({ children, value, ...props }: React.HTMLAttributes<HTMLOptionElement> & { value: string }) => <option value={value} {...props}>{children}</option>;
-
+// Removed placeholder component definitions that were causing the issue
+// const Label = ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement> & { htmlFor: string }) => <label {...props}>{children}</label>;
+// const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { onValueChange: (value: string) => void, defaultValue: string }) => (
+//   <select onChange={(e) => props.onValueChange(e.target.value)} defaultValue={props.defaultValue} {...props}>
+//     {children}
+//   </select>
+// );
+// const SelectTrigger = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>;
+// const SelectValue = ({ children, ...props }: React.HTMLAttributes<HTMLSpanElement>) => <span {...props}>{children}</span>;
+// const SelectContent = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) => <div {...props}>{children}</div>;
+// const SelectItem = ({ children, value, ...props }: React.HTMLAttributes<HTMLOptionElement> & { value: string }) => <option value={value} {...props}>{children}</option>;
