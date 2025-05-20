@@ -12,6 +12,7 @@ export interface AppUser extends FirebaseUser {
   photoURL?: string | null;
   email?: string | null;
   phoneNumber?: string | null;
+  whatsAppNumber?: string | null; // Added for teacher's WhatsApp number
 }
 
 export interface Notice {
@@ -36,7 +37,7 @@ export interface Homework {
   postedByName: string;
   timestamp: Timestamp | FieldValue;
   displayDate?: string;
-  dueDate?: string;
+  dueDate?: string; // YYYY-MM-DD
   subject?: string;
   grade: string;
   division: string;
@@ -74,7 +75,7 @@ export interface Textbook {
   title: string;
   subject: string;
   fileUrl: string; 
-  coverImageUrl?: string; 
+  coverImageUrl?: string; // Can store Data URI
   fileName?: string;
   postedByUid: string;
   postedByName: string;
@@ -86,7 +87,7 @@ export interface PhotoGalleryAlbum {
   id: string;
   title: string;
   description?: string;
-  images: { url: string; alt?: string }[]; 
+  images: { url: string; alt?: string }[]; // URLs could be Data URIs
   postedByUid: string;
   postedByName: string;
   eventDate?: string; // YYYY-MM-DD
@@ -113,7 +114,7 @@ export interface StudentProfile {
   caste?: string;
   fullAddress?: string;
   photoUrl?: string; // Can store Data URI
-  email?: string; // Student's email
+  email?: string; 
 }
 
 export interface LiveClass {
@@ -157,7 +158,7 @@ export interface LeaveApplication {
   leaveStartDate: string; // YYYY-MM-DD
   leaveEndDate: string; // YYYY-MM-DD
   reason: string;
-  applicationDate: Timestamp | FieldValue;
+  applicationDate: Timestamp | FieldValue; // Firestore Server Timestamp
   status: LeaveApplicationStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
@@ -174,7 +175,7 @@ export interface SchoolForm {
 }
 
 export type LateArrivalRequestType = "Late Arrival" | "Early Departure";
-export type RequestStatus = "Pending" | "Approved" | "Rejected"; // Generic status for applications
+export type RequestStatus = "Pending" | "Approved" | "Rejected"; 
 
 export interface LateArrivalApplication {
   id?: string;
@@ -186,7 +187,7 @@ export interface LateArrivalApplication {
   type: LateArrivalRequestType;
   time: string; // HH:MM format
   reason: string;
-  applicationTimestamp: Timestamp | FieldValue; // When the request was submitted
+  applicationTimestamp: Timestamp | FieldValue; 
   status: RequestStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
@@ -194,20 +195,19 @@ export interface LateArrivalApplication {
   teacherComments?: string;
 }
 
-// New types for "Other School Applications"
 export type OtherApplicationType = 
   | "ProgressReportRequest"
   | "ReExamRequest"
   | "TCApplication"
   | "DuplicateTCRequest"
-  | "BonafideCertificateRequest"; // Added new type
+  | "BonafideCertificateRequest";
 
 export const otherApplicationTypeLabels: Record<OtherApplicationType, string> = {
   ProgressReportRequest: "Progress Report Request",
   ReExamRequest: "Re-exam / Re-test Request",
   TCApplication: "Transfer Certificate (TC) Application",
   DuplicateTCRequest: "Duplicate TC Request",
-  BonafideCertificateRequest: "Bonafide Certificate Request", // Added label
+  BonafideCertificateRequest: "Bonafide Certificate Request",
 };
 
 export interface OtherStudentApplication {
@@ -219,7 +219,7 @@ export interface OtherStudentApplication {
   formType: OtherApplicationType;
   reasonOrDetails: string;
   applicationTimestamp: Timestamp | FieldValue;
-  status: RequestStatus; // "Pending", "Approved", "Rejected"
+  status: RequestStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
   reviewTimestamp?: Timestamp | FieldValue;

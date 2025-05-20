@@ -12,32 +12,50 @@ import * as z from "zod";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProfile as updateAuthProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Loader2 } from "lucide-react";
 
 const teacherProfileSchema = z.object({
   displayName: z.string().min(3, "Name must be at least 3 characters"),
-  // Add other teacher-specific fields here if needed in the future
-  // e.g., contactNumber: z.string().optional(),
-  // photoUrl: z.string().url().optional().or(z.literal("")),
+  whatsAppNumber: z.string().optional().refine(val => {
+    if (!val) return true; // Optional field
+    return /^\+[1-9]\d{1,14}$/.test(val); // Basic E.164 format check
+  }, "Invalid WhatsApp number. Must be in international format (e.g., +91XXXXXXXXXX)."),
 });
 
 type TeacherProfileFormValues = z.infer<typeof teacherProfileSchema>;
 
 export function TeacherProfileForm() {
-  const { user, setUser } = useAuth(); // setUser from AuthContext to update context
+  const { user, setUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<TeacherProfileFormValues>({
     resolver: zodResolver(teacherProfileSchema),
+    defaultValues: {
+      displayName: "",
+      whatsAppNumber: "",
+    }
   });
 
   useEffect(() => {
     if (user) {
-      reset({
-        displayName: user.displayName || "",
+      // Fetch whatsAppNumber from user's document in 'users' collection
+      const userDocRef = doc(db, "users", user.uid);
+      getDoc(userDocRef).then(docSnap => {
+        if (docSnap.exists()) {
+          const userData = docSnap.data();
+          reset({
+            displayName: user.displayName || "",
+            whatsAppNumber: userData.whatsAppNumber || "",
+          });
+        } else {
+          reset({
+            displayName: user.displayName || "",
+            whatsAppNumber: "",
+          });
+        }
       });
     }
   }, [user, reset]);
@@ -50,21 +68,36 @@ export function TeacherProfileForm() {
     setIsLoading(true);
 
     try {
-      // Update Firebase Authentication display name
-      if (auth.currentUser && data.displayName !== auth.currentUser.displayName) {
-        await updateAuthProfile(auth.currentUser, { displayName: data.displayName });
+      const updatesToAuthUser: { displayName?: string } = {};
+      if (data.displayName !== user.displayName) {
+        updatesToAuthUser.displayName = data.displayName;
       }
 
-      // Update Firestore 'users' collection
+      // Update Firebase Authentication display name if changed
+      if (auth.currentUser && Object.keys(updatesToAuthUser).length > 0) {
+        await updateAuthProfile(auth.currentUser, updatesToAuthUser);
+      }
+
+      // Update Firestore 'users' collection with displayName and whatsAppNumber
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, { displayName: data.displayName }, { merge: true });
+      await setDoc(userDocRef, { 
+        displayName: data.displayName,
+        whatsAppNumber: data.whatsAppNumber || null, // Save as null if empty
+       }, { merge: true });
       
       // Update user in AuthContext
-      setUser(prevUser => prevUser ? { ...prevUser, displayName: data.displayName } : null);
+      setUser(prevUser => {
+        if (!prevUser) return null;
+        return { 
+          ...prevUser, 
+          displayName: data.displayName,
+          whatsAppNumber: data.whatsAppNumber || null,
+        };
+      });
 
       toast({
         title: "Profile Updated",
-        description: "Your display name has been updated successfully.",
+        description: "Your profile information has been updated successfully.",
       });
     } catch (error: any) {
       console.error("Teacher profile update error:", error);
@@ -90,6 +123,13 @@ export function TeacherProfileForm() {
             <Label htmlFor="displayName">Display Name</Label>
             <Input id="displayName" {...register("displayName")} />
             {errors.displayName && <p className="text-sm text-destructive mt-1">{errors.displayName.message}</p>}
+          </div>
+
+          <div>
+            <Label htmlFor="whatsAppNumber">WhatsApp Number (for notifications)</Label>
+            <Input id="whatsAppNumber" {...register("whatsAppNumber")} placeholder="+91XXXXXXXXXX" />
+            {errors.whatsAppNumber && <p className="text-sm text-destructive mt-1">{errors.whatsAppNumber.message}</p>}
+            <p className="text-xs text-muted-foreground mt-1">Enter with country code (e.g., +91 for India). This will be used for important notifications.</p>
           </div>
 
           <div>
