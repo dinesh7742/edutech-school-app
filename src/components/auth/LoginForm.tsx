@@ -22,7 +22,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -57,7 +56,7 @@ export function LoginForm() {
 
   const router = useRouter();
   const { toast } = useToast();
-  const { setUser } = useAuth();
+  const { setUser } = useAuth(); // setUser might be used if you want to immediately update context, though onAuthStateChanged handles it
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -71,7 +70,8 @@ export function LoginForm() {
         title: "Login Successful",
         description: "Welcome back! Redirecting to your dashboard...",
       });
-      router.push("/");
+      // AuthProvider's onAuthStateChanged will handle setting user and redirecting via HomePage effect
+      router.push("/"); 
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
