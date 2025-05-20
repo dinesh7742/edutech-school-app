@@ -11,7 +11,7 @@ export function Footer() {
           copyright@Dinesh Sardar (BMC teacher)
         </p>
         <p className="mt-1">
-          Powered by <Link href="#" className="font-medium hover:text-primary transition-colors">CampusConnect</Link>
+          Powered by <Link href="#" className="font-medium hover:text-primary transition-colors">Edutech</Link>
         </p>
       </div>
     </footer>
