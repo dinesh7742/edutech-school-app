@@ -191,71 +191,6 @@ export function TeacherDashboardClient() {
     checkTodaysAttendance();
   }, [teacherUser, toast]);
 
-  const handleDownloadStudentData = async () => {
-    setIsDownloadingStudentData(true);
-    toast({ title: "Preparing Download", description: "Fetching student data..." });
-    if (!teacherUser?.grade || !teacherUser?.division) {
-      toast({ title: "Missing Info", description: "Your profile must have grade and division to download class data.", variant: "destructive"});
-      setIsDownloadingStudentData(false);
-      return;
-    }
-    try {
-      const studentProfilesCollectionRef = collection(db, "studentProfiles");
-      const q = query(studentProfilesCollectionRef, where("grade", "==", teacherUser.grade), where("division", "==", teacherUser.division));
-      const querySnapshot = await getDocs(q);
-      
-      if (querySnapshot.empty) {
-        toast({ title: "No Data", description: "No student data found for your class.", variant: "destructive" });
-        setIsDownloadingStudentData(false);
-        return;
-      }
-
-      const studentsData = querySnapshot.docs.map(doc => {
-        const data = doc.data() as StudentProfile;
-        return {
-          UID: data.uid,
-          "First Name": data.firstName,
-          "Middle Name": data.middleName || "",
-          "Last Name": data.lastName,
-          "Mother's Name": data.motherName || "",
-          Gender: data.gender || "",
-          Grade: data.grade,
-          Division: data.division,
-          Email: data.email || "",
-          "Contact Number": data.contactNumber || "",
-          "Aadhar Card Number": data.aadharCardNumber || "",
-          "PEN Number": data.penNumber || "",
-          "GR Number": data.grNumber || "",
-          Religion: data.religion || "",
-          Caste: data.caste || "",
-          "Full Address": data.fullAddress || "",
-          "Photo URL": data.photoUrl || "",
-          "Date of Birth": data.dateOfBirth || ""
-        };
-      });
-
-      const worksheet = XLSX.utils.json_to_sheet(studentsData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Student Data");
-      
-      const filename = `StudentData_Grade${teacherUser?.grade}${teacherUser?.division}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, filename);
-
-      toast({ title: "Download Started", description: `File ${filename} should be downloading.` });
-
-    } catch (error: any) {
-      console.error("Error downloading student data:", error);
-      toast({ title: "Download Failed", description: error.message || "Could not download student data.", variant: "destructive" });
-       if (error.code === 'failed-precondition') {
-          toast({ title: "Index Required", description: "A Firestore index is needed for grade & division on studentProfiles. Please create it.", variant: "destructive", duration: 10000 });
-        }
-    } finally {
-      setIsDownloadingStudentData(false);
-    }
-  };
-  
-  const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
-
   const getAttendanceCardDescription = () => {
     if (loadingTodaysAttendanceStatus) {
       return "Checking today's attendance status...";
@@ -266,8 +201,14 @@ export function TeacherDashboardClient() {
     if (todaysAttendanceMarked === false) {
       return <span className="font-semibold text-destructive">Attendance for today needs to be marked!</span>;
     }
+    // Fallback if teacher grade/division is missing or another issue
+    if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
+        return "Please update your profile with assigned grade and division to mark attendance.";
+    }
     return "Mark daily attendance for students in your assigned class.";
   };
+  
+  const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
 
   const quickStatsItems = [
     {
@@ -369,7 +310,7 @@ export function TeacherDashboardClient() {
     {
       title: "Mark Attendance",
       icon: CalendarCheck,
-      description: getAttendanceCardDescription(),
+      description: getAttendanceCardDescription(), // Dynamically get description
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
       dataAiHint: "calendar check attendance"
@@ -468,3 +409,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    
