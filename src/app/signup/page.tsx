@@ -8,7 +8,7 @@ export default function SignupPage() {
       <div className="relative z-10 flex flex-col items-center space-y-6 w-full">
         <div className="flex items-center space-x-3 text-primary mb-6">
           <School size={48} />
-          <h1 className="text-4xl font-bold">CampusConnect</h1>
+          <h1 className="text-4xl font-bold">Edutech</h1>
         </div>
         <SignupForm />
       </div>
