@@ -38,6 +38,80 @@ export function TeacherDashboardClient() {
   const [todaysAttendanceMarked, setTodaysAttendanceMarked] = useState<boolean | null>(null);
   const [loadingTodaysAttendanceStatus, setLoadingTodaysAttendanceStatus] = useState(true);
 
+  const handleDownloadStudentData = async () => {
+    if (!teacherUser?.grade || !teacherUser?.division) {
+      toast({
+        title: "Cannot Download Data",
+        description: "Your profile is missing assigned grade/division. Please update your profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsDownloadingStudentData(true);
+    try {
+      const profilesCollectionRef = collection(db, "studentProfiles");
+      const q = query(
+        profilesCollectionRef,
+        where("grade", "==", teacherUser.grade),
+        where("division", "==", teacherUser.division),
+        orderBy("firstName")
+      );
+      const querySnapshot = await getDocs(q);
+      const studentsToDownload = querySnapshot.docs.map(doc => doc.data() as StudentProfile);
+
+      if (studentsToDownload.length === 0) {
+        toast({
+          title: "No Data",
+          description: "No students found for your assigned class to download.",
+        });
+        setIsDownloadingStudentData(false);
+        return;
+      }
+
+      // Map data for Excel
+      const dataForExcel = studentsToDownload.map(student => ({
+        "First Name": student.firstName || "",
+        "Middle Name": student.middleName || "",
+        "Last Name": student.lastName || "",
+        "Mother's Name": student.motherName || "",
+        "Father's Occupation": student.fatherOccupation || "",
+        "Mother's Occupation": student.motherOccupation || "",
+        "Date of Birth": student.dateOfBirth || "",
+        "Gender": student.gender || "",
+        "Grade": student.grade || "",
+        "Division": student.division || "",
+        "Contact Number": student.contactNumber || "",
+        "Aadhar Card Number": student.aadharCardNumber || "",
+        "PEN Number": student.penNumber || "",
+        "G.R. Number": student.grNumber || "",
+        "Religion": student.religion || "",
+        "Caste": student.caste || "",
+        "Full Address": student.fullAddress || "",
+        "Email": student.email || "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, `Grade_${teacherUser.grade}${teacherUser.division}`);
+      
+      XLSX.writeFile(workbook, `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
+      toast({
+        title: "Download Started",
+        description: "Student data Excel sheet is being downloaded.",
+      });
+
+    } catch (error: any) {
+      console.error("Error downloading student data:", error);
+      toast({
+        title: "Download Failed",
+        description: error.message || "Could not download student data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloadingStudentData(false);
+    }
+  };
+
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -409,5 +483,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    
