@@ -14,11 +14,22 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video } from "lucide-react";
-import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp } from "firebase/firestore";
+import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2 } from "lucide-react";
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
-import type { Notice, Homework } from "@/types"; // Import Notice and Homework types
+import type { Notice, Homework } from "@/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB for Firestore field limit
 const MAX_RAW_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB for initial client-side check
@@ -90,6 +101,7 @@ export function PostContentForm() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("notice");
 
   const defaultGradeDivision = { grade: user?.grade || "1", division: user?.division || "A" };
@@ -344,6 +356,37 @@ export function PostContentForm() {
       toast({ title: "Error", description: `Failed to post ${type}. ${e.message || 'Firestore document might be too large if many/large images were included.'}`, variant: "destructive" });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string, collectionName: 'notices' | 'homework') => {
+    if (!id || id === 'new') {
+      toast({ title: "Cannot Delete", description: "This item cannot be deleted right now.", variant: "destructive" });
+      return;
+    }
+    setIsDeleting(id);
+    try {
+      await deleteDoc(doc(db, collectionName, id));
+
+      if (collectionName === 'notices') {
+        setRecentNotices(prev => prev.filter(item => item.id !== id));
+      } else if (collectionName === 'homework') {
+        setRecentHomework(prev => prev.filter(item => item.id !== id));
+      }
+
+      toast({
+        title: "Post Deleted",
+        description: "The item has been successfully removed.",
+      });
+    } catch (error: any) {
+      console.error(`Error deleting post from ${collectionName}:`, error);
+      toast({
+        title: "Deletion Failed",
+        description: error.message || `Could not delete the post from ${collectionName}.`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -613,7 +656,7 @@ export function PostContentForm() {
     <Card className="w-full max-w-2xl mx-auto shadow-xl mt-8">
         <CardHeader>
             <CardTitle className="text-2xl font-semibold text-primary">My Recent Posts</CardTitle>
-            <CardDescription>Quick overview of your last few posts.</CardDescription>
+            <CardDescription>Quick overview of your last few posts. You can delete them here.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
             <section>
@@ -626,11 +669,36 @@ export function PostContentForm() {
                     <ul className="space-y-2">
                         {recentNotices.map(notice => (
                             <li key={notice.id} className="p-3 border rounded-md bg-muted/30">
-                                <p className="font-semibold">{notice.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    Posted: {notice.timestamp instanceof Timestamp ? notice.timestamp.toDate().toLocaleDateString() : 'Just now'}
-                                    {notice.grade && ` | For: Grade ${notice.grade}${notice.division ? ` Div ${notice.division}` : ' (All Div)'}`}
-                                </p>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-semibold">{notice.title}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Posted: {notice.timestamp instanceof Timestamp ? notice.timestamp.toDate().toLocaleDateString() : 'Just now'}
+                                            {notice.grade && ` | For: Grade ${notice.grade}${notice.division ? ` Div ${notice.division}` : ' (All Div)'}`}
+                                        </p>
+                                    </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={isDeleting === notice.id}>
+                                                {isDeleting === notice.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the notice titled "{notice.title}". This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDelete(notice.id, 'notices')} className="bg-destructive hover:bg-destructive/90">
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
                                 <p className="text-sm mt-1 line-clamp-2 whitespace-pre-wrap">{notice.content}</p>
                             </li>
                         ))}
@@ -646,13 +714,38 @@ export function PostContentForm() {
                 ) : (
                     <ul className="space-y-2">
                         {recentHomework.map(hw => (
-                            <li key={hw.id} className="p-3 border rounded-md bg-muted/30">
-                                <p className="font-semibold">{hw.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    Subject: {hw.subject} | Due: {hw.dueDate ? new Date(hw.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A'}
-                                    <br/>
-                                    For: Grade {hw.grade} Div {hw.division} | Posted: {hw.timestamp instanceof Timestamp ? hw.timestamp.toDate().toLocaleDateString() : 'Just now'}
-                                </p>
+                             <li key={hw.id} className="p-3 border rounded-md bg-muted/30">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <p className="font-semibold">{hw.title}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Subject: {hw.subject} | Due: {hw.dueDate ? new Date(hw.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A'}
+                                            <br/>
+                                            For: Grade {hw.grade} Div {hw.division} | Posted: {hw.timestamp instanceof Timestamp ? hw.timestamp.toDate().toLocaleDateString() : 'Just now'}
+                                        </p>
+                                    </div>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={isDeleting === hw.id}>
+                                                {isDeleting === hw.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the homework titled "{hw.title}". This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDelete(hw.id, 'homework')} className="bg-destructive hover:bg-destructive/90">
+                                                    Delete
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
                                 {hw.description && <p className="text-sm mt-1 line-clamp-2 whitespace-pre-wrap">{hw.description}</p>}
                             </li>
                         ))}
