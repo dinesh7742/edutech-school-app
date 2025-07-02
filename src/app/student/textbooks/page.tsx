@@ -123,7 +123,7 @@ export default function StudentTextbooksPage() {
             <Card key={book.id} className="shadow-lg flex flex-col">
               <CardHeader className="p-0">
                 <Image 
-                  src={book.coverImageUrl || `https://placehold.co/200x280.png/E8EAF6/3F51B5?text=${encodeURIComponent(book.subject)}`} 
+                  src={book.coverImageUrl || 'https://placehold.co/200x280.png'} 
                   alt={book.title} 
                   width={200} 
                   height={280} 
