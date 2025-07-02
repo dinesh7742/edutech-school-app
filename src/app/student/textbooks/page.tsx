@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, Timestamp, orderBy } from "firebase/firestore"; 
+import { collection, query, getDocs, Timestamp } from "firebase/firestore"; 
 import type { Textbook } from "@/types";
 
 export default function StudentTextbooksPage() {
@@ -21,7 +21,8 @@ export default function StudentTextbooksPage() {
       // console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
       try {
         const textbooksCollectionRef = collection(db, "textbooks");
-        const q = query(textbooksCollectionRef, orderBy("grade"), orderBy("title")); 
+        // Removed orderBy from query to avoid needing a composite index. Sorting will be done client-side.
+        const q = query(textbooksCollectionRef); 
         // console.log("[StudentTextbooksPage] Executing Firestore query for textbooks:", q);
         const querySnapshot = await getDocs(q);
         
@@ -52,8 +53,17 @@ export default function StudentTextbooksPage() {
           };
         }).filter(Boolean) as Textbook[]; 
         
+        // Sort the textbooks client-side by grade, then by title
+        fetchedTextbooks.sort((a, b) => {
+            if (a.grade < b.grade) return -1;
+            if (a.grade > b.grade) return 1;
+            if (a.title.toLowerCase() < b.title.toLowerCase()) return -1;
+            if (a.title.toLowerCase() > b.title.toLowerCase()) return 1;
+            return 0;
+        });
+        
         setTextbooksList(fetchedTextbooks);
-        // console.log(`[StudentTextbooksPage] Successfully mapped ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
+        // console.log(`[StudentTextbooksPage] Successfully mapped and sorted ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
 
       } catch (err: any) {
         console.error("[StudentTextbooksPage] Error fetching textbooks from Firestore:", err);
