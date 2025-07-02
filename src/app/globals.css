@@ -9,79 +9,78 @@ body {
 
 @layer base {
   :root {
-    /* Light Mode - Inspired by the NLET image */
-    --background: 220 60% 97%; /* Very Light Blue-Gray for page background */
-    --foreground: 220 15% 25%; /* Dark Slate Blue/Gray for text */
+    /* Light Mode - Deep Blue & Indigo Theme */
+    --background: 232 67% 94%; /* Light Blue (#E8EAF6) */
+    --foreground: 231 48% 25%; /* Dark Blue-Gray Text */
 
-    --card: 0 0% 100%; /* White for cards */
-    --card-foreground: 220 15% 25%; /* Dark Slate Blue/Gray for text on cards */
+    --card: 232 60% 99%; /* Almost White with blue tint */
+    --card-foreground: 231 48% 25%;
 
-    --popover: 0 0% 100%; /* White for popovers */
-    --popover-foreground: 220 15% 25%; /* Dark Slate Blue/Gray for text on popovers */
+    --popover: 232 60% 99%;
+    --popover-foreground: 231 48% 25%;
 
-    --primary: 225 70% 45%; /* Strong Dark Blue for primary actions, navbar */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary: 231 48% 48%; /* Deep Blue (#3F51B5) */
+    --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 220 30% 94%; /* Lighter Gray for secondary elements */
-    --secondary-foreground: 220 15% 25%; /* Dark text on secondary */
+    --secondary: 231 44% 88%; /* Lighter Indigo */
+    --secondary-foreground: 231 48% 25%;
 
-    --muted: 220 30% 90%; /* Slightly darker light gray for muted elements (e.g., inactive tabs bg) */
-    --muted-foreground: 220 10% 45%; /* Medium Gray for text on muted */
+    --muted: 231 44% 94%; /* Very Light Indigo */
+    --muted-foreground: 231 30% 45%;
 
-    --accent: 145 60% 40%; /* Vibrant Green for "New" / "Today" badges */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --accent: 231 44% 56%; /* Indigo (#5C6BC0) */
+    --accent-foreground: 0 0% 100%; /* White */
 
     --destructive: 0 70% 50%; /* Standard Red */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%; /* Light Gray Border */
-    --input: 0 0% 100%; /* White input background */
-    --ring: 225 70% 55%; /* Lighter/brighter primary blue for focus rings */
-    --radius: 0.75rem; /* Slightly more rounded corners as in image */
+    --border: 231 44% 85%; /* Light Indigo Border */
+    --input: 232 60% 99%;
+    --ring: 231 44% 56%; /* Accent color for rings */
+    --radius: 0.75rem;
 
-    --chart-1: 225 70% 45%; /* Primary Blue */
-    --chart-2: 145 60% 40%; /* Accent Green */
-    --chart-3: 30 90% 60%;  /* Orange - placeholder if needed */
-    --chart-4: 210 55% 70%; /* Light Blue - placeholder */
-    --chart-5: 240 30% 60%; /* Indigo - placeholder */
+    --chart-1: 231 48% 48%; /* Primary Blue */
+    --chart-2: 231 44% 56%; /* Accent Indigo */
+    --chart-3: 45 90% 60%;  /* Vibrant Yellow/Orange */
+    --chart-4: 180 50% 50%; /* Teal */
+    --chart-5: 260 50% 60%; /* Purple */
   }
 
   .dark {
-    /* Dark Mode - Corresponding theme */
-    --background: 220 15% 10%; /* Very Dark Blue-Gray */
-    --foreground: 220 20% 90%; /* Light Gray/Off-white text */
+    /* Dark Mode - Deep Blue & Indigo Theme */
+    --background: 231 30% 10%; /* Very Dark Blue */
+    --foreground: 231 15% 90%; /* Light Bluish Gray */
 
-    --card: 220 15% 15%; /* Darker Gray for cards */
-    --card-foreground: 220 20% 90%; /* Light text on cards */
+    --card: 231 30% 15%; /* Dark Blue-Gray Card */
+    --card-foreground: 231 15% 90%;
 
-    --popover: 220 15% 12%; /* Very Dark Gray for popovers */
-    --popover-foreground: 220 20% 90%; /* Light text on popovers */
+    --popover: 231 30% 12%;
+    --popover-foreground: 231 15% 90%;
 
-    --primary: 225 65% 55%; /* Slightly lighter/brighter Dark Blue for primary actions */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    --primary: 231 48% 58%; /* Brighter Blue for primary */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 25%; /* Dark Gray for secondary elements */
-    --secondary-foreground: 220 20% 85%; /* Lighter text on secondary */
+    --secondary: 231 30% 25%;
+    --secondary-foreground: 231 15% 85%;
 
-    --muted: 220 15% 20%; /* Darker Gray for muted elements */
-    --muted-foreground: 220 15% 65%; /* Medium-Light Gray for text on muted */
+    --muted: 231 30% 20%;
+    --muted-foreground: 231 15% 65%;
 
-    --accent: 145 55% 50%; /* Vibrant Green for "New" / "Today" badges */
-    --accent-foreground: 0 0% 100%; /* White text on accent */
+    --accent: 231 44% 66%; /* Brighter Indigo for accent */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 60% 55%; /* Red */
-    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --destructive: 0 60% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 30%; /* Darker Gray Border */
-    --input: 220 15% 18%; /* Dark input background */
-    --ring: 225 65% 60%; /* Lighter primary blue for focus rings */
+    --border: 231 30% 30%;
+    --input: 231 30% 18%;
+    --ring: 231 44% 66%;
 
-    /* Chart colors for dark mode can be adjusted if needed */
-    --chart-1: 225 65% 55%;
-    --chart-2: 145 55% 50%;
-    --chart-3: 30 80% 65%;
-    --chart-4: 210 50% 60%;
-    --chart-5: 240 25% 55%;
+    --chart-1: 231 48% 58%;
+    --chart-2: 231 44% 66%;
+    --chart-3: 45 80% 65%;
+    --chart-4: 180 45% 60%;
+    --chart-5: 260 45% 70%;
   }
 }
 
