@@ -118,7 +118,7 @@ export function LoginForm() {
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-primary">Welcome Back!</CardTitle>
           <CardDescription className="text-center">
-            Log in to access your CampusConnect dashboard.
+            Log in to access your Edutech dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
