@@ -12,30 +12,40 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        if (role === "student") {
-          router.replace("/student/dashboard");
-        } else if (role === "teacher") {
-          router.replace("/teacher/dashboard");
-        } else if (role === "admin") { // Added admin redirection
-          router.replace("/admin/dashboard");
-        }
-         else {
-          // If role is not defined yet (e.g. during signup), stay or redirect to a pending page
-          // For now, redirect to login if role is unknown after loading
-          router.replace("/login"); 
-        }
-      } else {
+    // Don't do anything until the auth state is fully loaded
+    if (loading) {
+      return;
+    }
+
+    // If loading is done and there's no user, they should be on the login page.
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+
+    // If loading is done and there is a user, redirect based on their role.
+    switch (role) {
+      case "student":
+        router.replace("/student/dashboard");
+        break;
+      case "teacher":
+        router.replace("/teacher/dashboard");
+        break;
+      case "admin":
+        router.replace("/admin/dashboard");
+        break;
+      default:
+        // If user exists but has no valid role, it's a broken state.
+        // Redirecting to login is a safe fallback.
         router.replace("/login");
-      }
+        break;
     }
   }, [user, loading, role, router]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-md space-y-6 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-primary">CampusConnect</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-primary">Edutech</h1>
         <p className="text-muted-foreground">Loading your experience...</p>
         <div className="space-y-4">
           <Skeleton className="h-10 w-full" />
