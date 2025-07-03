@@ -152,6 +152,33 @@ export function MarkAttendanceForm() {
       const attendanceDocRef = doc(db, "dailyAttendance", attendanceDocId);
       await setDoc(attendanceDocRef, attendanceData, { merge: true }); // Use merge true to update if exists or create new
       toast({ title: "Success", description: `Attendance for ${formattedDate} saved successfully.` });
+
+      // --- SMS Simulation Logic ---
+      const studentMap = new Map(students.map(s => [s.uid, s]));
+      const absentStudentsWithNumbers: string[] = [];
+
+      for (const studentUid in data) {
+        if (data[studentUid] === "Absent") {
+          const student = studentMap.get(studentUid);
+          if (student && student.contactNumber) {
+            absentStudentsWithNumbers.push(student.firstName);
+            // This is where a real backend call to an SMS service would be made.
+            console.log(
+              `SIMULATING SMS: Sending 'absent' message to parent of ${student.firstName} at ${student.contactNumber}`
+            );
+          }
+        }
+      }
+
+      if (absentStudentsWithNumbers.length > 0) {
+        toast({
+          title: "Absentee Notifications (Simulated)",
+          description: `An SMS would be sent to the parents of: ${absentStudentsWithNumbers.join(", ")}.`,
+          duration: 8000, // Longer duration for visibility
+        });
+      }
+      // --- End SMS Simulation Logic ---
+
     } catch (error: any) {
       console.error("Error saving attendance:", error);
       toast({ title: "Error", description: "Could not save attendance. " + error.message, variant: "destructive" });
