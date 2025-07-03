@@ -281,7 +281,7 @@ export function StudentDashboardClient() {
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
-            {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
+            {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
           </div>
           <p className="text-sm line-clamp-4 whitespace-pre-wrap">{data.content}</p>
         </div>
@@ -303,7 +303,7 @@ export function StudentDashboardClient() {
           <div className="text-xs text-muted-foreground">
             Subject: {data.subject} | Due: {data.dueDate} <br/>
             Posted: {data.displayDate} by {data.postedByName}
-            {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
+            {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
@@ -351,7 +351,7 @@ export function StudentDashboardClient() {
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
-             {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
+             {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           {data.fileUrl && (
@@ -381,7 +381,7 @@ export function StudentDashboardClient() {
             Posted: {data.displayDate} by {data.postedByName}
             {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
             {!data.grade && ' | School Wide'}
-            {isNew(data.timestamp) && <Badge variant="accent" className="ml-2 text-xs">New</Badge>}
+            {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
           <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
@@ -489,7 +489,7 @@ export function StudentDashboardClient() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => (
-          <Card key={card.id} className="text-center flex flex-col">
+          <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                <card.icon className="h-16 w-16 text-primary" data-ai-hint={card.dataAiHint}/>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
@@ -499,7 +499,7 @@ export function StudentDashboardClient() {
                     (card.contentData.item as LeaveApplication).applicationDate ||
                     (card.contentData.item as LateArrivalApplication).applicationTimestamp
                     ) && (
-                  <Badge variant="accent" className="animate-pulse">New</Badge>
+                  <Badge variant="highlight" className="animate-pulse">New!</Badge>
                 )}
                  {(card.id === 'applyLeave' && latestLeaveApplication.item?.status === "Pending") && (
                     <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
@@ -533,7 +533,7 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
-         <Card className="text-center flex flex-col">
+         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <ListChecks className="h-16 w-16 text-primary" data-ai-hint="attendance list" />
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
@@ -546,7 +546,7 @@ export function StudentDashboardClient() {
               </Button>
             </CardContent>
           </Card>
-        <Card className="text-center flex flex-col">
+        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <UserCircle className="h-16 w-16 text-primary" data-ai-hint="user profile" />
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
