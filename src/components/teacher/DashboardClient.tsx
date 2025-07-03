@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Loader2, UserCheck, UserX, FileSpreadsheet, UserCog, CalendarCheck, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, CheckSquare, ClipboardCheck, MailOpen, AlertTriangle, FileSignature } from "lucide-react";
+import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -288,7 +289,6 @@ export function TeacherDashboardClient() {
     {
       id: "studentCount",
       title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
-      icon: Users,
       dataAiHint: "group users",
       content: loadingStudentCount ? (
         <div className="flex items-center justify-center space-x-2 h-full">
@@ -315,7 +315,6 @@ export function TeacherDashboardClient() {
     {
       id: "recentSubmissions",
       title: "Recent Homework Submissions",
-      icon: CheckSquare, 
       dataAiHint: "homework check",
       content: loadingSubmissions ? (
          <div className="flex items-center justify-center space-x-2 h-full">
@@ -341,7 +340,6 @@ export function TeacherDashboardClient() {
      {
       id: "profileSettings",
       title: "Profile Settings",
-      icon: UserCog,
       description: "Update your account and display information.",
       dataAiHint: "user settings",
       content: (
@@ -358,7 +356,6 @@ export function TeacherDashboardClient() {
   const mainActionItems = [
      {
       title: "Manage Content",
-      icon: ClipboardList, 
       description: (
         <ul className="space-y-1 text-left text-xs sm:text-sm text-muted-foreground px-2 sm:px-4">
           <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Notices</li>
@@ -375,7 +372,6 @@ export function TeacherDashboardClient() {
     },
     {
       title: "Student Data",
-      icon: Users,
       description: "View and manage student profiles for your assigned classes and the entire school.",
       link: "/teacher/student-data",
       buttonText: "View Student List",
@@ -383,7 +379,6 @@ export function TeacherDashboardClient() {
     },
     {
       title: "Mark Attendance",
-      icon: CalendarCheck,
       description: getAttendanceCardDescription(), // Dynamically get description
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
@@ -391,7 +386,6 @@ export function TeacherDashboardClient() {
     },
      { 
       title: "Manage Student Submissions",
-      icon: ClipboardCheck,
       description: (
         loadingPendingCounts ? (
           <div className="flex items-center justify-center space-x-2 h-full">
@@ -414,7 +408,6 @@ export function TeacherDashboardClient() {
     },
      {
       title: "Download Class Data",
-      icon: FileSpreadsheet,
       description: "Download an Excel sheet of student data for your assigned class.",
       action: handleDownloadStudentData,
       buttonText: "Download Excel",
@@ -435,7 +428,14 @@ export function TeacherDashboardClient() {
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="flex justify-center mb-4">
-                    <item.icon className="h-16 w-16 text-primary" data-ai-hint={item.dataAiHint}/>
+                    <Image
+                      src="https://placehold.co/128x128.png"
+                      alt={item.title}
+                      width={64}
+                      height={64}
+                      className="rounded-full"
+                      data-ai-hint={item.dataAiHint}
+                    />
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
                 {item.description && <CardDescription className="text-sm min-h-[2.5rem] px-2">{item.description}</CardDescription>}
@@ -452,7 +452,14 @@ export function TeacherDashboardClient() {
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
                 <CardHeader className="pb-2 pt-4 items-center">
                     <div className="flex justify-center mb-4">
-                        <item.icon className="h-16 w-16 text-primary" data-ai-hint={item.dataAiHint}/>
+                        <Image
+                          src="https://placehold.co/128x128.png"
+                          alt={item.title}
+                          width={64}
+                          height={64}
+                          className="rounded-full"
+                          data-ai-hint={item.dataAiHint}
+                        />
                     </div>
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}

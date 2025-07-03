@@ -2,11 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Bell, ClipboardList, FileText, BookOpen, Image as ImageIconLucide, UserCircle, Download, Loader2, Video, ListChecks, CalendarPlus, Hourglass, AlertTriangle, FileSignature, Edit, FileArchive, CheckCircle, MailOpen } from "lucide-react";
+import { Download, Loader2, Hourglass, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -268,7 +269,6 @@ export function StudentDashboardClient() {
     {
       id: "notices",
       title: "Notice Board",
-      icon: Bell,
       link: "/student/notices",
       buttonText: "View All Notices",
       dataAiHint: "notification bell",
@@ -291,7 +291,6 @@ export function StudentDashboardClient() {
     {
       id: "homework",
       title: "Homework",
-      icon: ClipboardList,
       link: "/student/homework",
       buttonText: "View All Homework",
       dataAiHint: "clipboard list",
@@ -338,7 +337,6 @@ export function StudentDashboardClient() {
     {
       id: "circulars",
       title: "Circulars",
-      icon: FileText,
       link: "/student/circulars",
       buttonText: "View All Circulars",
       dataAiHint: "document file",
@@ -368,7 +366,6 @@ export function StudentDashboardClient() {
      {
       id: "liveClass",
       title: "Live Class",
-      icon: Video,
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
       dataAiHint: "video conference",
@@ -396,7 +393,6 @@ export function StudentDashboardClient() {
      {
       id: "applyLeave",
       title: "Leave Application Status",
-      icon: MailOpen,
       link: "/student/apply-leave",
       buttonText: "Apply or View History",
       dataAiHint: "mail letter envelope",
@@ -421,7 +417,6 @@ export function StudentDashboardClient() {
     {
       id: "lateArrivalRequest",
       title: "Late Arrival / Early Departure",
-      icon: AlertTriangle,
       link: "/student/late-arrival",
       buttonText: "Submit or View History",
       dataAiHint: "alert triangle time",
@@ -446,7 +441,6 @@ export function StudentDashboardClient() {
     {
       id: "mySchoolApplications",
       title: "My School Applications",
-      icon: FileSignature,
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
       dataAiHint: "form signature document",
@@ -458,7 +452,6 @@ export function StudentDashboardClient() {
     {
       id: "textbooks",
       title: "Textbooks",
-      icon: BookOpen,
       link: "/student/textbooks",
       buttonText: "View Textbooks",
       dataAiHint: "book open",
@@ -470,7 +463,6 @@ export function StudentDashboardClient() {
     {
       id: "gallery",
       title: "Photo Gallery",
-      icon: ImageIconLucide,
       link: "/student/gallery",
       buttonText: "View Gallery",
       dataAiHint: "image landscape",
@@ -491,7 +483,14 @@ export function StudentDashboardClient() {
         {dashboardCards.map((card) => (
           <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
-               <card.icon className="h-16 w-16 text-primary" data-ai-hint={card.dataAiHint}/>
+               <Image
+                  src="https://placehold.co/128x128.png"
+                  alt={card.title}
+                  width={64}
+                  height={64}
+                  className="rounded-full mb-4"
+                  data-ai-hint={card.dataAiHint}
+                />
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
@@ -535,7 +534,14 @@ export function StudentDashboardClient() {
         ))}
          <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
-                <ListChecks className="h-16 w-16 text-primary" data-ai-hint="attendance list" />
+                <Image
+                  src="https://placehold.co/128x128.png"
+                  alt="My Attendance"
+                  width={64}
+                  height={64}
+                  className="rounded-full mb-4"
+                  data-ai-hint="attendance list"
+                />
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
@@ -548,7 +554,14 @@ export function StudentDashboardClient() {
           </Card>
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
-                 <UserCircle className="h-16 w-16 text-primary" data-ai-hint="user profile" />
+                 <Image
+                    src="https://placehold.co/128x128.png"
+                    alt="My Profile"
+                    width={64}
+                    height={64}
+                    className="rounded-full mb-4"
+                    data-ai-hint="user profile"
+                  />
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
@@ -567,3 +580,4 @@ export function StudentDashboardClient() {
     
 
     
+
