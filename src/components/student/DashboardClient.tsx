@@ -271,7 +271,7 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      imageUrl: "https://jmp.sh/kxa81ftD",
+      imageUrl: "https://jmp.sh/fA7145yv",
       dataAiHint: "notification bell",
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
@@ -589,5 +589,6 @@ export function StudentDashboardClient() {
     
 
     
+
 
 
