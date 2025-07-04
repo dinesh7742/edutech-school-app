@@ -12,34 +12,39 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Don't do anything until the auth state is fully loaded
+    // Wait until the initial authentication check is complete.
     if (loading) {
       return;
     }
 
-    // If loading is done and there's no user, they should be on the login page.
+    // If auth is checked and there's no user, they must log in.
     if (!user) {
       router.replace("/login");
       return;
     }
 
-    // If loading is done and there is a user, redirect based on their role.
-    switch (role) {
-      case "student":
-        router.replace("/student/dashboard");
-        break;
-      case "teacher":
-        router.replace("/teacher/dashboard");
-        break;
-      case "admin":
-        router.replace("/admin/dashboard");
-        break;
-      default:
-        // If user exists but has no valid role, it's a broken state.
-        // Redirecting to login is a safe fallback.
-        router.replace("/login");
-        break;
+    // If there IS a user and their role has been determined, redirect them.
+    if (user && role) {
+      switch (role) {
+        case "student":
+          router.replace("/student/dashboard");
+          break;
+        case "teacher":
+          router.replace("/teacher/dashboard");
+          break;
+        case "admin":
+          router.replace("/admin/dashboard");
+          break;
+        default:
+          // Fallback for an unknown role.
+          router.replace("/login");
+          break;
+      }
     }
+    
+    // If user exists but role is not yet loaded, this effect does nothing and waits.
+    // It will re-run when the 'role' state changes, triggering the correct redirect.
+
   }, [user, loading, role, router]);
 
   return (
