@@ -17,6 +17,7 @@ export function AdminDashboardClient() {
       description: "View, edit, and manage all user accounts (students, teachers, admins).",
       link: "/admin/user-management", // Placeholder link, page to be created
       buttonText: "Manage Users",
+      imageUrl: "https://jmp.sh/zVv4myy6",
       dataAiHint: "group users profile"
     },
     {
@@ -24,6 +25,7 @@ export function AdminDashboardClient() {
       description: "Oversee and manage all posted content like notices, homework, circulars.",
       link: "/admin/content-management", // Placeholder link, page to be created
       buttonText: "Manage Content",
+      imageUrl: "https://jmp.sh/fA7145yv",
       dataAiHint: "edit document"
     },
     {
@@ -31,6 +33,7 @@ export function AdminDashboardClient() {
       description: "Configure application-wide settings and parameters.",
       link: "/admin/system-settings", // Placeholder link, page to be created
       buttonText: "System Settings",
+      imageUrl: "https://jmp.sh/ApA0eL9B",
       dataAiHint: "gear settings"
     },
     {
@@ -38,6 +41,7 @@ export function AdminDashboardClient() {
       description: "Manage user roles and system security configurations.",
       link: "/admin/security", // Placeholder link, page to be created
       buttonText: "Security Settings",
+      imageUrl: "https://jmp.sh/sMv3n4hR",
       dataAiHint: "shield check security"
     },
   ];
@@ -55,7 +59,7 @@ export function AdminDashboardClient() {
             <CardHeader className="pb-4">
               <div className="flex justify-center mb-4">
                 <Image
-                  src="https://placehold.co/128x128.png"
+                  src={task.imageUrl}
                   alt={task.title}
                   width={64}
                   height={64}

@@ -271,6 +271,7 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
+      imageUrl: "https://jmp.sh/kxa81ftD",
       dataAiHint: "notification bell",
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
@@ -293,6 +294,7 @@ export function StudentDashboardClient() {
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
+      imageUrl: "https://jmp.sh/fA7145yv",
       dataAiHint: "clipboard list",
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
@@ -339,6 +341,7 @@ export function StudentDashboardClient() {
       title: "Circulars",
       link: "/student/circulars",
       buttonText: "View All Circulars",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "document file",
       description: "Important circulars and official communications.",
       contentData: latestCircular,
@@ -368,6 +371,7 @@ export function StudentDashboardClient() {
       title: "Live Class",
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "video conference",
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
@@ -395,6 +399,7 @@ export function StudentDashboardClient() {
       title: "Leave Application Status",
       link: "/student/apply-leave",
       buttonText: "Apply or View History",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "mail letter envelope",
       description: "View the status of your recent leave application or submit a new one.",
       contentData: latestLeaveApplication,
@@ -419,6 +424,7 @@ export function StudentDashboardClient() {
       title: "Late Arrival / Early Departure",
       link: "/student/late-arrival",
       buttonText: "Submit or View History",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "alert triangle time",
       description: "Request permission for late arrival or early departure. View status of recent requests.",
       contentData: latestLateArrivalRequest,
@@ -443,6 +449,7 @@ export function StudentDashboardClient() {
       title: "My School Applications",
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "form signature document",
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
       contentData: null, 
@@ -454,6 +461,7 @@ export function StudentDashboardClient() {
       title: "Textbooks",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "book open",
       description: "Access your digital textbooks for all subjects.",
       contentData: null,
@@ -465,6 +473,7 @@ export function StudentDashboardClient() {
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "image landscape",
       description: "Explore photos from school events and activities.",
       contentData: null,
@@ -484,7 +493,7 @@ export function StudentDashboardClient() {
           <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                <Image
-                  src="https://placehold.co/128x128.png"
+                  src={card.imageUrl}
                   alt={card.title}
                   width={64}
                   height={64}
@@ -580,4 +589,5 @@ export function StudentDashboardClient() {
     
 
     
+
 

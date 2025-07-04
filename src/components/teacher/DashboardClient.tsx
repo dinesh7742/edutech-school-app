@@ -289,6 +289,7 @@ export function TeacherDashboardClient() {
     {
       id: "studentCount",
       title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
+      imageUrl: "https://jmp.sh/zVv4myy6",
       dataAiHint: "group users",
       content: loadingStudentCount ? (
         <div className="flex items-center justify-center space-x-2 h-full">
@@ -315,6 +316,7 @@ export function TeacherDashboardClient() {
     {
       id: "recentSubmissions",
       title: "Recent Homework Submissions",
+      imageUrl: "https://jmp.sh/fA7145yv",
       dataAiHint: "homework check",
       content: loadingSubmissions ? (
          <div className="flex items-center justify-center space-x-2 h-full">
@@ -341,6 +343,7 @@ export function TeacherDashboardClient() {
       id: "profileSettings",
       title: "Profile Settings",
       description: "Update your account and display information.",
+      imageUrl: "https://jmp.sh/ApA0eL9B",
       dataAiHint: "user settings",
       content: (
         <>
@@ -368,6 +371,7 @@ export function TeacherDashboardClient() {
       ),
       link: "/teacher/post-content",
       buttonText: "Post Content",
+      imageUrl: "https://placehold.co/128x128.png",
       dataAiHint: "cloud upload"
     },
     {
@@ -375,6 +379,7 @@ export function TeacherDashboardClient() {
       description: "View and manage student profiles for your assigned classes and the entire school.",
       link: "/teacher/student-data",
       buttonText: "View Student List",
+      imageUrl: "https://jmp.sh/zVv4myy6",
       dataAiHint: "group users"
     },
     {
@@ -382,6 +387,7 @@ export function TeacherDashboardClient() {
       description: getAttendanceCardDescription(), // Dynamically get description
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
+      imageUrl: "https://jmp.sh/gGj8mQxK",
       dataAiHint: "calendar check attendance"
     },
      { 
@@ -404,6 +410,7 @@ export function TeacherDashboardClient() {
       ),
       link: "/teacher/manage-submissions",
       buttonText: "Review Submissions",
+      imageUrl: "https://jmp.sh/fA7145yv",
       dataAiHint: "clipboard check task"
     },
      {
@@ -414,6 +421,7 @@ export function TeacherDashboardClient() {
       loading: isDownloadingStudentData,
       disabled: !teacherUser?.grade || !teacherUser?.division,
       disabledText: "Update profile with grade/division to enable.",
+      imageUrl: "https://jmp.sh/s6j2k2XF",
       dataAiHint: "spreadsheet file"
     }
   ];
@@ -429,7 +437,7 @@ export function TeacherDashboardClient() {
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="flex justify-center mb-4">
                     <Image
-                      src="https://placehold.co/128x128.png"
+                      src={item.imageUrl}
                       alt={item.title}
                       width={64}
                       height={64}
@@ -453,7 +461,7 @@ export function TeacherDashboardClient() {
                 <CardHeader className="pb-2 pt-4 items-center">
                     <div className="flex justify-center mb-4">
                         <Image
-                          src="https://placehold.co/128x128.png"
+                          src={item.imageUrl}
                           alt={item.title}
                           width={64}
                           height={64}
