@@ -94,15 +94,17 @@ export function TeacherDashboardClient() {
       XLSX.utils.book_append_sheet(workbook, worksheet, `Grade_${teacherUser.grade}${teacherUser.division}`);
       
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const data = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'});
+      const dataBlob = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'});
       
-      const downloadUrl = window.URL.createObjectURL(data);
+      const downloadUrl = window.URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = downloadUrl;
       link.setAttribute('download', `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+
 
       toast({
         title: "Download Started",
@@ -365,14 +367,32 @@ export function TeacherDashboardClient() {
      {
       title: "Manage Content",
       description: (
-        <ul className="space-y-1 text-left text-xs sm:text-sm text-muted-foreground px-2 sm:px-4">
-          <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Notices</li>
-          <li className="flex items-center"><ClipboardList className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Homework</li>
-          <li className="flex items-center"><FileText className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Circulars</li>
-          <li className="flex items-center"><BookOpen className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Textbooks</li>
-          <li className="flex items-center"><ImageIconLucide className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Gallery Photos</li>
-          <li className="flex items-center"><Video className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Live Classes</li>
-        </ul>
+        <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Notices</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <ClipboardList className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Homework</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Circulars</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Textbooks</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Gallery</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <Video className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Live Classes</span>
+          </div>
+        </div>
       ),
       link: "/teacher/post-content",
       buttonText: "Post Content",
