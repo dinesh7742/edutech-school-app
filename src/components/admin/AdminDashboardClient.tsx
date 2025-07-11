@@ -4,9 +4,9 @@
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { Users, Edit, Settings, ShieldCheck } from "lucide-react";
 
 export function AdminDashboardClient() {
   const { user } = useAuth();
@@ -17,32 +17,28 @@ export function AdminDashboardClient() {
       description: "View, edit, and manage all user accounts (students, teachers, admins).",
       link: "/admin/user-management", // Placeholder link, page to be created
       buttonText: "Manage Users",
-      imageUrl: "https://jmp.sh/zVv4myy6",
-      dataAiHint: "group users profile"
+      icon: Users,
     },
     {
       title: "Content Management",
       description: "Oversee and manage all posted content like notices, homework, circulars.",
       link: "/admin/content-management", // Placeholder link, page to be created
       buttonText: "Manage Content",
-      imageUrl: "https://jmp.sh/fA7145yv",
-      dataAiHint: "edit document"
+      icon: Edit,
     },
     {
       title: "System Settings",
       description: "Configure application-wide settings and parameters.",
       link: "/admin/system-settings", // Placeholder link, page to be created
       buttonText: "System Settings",
-      imageUrl: "https://jmp.sh/ApA0eL9B",
-      dataAiHint: "gear settings"
+      icon: Settings,
     },
     {
       title: "Security & Roles",
       description: "Manage user roles and system security configurations.",
       link: "/admin/security", // Placeholder link, page to be created
       buttonText: "Security Settings",
-      imageUrl: "https://jmp.sh/sMv3n4hR",
-      dataAiHint: "shield check security"
+      icon: ShieldCheck,
     },
   ];
 
@@ -58,14 +54,7 @@ export function AdminDashboardClient() {
           <Card key={task.title} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-4">
               <div className="flex justify-center mb-4">
-                <Image
-                  src={task.imageUrl}
-                  alt={task.title}
-                  width={64}
-                  height={64}
-                  className="rounded-full"
-                  data-ai-hint={task.dataAiHint}
-                />
+                <task.icon className="h-16 w-16 text-primary" />
               </div>
               <CardTitle className="text-xl font-semibold">{task.title}</CardTitle>
               <CardDescription className="text-sm h-12 line-clamp-2">{task.description}</CardDescription>

@@ -2,12 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Download, Loader2, Hourglass, CheckCircle } from "lucide-react";
+import { 
+  Download, Loader2, Hourglass, CheckCircle, FileText, ClipboardList, BookOpen, 
+  Image as ImageIcon, Video, MailOpen, AlertTriangle, FileSignature, ListChecks, UserCircle 
+} from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -271,8 +273,7 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      imageUrl: "https://jmp.sh/fA7145yv",
-      dataAiHint: "notification bell",
+      icon: FileText,
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => data ? (
@@ -294,8 +295,7 @@ export function StudentDashboardClient() {
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
-      imageUrl: "https://jmp.sh/fA7145yv",
-      dataAiHint: "clipboard list",
+      icon: ClipboardList,
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => data ? (
@@ -341,8 +341,7 @@ export function StudentDashboardClient() {
       title: "Circulars",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "document file",
+      icon: FileText,
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => data ? (
@@ -371,8 +370,7 @@ export function StudentDashboardClient() {
       title: "Live Class",
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "video conference",
+      icon: Video,
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => data ? (
@@ -399,8 +397,7 @@ export function StudentDashboardClient() {
       title: "Leave Application Status",
       link: "/student/apply-leave",
       buttonText: "Apply or View History",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "mail letter envelope",
+      icon: MailOpen,
       description: "View the status of your recent leave application or submit a new one.",
       contentData: latestLeaveApplication,
       renderContent: (data: LeaveApplication | null) => data ? (
@@ -424,8 +421,7 @@ export function StudentDashboardClient() {
       title: "Late Arrival / Early Departure",
       link: "/student/late-arrival",
       buttonText: "Submit or View History",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "alert triangle time",
+      icon: AlertTriangle,
       description: "Request permission for late arrival or early departure. View status of recent requests.",
       contentData: latestLateArrivalRequest,
       renderContent: (data: LateArrivalApplication | null) => data ? (
@@ -449,8 +445,7 @@ export function StudentDashboardClient() {
       title: "My School Applications",
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "form signature document",
+      icon: FileSignature,
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
       contentData: null, 
       renderContent: null,
@@ -461,8 +456,7 @@ export function StudentDashboardClient() {
       title: "Textbooks",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "book open",
+      icon: BookOpen,
       description: "Access your digital textbooks for all subjects.",
       contentData: null,
       renderContent: null,
@@ -473,8 +467,7 @@ export function StudentDashboardClient() {
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      imageUrl: "https://placehold.co/128x128.png",
-      dataAiHint: "image landscape",
+      icon: ImageIcon,
       description: "Explore photos from school events and activities.",
       contentData: null,
       renderContent: null,
@@ -492,14 +485,7 @@ export function StudentDashboardClient() {
         {dashboardCards.map((card) => (
           <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
-               <Image
-                  src={card.imageUrl}
-                  alt={card.title}
-                  width={64}
-                  height={64}
-                  className="rounded-full mb-4"
-                  data-ai-hint={card.dataAiHint}
-                />
+               <card.icon className="h-16 w-16 text-primary mb-4" />
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
@@ -543,14 +529,7 @@ export function StudentDashboardClient() {
         ))}
          <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
-                <Image
-                  src="https://placehold.co/128x128.png"
-                  alt="My Attendance"
-                  width={64}
-                  height={64}
-                  className="rounded-full mb-4"
-                  data-ai-hint="attendance list"
-                />
+                <ListChecks className="h-16 w-16 text-primary mb-4" />
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
@@ -563,14 +542,7 @@ export function StudentDashboardClient() {
           </Card>
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
-                 <Image
-                    src="https://placehold.co/128x128.png"
-                    alt="My Profile"
-                    width={64}
-                    height={64}
-                    className="rounded-full mb-4"
-                    data-ai-hint="user profile"
-                  />
+                 <UserCircle className="h-16 w-16 text-primary mb-4" />
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
@@ -585,10 +557,3 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-    
-    
-
-    
-
-
-
