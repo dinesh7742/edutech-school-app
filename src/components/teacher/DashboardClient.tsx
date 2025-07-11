@@ -294,6 +294,15 @@ export function TeacherDashboardClient() {
   };
   
   const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
+  
+  const submissionColorClasses = [
+    "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700/50",
+    "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-700/50",
+    "bg-amber-100 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50",
+    "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700/50",
+    "bg-pink-100 dark:bg-pink-900/30 border-pink-200 dark:border-pink-700/50",
+  ];
+
 
   const quickStatsItems = [
     {
@@ -336,15 +345,17 @@ export function TeacherDashboardClient() {
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
-        <ul className="space-y-2 text-xs text-left">
-          {recentSubmissions.map(sub => (
-            <li key={sub.id} className="p-2 border rounded-md bg-background shadow-sm">
-              <p className="font-semibold truncate text-sm">{sub.homeworkTitle}</p>
-              <p>Student: {sub.studentName}</p>
-              <p>Completed: {sub.completedAt ? format(sub.completedAt.toDate(), "PP pp") : "N/A"}</p>
-            </li>
-          ))}
-        </ul>
+        <div className="w-full h-full max-h-[150px] overflow-y-auto pr-2">
+            <ul className="space-y-2 text-xs text-left">
+              {recentSubmissions.map((sub, index) => (
+                <li key={sub.id} className={`p-2 border rounded-md shadow-sm ${submissionColorClasses[index % submissionColorClasses.length]}`}>
+                  <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
+                  <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
+                  <p className="text-muted-foreground">Completed: {sub.completedAt ? format(sub.completedAt.toDate(), "PP pp") : "N/A"}</p>
+                </li>
+              ))}
+            </ul>
+        </div>
       )
     },
      {
@@ -462,7 +473,7 @@ export function TeacherDashboardClient() {
                 {item.description && <CardDescription className="text-sm min-h-[2.5rem] px-2">{item.description}</CardDescription>}
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-             <div className="flex-grow flex flex-col justify-center items-center w-full"> {item.content} </div>
+             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[150px]"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
@@ -504,3 +515,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    
