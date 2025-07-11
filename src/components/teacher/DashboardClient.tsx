@@ -358,20 +358,6 @@ export function TeacherDashboardClient() {
         </div>
       )
     },
-     {
-      id: "profileSettings",
-      title: "Profile Settings",
-      description: "Update your account and display information.",
-      icon: Settings,
-      content: (
-        <>
-           <Button variant="outline" size="sm" className="w-full mt-2" asChild>
-              <Link href="/teacher/profile">Manage Profile</Link>
-           </Button>
-           <p className="text-xs text-muted-foreground mt-1">Update your account</p>
-        </>
-      )
-    },
   ];
 
   const mainActionItems = [
@@ -462,7 +448,7 @@ export function TeacherDashboardClient() {
     <div className="space-y-8">
       <WelcomeMessage />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
@@ -515,5 +501,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    
