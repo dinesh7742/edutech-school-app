@@ -318,14 +318,18 @@ export function TeacherDashboardClient() {
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
         <>
-          <div className="text-3xl font-bold text-primary">{totalStudentsInClass ?? 0}</div>
-          <p className="text-xs text-muted-foreground">Total students.</p>
-          <div className="mt-2 space-y-1 text-xs">
-              <div className="flex items-center justify-center text-muted-foreground">
-                  <UserCheck className="mr-1 h-4 w-4 text-blue-500 flex-shrink-0"/> Boys: {maleStudents}
+          <div className="text-5xl font-bold text-primary">{totalStudentsInClass ?? 0}</div>
+          <p className="text-sm text-muted-foreground mt-1">Total students.</p>
+          <div className="mt-4 flex justify-center items-center gap-6">
+              <div className="flex items-center gap-2 text-foreground">
+                  <UserCheck className="h-5 w-5 text-blue-500"/>
+                  <span className="font-bold text-lg">{maleStudents}</span>
+                  <span className="text-sm">Boys</span>
               </div>
-              <div className="flex items-center justify-center text-muted-foreground">
-                  <UserX className="mr-1 h-4 w-4 text-pink-500 flex-shrink-0"/> Girls: {femaleStudents}
+              <div className="flex items-center gap-2 text-foreground">
+                  <UserX className="h-5 w-5 text-pink-500"/>
+                  <span className="font-bold text-lg">{femaleStudents}</span>
+                   <span className="text-sm">Girls</span>
               </div>
           </div>
         </>
