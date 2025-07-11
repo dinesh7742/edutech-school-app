@@ -68,7 +68,6 @@ export function TeacherDashboardClient() {
         return;
       }
 
-      // Map data for Excel
       const dataForExcel = studentsToDownload.map(student => ({
         "First Name": student.firstName || "",
         "Middle Name": student.middleName || "",
@@ -94,7 +93,17 @@ export function TeacherDashboardClient() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, `Grade_${teacherUser.grade}${teacherUser.division}`);
       
-      XLSX.writeFile(workbook, `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const data = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'});
+      
+      const downloadUrl = window.URL.createObjectURL(data);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.setAttribute('download', `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       toast({
         title: "Download Started",
         description: "Student data Excel sheet is being downloaded.",
