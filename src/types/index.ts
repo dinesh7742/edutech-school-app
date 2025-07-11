@@ -27,12 +27,17 @@ export interface Notice {
   division?: string | null;
 }
 
+export interface HomeworkAttachment {
+  name: string;
+  url: string;
+  type: 'image' | 'video' | 'pdf' | 'other';
+}
+
 export interface Homework {
   id: string;
   title: string;
   description?: string;
-  fileUrl?: string;
-  fileName?: string;
+  attachments?: HomeworkAttachment[]; // Replaces fileUrl and fileName
   postedByUid: string;
   postedByName: string;
   timestamp: Timestamp | FieldValue;

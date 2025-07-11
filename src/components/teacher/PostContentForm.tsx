@@ -14,11 +14,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2 } from "lucide-react";
+import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus } from "lucide-react";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Image from "next/image";
-import type { Notice, Homework } from "@/types";
+import type { Notice, Homework, HomeworkAttachment } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,7 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB for Firestore field limit
-const MAX_RAW_FILE_SIZE_BYTES = 2 * 1024 * 1024; // 2MB for initial client-side check
+const MAX_RAW_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB for file uploads
 
 // Schemas for different content types
 const noticeSchema = z.object({
@@ -46,8 +47,6 @@ type NoticeFormValues = z.infer<typeof noticeSchema>;
 const homeworkSchema = z.object({
   title: z.string().min(3, "Title is required"),
   description: z.string().optional(),
-  fileUrl: z.string().url("Please provide a valid URL for the file.").or(z.literal("")).optional(),
-  fileName: z.string().optional(),
   grade: z.string().min(1, "Grade is required"),
   division: z.string().min(1, "Division is required"),
   subject: z.string().min(1, "Subject is required"),
@@ -107,7 +106,12 @@ export function PostContentForm() {
   const defaultGradeDivision = { grade: user?.grade || "1", division: user?.division || "A" };
 
   const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
+  
   const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
+  const [homeworkFiles, setHomeworkFiles] = useState<File[]>([]);
+  const [homeworkFilePreviews, setHomeworkFilePreviews] = useState<{name: string, type: string, url: string}[]>([]);
+
+
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   
   const formTextbook = useForm<TextbookFormValues>({ resolver: zodResolver(textbookSchema), defaultValues: { grade: user?.grade || "1", coverImageUrl: "" } });
@@ -183,6 +187,43 @@ export function PostContentForm() {
       setTextbookCoverPreview(null);
     }
   };
+  
+    const handleHomeworkFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            const filesArray = Array.from(event.target.files);
+            const validFiles: File[] = [];
+
+            for (const file of filesArray) {
+                if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+                    toast({
+                        title: "File Too Large",
+                        description: `${file.name} is too large (max ${MAX_RAW_FILE_SIZE_BYTES / 1024 / 1024}MB). It has been skipped.`,
+                        variant: "destructive",
+                        duration: 5000,
+                    });
+                    continue;
+                }
+                validFiles.push(file);
+
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setHomeworkFilePreviews(prev => [...prev, {
+                        name: file.name,
+                        type: file.type,
+                        url: reader.result as string,
+                    }]);
+                };
+                reader.readAsDataURL(file);
+            }
+            setHomeworkFiles(prev => [...prev, ...validFiles]);
+        }
+    };
+    
+    const removeHomeworkFile = (index: number) => {
+        setHomeworkFiles(prev => prev.filter((_, i) => i !== index));
+        setHomeworkFilePreviews(prev => prev.filter((_, i) => i !== index));
+    };
+
 
   const handleGalleryFilesChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -232,8 +273,30 @@ export function PostContentForm() {
         postedByName: user.displayName || user.email || "Teacher",
         timestamp: serverTimestamp(),
       };
+      
+      if (type === "homework") {
+        collectionName = "homework";
+        const uploadedAttachments: HomeworkAttachment[] = [];
+        if (homeworkFiles.length > 0) {
+            for (const file of homeworkFiles) {
+                const storageRef = ref(storage, `homework/${user.uid}/${Date.now()}_${file.name}`);
+                await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+                
+                let fileType: HomeworkAttachment['type'] = 'other';
+                if (file.type.startsWith('image/')) fileType = 'image';
+                else if (file.type.startsWith('video/')) fileType = 'video';
+                else if (file.type === 'application/pdf') fileType = 'pdf';
 
-      if (type === "textbook") {
+                uploadedAttachments.push({
+                    name: file.name,
+                    url: downloadURL,
+                    type: fileType,
+                });
+            }
+        }
+        documentData.attachments = uploadedAttachments;
+      } else if (type === "textbook") {
         collectionName = "textbooks";
         if (selectedTextbookCoverFile) {
           const coverDataUri = await new Promise<string>((resolve, reject) => {
@@ -301,9 +364,6 @@ export function PostContentForm() {
               documentData.grade = data.grade || null;
               documentData.division = data.division || null;
               break;
-            case "homework":
-              collectionName = "homework";
-              break;
             case "circular":
               collectionName = "circulars";
               documentData.grade = data.grade || null;
@@ -331,7 +391,9 @@ export function PostContentForm() {
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
-        formHomework.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+        formHomework.reset({ title: "", description: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+        setHomeworkFiles([]);
+        setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
@@ -425,7 +487,7 @@ export function PostContentForm() {
         </>
       )}
 
-      {type !== 'notice' && type !== 'liveClass' && (
+      {type === 'circular' && (
         <>
           <div>
             <Label htmlFor={`${activeTab}FileUrl`}>File URL (Optional, direct link to the PDF/document)</Label>
@@ -508,8 +570,51 @@ export function PostContentForm() {
           </TabsContent>
 
           <TabsContent value="homework">
-            <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
+             <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
               {renderSharedFields(formHomework, "homework")}
+              <div className="space-y-2">
+                <Label htmlFor="homeworkFiles">Attachments (PDFs, Images, Videos)</Label>
+                <div className="flex items-center justify-center w-full">
+                    <label htmlFor="homeworkFiles" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <UploadCloud className="w-8 h-8 mb-4 text-muted-foreground" />
+                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                            <p className="text-xs text-muted-foreground">PDF, IMAGE, or VIDEO (MAX 10MB each)</p>
+                        </div>
+                        <Input id="homeworkFiles" type="file" className="hidden" multiple onChange={handleHomeworkFilesChange} accept="application/pdf,image/*,video/*"/>
+                    </label>
+                </div>
+              </div>
+              
+              {homeworkFilePreviews.length > 0 && (
+                  <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    {homeworkFilePreviews.map((file, index) => (
+                      <div key={index} className="relative group border rounded-md p-2 flex flex-col items-center gap-2">
+                        {file.type.startsWith('image/') ? (
+                           <Image src={file.url} alt={`Preview ${file.name}`} width={80} height={80} className="rounded-md object-cover w-full aspect-square" />
+                        ) : file.type.startsWith('video/') ? (
+                           <div className="flex flex-col items-center justify-center w-full aspect-square bg-slate-200 rounded-md">
+                             <Film className="w-10 h-10 text-slate-500" />
+                           </div>
+                        ) : (
+                           <div className="flex flex-col items-center justify-center w-full aspect-square bg-slate-200 rounded-md">
+                             <FileIcon className="w-10 h-10 text-slate-500" />
+                           </div>
+                        )}
+                        <p className="text-xs text-center truncate w-full">{file.name}</p>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-0 right-0 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => removeHomeworkFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Homework
               </Button>

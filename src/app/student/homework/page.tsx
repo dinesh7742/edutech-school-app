@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Download, Loader2 } from "lucide-react";
+import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon } from "lucide-react";
+import NextImage from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
-import type { Homework } from "@/types";
+import type { Homework, HomeworkAttachment } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 
 export default function StudentHomeworkPage() {
@@ -30,8 +31,7 @@ export default function StudentHomeworkPage() {
             id: doc.id,
             title: data.title,
             description: data.description,
-            fileUrl: data.fileUrl,
-            fileName: data.fileName,
+            attachments: data.attachments || [],
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
             timestamp: timestamp,
@@ -70,6 +70,36 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
+  const renderAttachment = (attachment: HomeworkAttachment, index: number) => {
+    switch(attachment.type) {
+      case 'image':
+        return (
+          <div key={index} className="relative w-full aspect-video border rounded-md overflow-hidden my-2">
+            <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="cover" />
+             <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-1 right-1">
+                <Button size="sm" variant="outline"><Download className="mr-2 h-4 w-4" /> View Full</Button>
+            </a>
+          </div>
+        )
+      case 'video':
+        return (
+          <div key={index} className="my-2">
+            <video controls src={attachment.url} className="w-full rounded-md border bg-black"></video>
+            <p className="text-xs text-muted-foreground mt-1">{attachment.name}</p>
+          </div>
+        )
+      case 'pdf':
+      default:
+        return (
+          <Button key={index} asChild variant="outline" className="mt-2">
+            <a href={attachment.url} target="_blank" rel="noopener noreferrer" data-ai-hint="document sheet">
+              {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
+              {`Download ${attachment.name}`}
+            </a>
+          </Button>
+        )
+    }
+  }
 
   if (loading) {
     return (
@@ -101,13 +131,12 @@ export default function StudentHomeworkPage() {
               </CardHeader>
               <CardContent>
                 {hw.description && <p className="text-sm mb-3 whitespace-pre-wrap">{hw.description}</p>}
-                {hw.fileUrl && (
-                  <Button asChild variant="outline">
-                    <a href={hw.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document sheet">
-                      <Download className="mr-2 h-4 w-4" /> 
-                      {hw.fileName ? `Download ${hw.fileName}` : 'Download Attachment'}
-                    </a>
-                  </Button>
+                
+                {hw.attachments && hw.attachments.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Attachments:</h4>
+                     {hw.attachments.map((att, index) => renderAttachment(att, index))}
+                  </div>
                 )}
               </CardContent>
             </Card>
