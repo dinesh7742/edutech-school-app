@@ -415,16 +415,32 @@ export function TeacherDashboardClient() {
         loadingPendingCounts ? (
           <div className="flex items-center justify-center space-x-2 h-full">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Loading pending counts...</span>
+            <span className="text-sm text-muted-foreground">Loading...</span>
           </div>
-        ) : totalPendingSubmissions > 0 ? (
-          <ul className="space-y-1 text-left text-sm text-muted-foreground px-2 sm:px-4">
-            {pendingLeaveCount > 0 && <li className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><MailOpen className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Pending Leave: <Badge variant="destructive" className="ml-auto sm:ml-2">{pendingLeaveCount}</Badge></li>}
-            {pendingLateArrivalCount > 0 && <li className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><AlertTriangle className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Pending Late Arrival: <Badge variant="destructive" className="ml-auto sm:ml-2">{pendingLateArrivalCount}</Badge></li>}
-            {pendingOtherAppsCount > 0 && <li className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1"><FileSignature className="mr-2 h-4 w-4 text-primary flex-shrink-0" /> Pending Other Requests: <Badge variant="destructive" className="ml-auto sm:ml-2">{pendingOtherAppsCount}</Badge></li>}
-          </ul>
         ) : (
-          <p className="text-sm text-muted-foreground text-center">No new submissions to review.</p>
+          <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
+            <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
+              <div className="flex items-center gap-2">
+                <MailOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="font-semibold">Leave</span>
+              </div>
+              {pendingLeaveCount > 0 && <Badge variant="destructive">{pendingLeaveCount}</Badge>}
+            </div>
+            <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-primary flex-shrink-0" />
+                <span className="font-semibold">Late</span>
+              </div>
+              {pendingLateArrivalCount > 0 && <Badge variant="destructive">{pendingLateArrivalCount}</Badge>}
+            </div>
+             <div className="col-span-2 flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
+                <div className="flex items-center gap-2">
+                    <FileSignature className="h-4 w-4 text-primary flex-shrink-0" />
+                    <span className="font-semibold">Other</span>
+                </div>
+                {pendingOtherAppsCount > 0 && <Badge variant="destructive">{pendingOtherAppsCount}</Badge>}
+            </div>
+          </div>
         )
       ),
       link: "/teacher/manage-submissions",
@@ -456,7 +472,6 @@ export function TeacherDashboardClient() {
                     <item.icon className="h-16 w-16 text-primary" />
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-                {item.description && <CardDescription className="text-sm min-h-[2.5rem] px-2">{item.description}</CardDescription>}
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[150px]"> {item.content} </div>
@@ -480,9 +495,9 @@ export function TeacherDashboardClient() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-                    <CardDescription className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <p>{item.description}</p> : item.description}
-                    </CardDescription>
+                    <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
+                         {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
+                    </div>
                     {item.link ? (
                         <Button asChild className="w-full mt-auto">
                             <Link href={item.link}>{item.buttonText} <ArrowRight className="ml-2 h-4 w-4" /></Link>
