@@ -53,9 +53,8 @@ const homeworkSchema = z.object({
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, "Due date is required and must be a valid date"),
-  // title and description are removed from schema
-  title: z.string().optional(),
-  description: z.string().optional(),
+  title: z.string().optional(), // Make title optional as it's auto-generated
+  description: z.string().optional(), // Make description optional
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
 
