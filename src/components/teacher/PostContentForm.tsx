@@ -280,10 +280,15 @@ export function PostContentForm() {
         }
         collectionName = "homework";
 
-        // Auto-generate title for homework
-        documentData.title = `Homework: ${data.subject} - ${data.dueDate}`;
-        documentData.grade = user.grade;
-        documentData.division = user.division;
+        // This is the FIX: ensure subject and dueDate from form `data` are included.
+        documentData = {
+          ...documentData, // This contains the generic data like poster UID etc.
+          subject: data.subject,
+          dueDate: data.dueDate,
+          title: `Homework: ${data.subject} - ${data.dueDate}`, // Auto-generate title
+          grade: user.grade,
+          division: user.division,
+        };
         
         const uploadedAttachments: HomeworkAttachment[] = [];
         if (homeworkFiles.length > 0) {
