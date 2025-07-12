@@ -307,13 +307,16 @@ export function StudentDashboardClient() {
             {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
           </div>
           {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
-          {data.fileUrl && (
+          
+          {data.attachments && data.attachments.length > 0 && (
             <Button asChild variant="outline" size="sm" className="mt-2">
-              <a href={data.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document sheet">
-                <Download className="mr-2 h-4 w-4" /> {data.fileName || 'Download Attachment'}
+              <a href={data.attachments[0].url} target="_blank" rel="noopener noreferrer" download={data.attachments[0].name} data-ai-hint="document sheet">
+                <Download className="mr-2 h-4 w-4" /> 
+                {data.attachments[0].name} {data.attachments.length > 1 ? `(+${data.attachments.length - 1} more)` : ''}
               </a>
             </Button>
           )}
+
           {data && !isLatestHomeworkCompleted && (
             <Button
               variant="outline"
