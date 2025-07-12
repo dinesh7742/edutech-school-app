@@ -45,8 +45,6 @@ const noticeSchema = z.object({
 type NoticeFormValues = z.infer<typeof noticeSchema>;
 
 const homeworkSchema = z.object({
-  title: z.string().min(3, "Title is required"),
-  description: z.string().optional(),
   grade: z.string().min(1, "Grade is required"),
   division: z.string().min(1, "Division is required"),
   subject: z.string().min(1, "Subject is required"),
@@ -55,6 +53,9 @@ const homeworkSchema = z.object({
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, "Due date is required and must be a valid date"),
+  // title and description are removed from schema
+  title: z.string().optional(),
+  description: z.string().optional(),
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
 
@@ -273,9 +274,13 @@ export function PostContentForm() {
         postedByName: user.displayName || user.email || "Teacher",
         timestamp: serverTimestamp(),
       };
-      
+
       if (type === "homework") {
         collectionName = "homework";
+
+        // Auto-generate title for homework
+        documentData.title = `Homework: ${data.subject} - ${data.dueDate}`;
+        
         const uploadedAttachments: HomeworkAttachment[] = [];
         if (homeworkFiles.length > 0) {
             for (const file of homeworkFiles) {
@@ -391,7 +396,7 @@ export function PostContentForm() {
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
-        formHomework.reset({ title: "", description: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+        formHomework.reset({ grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
         setHomeworkFiles([]);
         setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
@@ -454,11 +459,13 @@ export function PostContentForm() {
 
   const renderSharedFields = (formInstance: any, type: 'homework' | 'circular' | 'notice' | 'liveClass') => (
     <>
-      <div>
-        <Label htmlFor={`${activeTab}Title`}>{type === 'liveClass' ? 'Subject / Title *' : 'Title *'}</Label>
-        <Input id={`${activeTab}Title`} {...formInstance.register(type === 'liveClass' ? "subject" : "title")} />
-        {formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] as any).message}</p>}
-      </div>
+      { type !== 'homework' && (
+        <div>
+          <Label htmlFor={`${activeTab}Title`}>{type === 'liveClass' ? 'Subject / Title *' : 'Title *'}</Label>
+          <Input id={`${activeTab}Title`} {...formInstance.register(type === 'liveClass' ? "subject" : "title")} />
+          {formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] as any).message}</p>}
+        </div>
+      )}
 
       {type === 'notice' ? (
         <div>
@@ -466,7 +473,7 @@ export function PostContentForm() {
           <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
           {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
         </div>
-      ) : type !== 'liveClass' ? ( 
+      ) : type !== 'liveClass' && type !== 'homework' ? ( 
         <div>
           <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
           <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
