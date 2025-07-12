@@ -45,8 +45,6 @@ const noticeSchema = z.object({
 type NoticeFormValues = z.infer<typeof noticeSchema>;
 
 const homeworkSchema = z.object({
-  grade: z.string().min(1, "Grade is required"),
-  division: z.string().min(1, "Division is required"),
   subject: z.string().min(1, "Subject is required"),
   dueDate: z.string().refine((val) => {
     if (!val) return false;
@@ -107,7 +105,7 @@ export function PostContentForm() {
 
   const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   
-  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: defaultGradeDivision });
+  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema) });
   const [homeworkFiles, setHomeworkFiles] = useState<File[]>([]);
   const [homeworkFilePreviews, setHomeworkFilePreviews] = useState<{name: string, type: string, url: string}[]>([]);
 
@@ -275,10 +273,17 @@ export function PostContentForm() {
       };
 
       if (type === "homework") {
+        if (!user.grade || !user.division) {
+            toast({ title: "Error", description: "Your teacher profile is missing a grade/division.", variant: "destructive" });
+            setIsLoading(false);
+            return;
+        }
         collectionName = "homework";
 
         // Auto-generate title for homework
         documentData.title = `Homework: ${data.subject} - ${data.dueDate}`;
+        documentData.grade = user.grade;
+        documentData.division = user.division;
         
         const uploadedAttachments: HomeworkAttachment[] = [];
         if (homeworkFiles.length > 0) {
@@ -395,7 +400,7 @@ export function PostContentForm() {
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
-        formHomework.reset({ subject: "", dueDate: "" }); // FIX: Reset only existing fields
+        formHomework.reset({ subject: "", dueDate: "" });
         setHomeworkFiles([]);
         setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
@@ -456,15 +461,13 @@ export function PostContentForm() {
     }
   };
 
-  const renderSharedFields = (formInstance: any, type: 'homework' | 'circular' | 'notice' | 'liveClass') => (
+  const renderSharedFields = (formInstance: any, type: 'circular' | 'notice' | 'liveClass') => (
     <>
-      { type !== 'homework' && (
-        <div>
+      <div>
           <Label htmlFor={`${activeTab}Title`}>{type === 'liveClass' ? 'Subject / Title *' : 'Title *'}</Label>
           <Input id={`${activeTab}Title`} {...formInstance.register(type === 'liveClass' ? "subject" : "title")} />
           {formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors[type === 'liveClass' ? "subject" : "title"] as any).message}</p>}
-        </div>
-      )}
+      </div>
 
       {type === 'notice' ? (
         <div>
@@ -472,7 +475,7 @@ export function PostContentForm() {
           <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
           {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
         </div>
-      ) : type !== 'liveClass' && type !== 'homework' ? ( 
+      ) : type !== 'liveClass' ? ( 
         <div>
           <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
           <Textarea id={`${activeTab}Description`} {...formInstance.register("description")} />
@@ -506,21 +509,6 @@ export function PostContentForm() {
           </div>
         </>
       )}
-
-      {type === 'homework' && (
-        <>
-          <div>
-            <Label htmlFor="homeworkSubject">Subject *</Label>
-            <Input id="homeworkSubject" {...formInstance.register("subject")} />
-            {formInstance.formState.errors.subject && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.subject as any).message}</p>}
-          </div>
-          <div>
-            <Label htmlFor="homeworkDueDate">Due Date *</Label>
-            <Input id="homeworkDueDate" type="date" {...formInstance.register("dueDate")} />
-            {formInstance.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.dueDate as any).message}</p>}
-          </div>
-        </>
-      )}
       <Controller
         name="grade"
         control={formInstance.control}
@@ -534,14 +522,12 @@ export function PostContentForm() {
                 onGradeChange={gradeField.onChange}
                 division={divisionField.value || ""}
                 onDivisionChange={divisionField.onChange}
-                showDivision={type !== 'textbook'}
+                showDivision={true}
               />
             )}
           />
         )}
       />
-      {formInstance.formState.errors.grade && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.grade as any).message}</p>}
-      {(type === 'homework' || type === 'liveClass') && formInstance.formState.errors.division && <p className="text-sm text-destructive mt-1">{(formInstance.formState.errors.division as any).message}</p>}
 
       {(type === 'circular' || type === 'notice' || type === 'liveClass') && <p className="text-xs text-muted-foreground mt-1">Optionally select grade and division to target specific students. Leave empty for school-wide content.</p>}
     </>
@@ -573,7 +559,19 @@ export function PostContentForm() {
 
           <TabsContent value="homework">
              <form onSubmit={formHomework.handleSubmit(data => handleFormSubmit(data, "homework"))} className="space-y-4">
-              {renderSharedFields(formHomework, "homework")}
+                <p className="text-sm text-muted-foreground">
+                  Homework will be posted for your assigned class: Grade {user?.grade || 'N/A'}-{user?.division || 'N/A'}.
+                </p>
+                <div>
+                  <Label htmlFor="homeworkSubject">Subject *</Label>
+                  <Input id="homeworkSubject" {...formHomework.register("subject")} />
+                  {formHomework.formState.errors.subject && <p className="text-sm text-destructive mt-1">{(formHomework.formState.errors.subject as any).message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="homeworkDueDate">Due Date *</Label>
+                  <Input id="homeworkDueDate" type="date" {...formHomework.register("dueDate")} />
+                  {formHomework.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{(formHomework.formState.errors.dueDate as any).message}</p>}
+                </div>
               <div className="space-y-2">
                 <Label htmlFor="homeworkFiles">Attachments (PDFs, Images, Videos)</Label>
                 <div className="flex items-center justify-center w-full">
@@ -865,5 +863,3 @@ export function PostContentForm() {
     </>
   );
 }
-
-    
