@@ -395,7 +395,7 @@ export function PostContentForm() {
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
-        formHomework.reset({ grade: defaultGradeDivision.grade, division: defaultGradeDivision.division, subject: "", dueDate: "" });
+        formHomework.reset({ subject: "", dueDate: "" }); // FIX: Reset only existing fields
         setHomeworkFiles([]);
         setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
@@ -865,3 +865,5 @@ export function PostContentForm() {
     </>
   );
 }
+
+    
