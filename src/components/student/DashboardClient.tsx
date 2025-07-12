@@ -155,6 +155,7 @@ export function StudentDashboardClient() {
           const currentHomeworkItem = {
             id: hwDoc.id,
             ...hwData,
+            attachments: hwData.attachments || [],
             timestamp: hwData.timestamp as Timestamp,
             displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
             // Ensure dueDate is handled correctly, even if it's just a date string from Firestore
