@@ -76,8 +76,8 @@ export default function StudentHomeworkPage() {
         return (
           <div key={index} className="relative w-full aspect-video border rounded-md overflow-hidden my-2">
             <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="cover" />
-             <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-1 right-1">
-                <Button size="sm" variant="outline"><Download className="mr-2 h-4 w-4" /> View Full</Button>
+             <a href={attachment.url} target="_blank" rel="noopener noreferrer" download={attachment.name} className="absolute bottom-1 right-1">
+                <Button size="sm" variant="outline"><Download className="mr-2 h-4 w-4" /> View Full / Download</Button>
             </a>
           </div>
         )
@@ -86,13 +86,16 @@ export default function StudentHomeworkPage() {
           <div key={index} className="my-2">
             <video controls src={attachment.url} className="w-full rounded-md border bg-black"></video>
             <p className="text-xs text-muted-foreground mt-1">{attachment.name}</p>
+             <a href={attachment.url} target="_blank" rel="noopener noreferrer" download={attachment.name}>
+                <Button size="sm" variant="outline" className="w-full mt-1"><Download className="mr-2 h-4 w-4" /> Download Video</Button>
+            </a>
           </div>
         )
       case 'pdf':
       default:
         return (
           <Button key={index} asChild variant="outline" className="mt-2">
-            <a href={attachment.url} target="_blank" rel="noopener noreferrer" data-ai-hint="document sheet">
+            <a href={attachment.url} target="_blank" rel="noopener noreferrer" download={attachment.name} data-ai-hint="document sheet">
               {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
               {`Download ${attachment.name}`}
             </a>

@@ -16,8 +16,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus } from "lucide-react";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
 import Image from "next/image";
 import type { Notice, Homework, HomeworkAttachment } from "@/types";
 import {
@@ -51,8 +50,8 @@ const homeworkSchema = z.object({
     const date = new Date(val);
     return !isNaN(date.getTime());
   }, "Due date is required and must be a valid date"),
-  title: z.string().optional(), // Make title optional as it's auto-generated
-  description: z.string().optional(), // Make description optional
+  title: z.string().optional(),
+  description: z.string().optional(),
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
 
@@ -192,12 +191,12 @@ export function PostContentForm() {
             const validFiles: File[] = [];
 
             for (const file of filesArray) {
-                if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+                if (file.size > MAX_DATA_URI_SIZE_BYTES) {
                     toast({
                         title: "File Too Large",
-                        description: `${file.name} is too large (max ${MAX_RAW_FILE_SIZE_BYTES / 1024 / 1024}MB). It has been skipped.`,
+                        description: `${file.name} is larger than 1MB and will not be saved. Please choose smaller files.`,
                         variant: "destructive",
-                        duration: 5000,
+                        duration: 7000,
                     });
                     continue;
                 }
@@ -230,10 +229,10 @@ export function PostContentForm() {
       let newPreviews: string[] = [];
 
       for (const file of filesArray) {
-        if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+        if (file.size > MAX_DATA_URI_SIZE_BYTES) {
           toast({
             title: "Image File Too Large",
-            description: `${file.name} is too large (max ${MAX_RAW_FILE_SIZE_BYTES / 1024 / 1024}MB). It has been skipped.`,
+            description: `${file.name} is too large (over 1MB) and was skipped.`,
             variant: "destructive",
             duration: 5000,
           });
@@ -280,12 +279,11 @@ export function PostContentForm() {
         }
         collectionName = "homework";
 
-        // This is the FIX: ensure subject and dueDate from form `data` are included.
         documentData = {
-          ...documentData, // This contains the generic data like poster UID etc.
+          ...documentData,
           subject: data.subject,
           dueDate: data.dueDate,
-          title: `Homework: ${data.subject} - ${data.dueDate}`, // Auto-generate title
+          title: `Homework: ${data.subject} - ${data.dueDate}`,
           grade: user.grade,
           division: user.division,
         };
@@ -293,10 +291,22 @@ export function PostContentForm() {
         const uploadedAttachments: HomeworkAttachment[] = [];
         if (homeworkFiles.length > 0) {
             for (const file of homeworkFiles) {
-                const storageRef = ref(storage, `homework/${user.uid}/${Date.now()}_${file.name}`);
-                await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(storageRef);
-                
+                const fileDataUri = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+
+                if (fileDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
+                    toast({
+                      title: "File Skipped",
+                      description: `${file.name} is too large (>1MB) to save directly and was skipped.`,
+                      variant: "destructive",
+                    });
+                    continue;
+                }
+
                 let fileType: HomeworkAttachment['type'] = 'other';
                 if (file.type.startsWith('image/')) fileType = 'image';
                 else if (file.type.startsWith('video/')) fileType = 'video';
@@ -304,12 +314,13 @@ export function PostContentForm() {
 
                 uploadedAttachments.push({
                     name: file.name,
-                    url: downloadURL,
+                    url: fileDataUri,
                     type: fileType,
                 });
             }
         }
         documentData.attachments = uploadedAttachments;
+
       } else if (type === "textbook") {
         collectionName = "textbooks";
         if (selectedTextbookCoverFile) {
@@ -584,7 +595,7 @@ export function PostContentForm() {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <UploadCloud className="w-8 h-8 mb-4 text-muted-foreground" />
                             <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                            <p className="text-xs text-muted-foreground">PDF, IMAGE, or VIDEO (MAX 10MB each)</p>
+                            <p className="text-xs text-muted-foreground">PDF, IMAGE, or VIDEO (MAX 1MB each)</p>
                         </div>
                         <Input id="homeworkFiles" type="file" className="hidden" multiple onChange={handleHomeworkFilesChange} accept="application/pdf,image/*,video/*"/>
                     </label>
@@ -741,7 +752,7 @@ export function PostContentForm() {
                   </div>
                 )}
                  <p className="text-xs text-muted-foreground mt-1">
-                   Upload images from your device. (Max 2MB per file. Very large images might not save due to database limits).
+                   Upload images from your device. (Max 1MB per file).
                  </p>
               </div>
               <Button type="submit" disabled={isLoading}>
