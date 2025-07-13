@@ -280,7 +280,7 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
-        <div className="w-full h-full p-2 border-8 border-[#654321] bg-[#0a481e] rounded-md flex flex-col justify-center items-center text-center">
+        <div className="w-full h-full p-2 border-4 border-amber-800 bg-green-900 rounded-md flex flex-col justify-center items-center text-center shadow-inner" style={{background: 'linear-gradient(to bottom right, #0a481e, #0c5c28)'}}>
           {data ? (
             <div className="text-white font-mono space-y-2">
               <h3 className="font-bold text-lg underline">{data.title}</h3>
@@ -307,45 +307,51 @@ export function StudentDashboardClient() {
       icon: ClipboardList,
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
-      renderContent: (data: Homework | null) => data ? (
-        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md">{data.title}</h3>
-          <div className="text-xs text-muted-foreground">
-            Subject: {data.subject} | Due: {data.dueDate} <br/>
-            Posted: {data.displayDate} by {data.postedByName}
-            {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
-          </div>
-          {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
-          
-          {data.attachments && data.attachments.length > 0 && (
-            <Button asChild variant="outline" size="sm" className="mt-2">
-              <a href={data.attachments[0].url} target="_blank" rel="noopener noreferrer" download={data.attachments[0].name} data-ai-hint="document sheet">
-                <Download className="mr-2 h-4 w-4" /> 
-                {data.attachments[0].name} {data.attachments.length > 1 ? `(+${data.attachments.length - 1} more)` : ''}
-              </a>
-            </Button>
-          )}
+      renderContent: (data: Homework | null) => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-[#f0f4f8] bg-cover" style={{backgroundImage: "linear-gradient(90deg, #d3e0f0 1px, transparent 1px), linear-gradient(180deg, #d3e0f0 1px, transparent 1px)", backgroundSize: '1.5rem 1.5rem'}}>
+           {data ? (
+              <div className="text-left w-full space-y-1 p-1 sm:p-2 rounded-md bg-white/80 backdrop-blur-sm">
+                <h3 className="font-semibold text-md text-gray-800">{data.title}</h3>
+                <div className="text-xs text-muted-foreground">
+                  Subject: {data.subject} | Due: {data.dueDate} <br/>
+                  Posted: {data.displayDate} by {data.postedByName}
+                  {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
+                </div>
+                {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap text-gray-700">{data.description}</p>}
+                
+                {data.attachments && data.attachments.length > 0 && (
+                  <Button asChild variant="outline" size="sm" className="mt-2">
+                    <a href={data.attachments[0].url} target="_blank" rel="noopener noreferrer" download={data.attachments[0].name} data-ai-hint="document sheet">
+                      <Download className="mr-2 h-4 w-4" /> 
+                      {data.attachments[0].name} {data.attachments.length > 1 ? `(+${data.attachments.length - 1} more)` : ''}
+                    </a>
+                  </Button>
+                )}
 
-          {data && !isLatestHomeworkCompleted && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => handleMarkHomeworkCompleted(data)}
-              disabled={completingHomework}
-            >
-              {completingHomework && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Mark as Completed
-            </Button>
-          )}
-          {data && isLatestHomeworkCompleted && (
-            <Badge variant="accent" className="mt-2 w-full flex items-center justify-center text-center py-2 px-4 text-sm">
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Homework Completed
-            </Badge>
-          )}
+                {!isLatestHomeworkCompleted && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 w-full"
+                    onClick={() => handleMarkHomeworkCompleted(data)}
+                    disabled={completingHomework}
+                  >
+                    {completingHomework && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Mark as Completed
+                  </Button>
+                )}
+                {isLatestHomeworkCompleted && (
+                  <Badge variant="accent" className="mt-2 w-full flex items-center justify-center text-center py-2 px-4 text-sm">
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Homework Completed
+                  </Badge>
+                )}
+              </div>
+            ) : (
+                <p className="text-muted-foreground font-medium">No new homework for your class.</p>
+            )}
         </div>
-      ) : null,
+      ),
       emptyMessage: "No new homework for your class."
     },
     {
@@ -356,25 +362,31 @@ export function StudentDashboardClient() {
       icon: FileText,
       description: "Important circulars and official communications.",
       contentData: latestCircular,
-      renderContent: (data: Circular | null) => data ? (
-         <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md">{data.title}</h3>
-          <div className="text-xs text-muted-foreground">
-            Posted: {data.displayDate} by {data.postedByName}
-            {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
-            {!data.grade && ' | School Wide'}
-             {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
-          </div>
-          {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
-          {data.fileUrl && (
-            <Button asChild variant="outline" size="sm" className="mt-2">
-              <a href={data.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document letter">
-                <Download className="mr-2 h-4 w-4" /> {data.fileName || 'Download Circular'}
-              </a>
-            </Button>
-          )}
+      renderContent: (data: Circular | null) => (
+         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-gray-50">
+            {data ? (
+                <div className="text-left w-full space-y-1 p-1 sm:p-2 border rounded-md bg-white/90 shadow-sm">
+                    <h3 className="font-semibold text-md">{data.title}</h3>
+                    <div className="text-xs text-muted-foreground">
+                    Posted: {data.displayDate} by {data.postedByName}
+                    {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
+                    {!data.grade && ' | School Wide'}
+                    {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
+                    </div>
+                    {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
+                    {data.fileUrl && (
+                        <Button asChild variant="outline" size="sm" className="mt-2">
+                        <a href={data.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document letter">
+                            <Download className="mr-2 h-4 w-4" /> {data.fileName || 'Download Circular'}
+                        </a>
+                        </Button>
+                    )}
+                </div>
+            ) : (
+                <p className="text-muted-foreground font-medium">No new circulars relevant to you.</p>
+            )}
         </div>
-      ) : null,
+      ),
       emptyMessage: "No new circulars relevant to you."
     },
      {
@@ -385,23 +397,29 @@ export function StudentDashboardClient() {
       icon: Video,
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
-      renderContent: (data: LiveClass | null) => data ? (
-        <div className="text-left w-full space-y-2 p-1 sm:p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md">{data.subject}</h3>
-          <div className="text-xs text-muted-foreground">
-            Posted: {data.displayDate} by {data.postedByName}
-            {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
-            {!data.grade && ' | School Wide'}
-            {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
-          </div>
-          {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
-          <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
-            <a href={data.meetingLink} target="_blank" rel="noopener noreferrer" data-ai-hint="video play">
-              Join Meeting
-            </a>
-          </Button>
+      renderContent: (data: LiveClass | null) => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-gray-800 text-white">
+            {data ? (
+                <div className="text-left w-full space-y-2 p-1 sm:p-2 rounded-md bg-gray-900/80">
+                <h3 className="font-semibold text-md">{data.subject}</h3>
+                <div className="text-xs text-gray-400">
+                    Posted: {data.displayDate} by {data.postedByName}
+                    {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
+                    {!data.grade && ' | School Wide'}
+                    {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
+                </div>
+                {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
+                <Button asChild variant="destructive" size="sm" className="mt-2 w-full">
+                    <a href={data.meetingLink} target="_blank" rel="noopener noreferrer" data-ai-hint="video play">
+                    Join Meeting
+                    </a>
+                </Button>
+                </div>
+            ) : (
+                 <p className="text-gray-400 font-medium">No live classes scheduled for you.</p>
+            )}
         </div>
-      ) : null,
+      ),
       emptyMessage: "No live classes scheduled for you."
     },
     {
@@ -459,12 +477,6 @@ export function StudentDashboardClient() {
                     ) && (
                   <Badge variant="highlight" className="animate-pulse">New!</Badge>
                 )}
-                 {(card.id === 'applyLeave' && latestLeaveApplication.item?.status === "Pending") && (
-                    <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
-                 )}
-                 {(card.id === 'lateArrivalRequest' && latestLateArrivalRequest.item?.status === "Pending") && (
-                    <Hourglass className="h-4 w-4 text-orange-500 animate-spin" />
-                 )}
               </CardTitle>
                <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
             </CardHeader>
@@ -477,9 +489,7 @@ export function StudentDashboardClient() {
               ) : card.renderContent && card.contentData?.item ? (
                 card.renderContent(card.contentData.item as any)
               ) : card.renderContent && !card.contentData.item ? (
-                <div className="w-full h-full p-2 border-8 border-[#654321] bg-[#0a481e] rounded-md flex flex-col justify-center items-center text-center">
-                    <p className="text-white font-mono">{card.emptyMessage}</p>
-                </div>
+                card.renderContent(null)
               ) : (
                  <div className="flex-grow flex items-center justify-center">
                  </div>
@@ -520,5 +530,3 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-
-    
