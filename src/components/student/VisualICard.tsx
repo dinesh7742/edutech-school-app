@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { School, User, Calendar, MapPin, Phone, Download, Loader2 } from "lucide-react";
+import { School, User, Calendar, MapPin, Phone, Download, Loader2, Hash } from "lucide-react";
 import html2canvas from "html2canvas";
 
 const schoolInfo = {
@@ -135,6 +135,7 @@ export function VisualICard() {
           </div>
 
           <div className="mt-3 space-y-2 text-left w-full">
+            <DetailRow icon={Hash} label="PEN Number" value={profile?.penNumber} />
             <DetailRow icon={Calendar} label="D.O.B" value={profile?.dateOfBirth} />
             <DetailRow icon={Phone} label="Contact" value={profile?.contactNumber} />
             <DetailRow icon={MapPin} label="Address" value={profile?.fullAddress} />
