@@ -92,7 +92,7 @@ export function VisualICard() {
   if (loading) {
     return (
         <div className="flex flex-col items-center space-y-4">
-            <Skeleton className="h-[25rem] w-[17rem] rounded-lg" />
+            <Skeleton className="h-[26rem] w-[17rem] rounded-lg" />
             <Skeleton className="h-10 w-40" />
         </div>
     );
@@ -120,7 +120,7 @@ export function VisualICard() {
 
         {/* Content */}
         <CardContent className="p-3 flex-grow flex flex-col items-center">
-          <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg -mt-10 bg-white">
+          <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg -mt-14 bg-white">
             <AvatarImage src={profile?.photoUrl} alt={fullName} />
             <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
                 {getInitials(profile?.firstName, profile?.lastName)}
