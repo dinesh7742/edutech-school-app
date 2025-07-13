@@ -102,9 +102,9 @@ export function VisualICard() {
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <Card
+      <div
         ref={iCardRef}
-        className="h-[26rem] w-[17rem] rounded-xl shadow-2xl bg-white overflow-hidden p-0 flex flex-col"
+        className="h-[26rem] w-[17rem] rounded-xl shadow-2xl bg-white overflow-hidden flex flex-col"
         style={{
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         }}
@@ -118,36 +118,40 @@ export function VisualICard() {
           <p className="text-xs opacity-80">{schoolInfo.address}</p>
         </div>
 
-        {/* Content */}
-        <CardContent className="p-3 flex-grow flex flex-col items-center">
-          <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg -mt-14 bg-white">
-            <AvatarImage src={profile?.photoUrl} alt={fullName} />
-            <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
-                {getInitials(profile?.firstName, profile?.lastName)}
-            </AvatarFallback>
-          </Avatar>
+        {/* Content Area */}
+        <div className="p-3 flex-grow flex flex-col items-center relative bg-white">
+            {/* Avatar positioned absolutely relative to this container */}
+            <div className="absolute -top-14 w-full flex justify-center">
+                <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg bg-white">
+                    <AvatarImage src={profile?.photoUrl} alt={fullName} />
+                    <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
+                        {getInitials(profile?.firstName, profile?.lastName)}
+                    </AvatarFallback>
+                </Avatar>
+            </div>
           
-          <div className="text-center mt-3">
-            <p className="font-extrabold text-xl text-blue-900 uppercase">{fullName}</p>
-            <p className="text-base font-semibold text-gray-600">
-                Grade: {profile?.grade} - {profile?.division}
-            </p>
-          </div>
+            {/* Inner content with padding to clear the avatar */}
+            <div className="pt-[70px] text-center w-full">
+                <p className="font-extrabold text-xl text-blue-900 uppercase">{fullName}</p>
+                <p className="text-base font-semibold text-gray-600">
+                    Grade: {profile?.grade} - {profile?.division}
+                </p>
+            </div>
 
-          <div className="mt-4 space-y-2.5 text-left w-full">
-            <DetailRow icon={Hash} label="PEN Number" value={profile?.penNumber} />
-            <DetailRow icon={Calendar} label="D.O.B" value={profile?.dateOfBirth} />
-            <DetailRow icon={Phone} label="Contact" value={profile?.contactNumber} />
-            <DetailRow icon={MapPin} label="Address" value={profile?.fullAddress} />
-          </div>
-          
-        </CardContent>
+            <div className="mt-4 space-y-2.5 text-left w-full">
+                <DetailRow icon={Hash} label="PEN Number" value={profile?.penNumber} />
+                <DetailRow icon={Calendar} label="D.O.B" value={profile?.dateOfBirth} />
+                <DetailRow icon={Phone} label="Contact" value={profile?.contactNumber} />
+                <DetailRow icon={MapPin} label="Address" value={profile?.fullAddress} />
+            </div>
+        </div>
+
 
         {/* Footer */}
         <div className="bg-blue-700 text-white text-center p-1.5 mt-auto">
             <p className="text-xs font-mono">UDISE: {schoolInfo.udise}</p>
         </div>
-      </Card>
+      </div>
 
       <Button onClick={handleDownload} disabled={isDownloading}>
         {isDownloading ? (
