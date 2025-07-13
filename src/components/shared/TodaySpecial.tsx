@@ -11,20 +11,41 @@ interface SpecialDay {
   description?: string;
 }
 
-// Example hardcoded special days for 2025.
+// Expanded list of special days and festivals for 2025.
 // In a real application, this would come from a database or API.
 const specialDays2025: SpecialDay[] = [
   { date: '2025-01-01', name: "New Year's Day" },
+  { date: '2025-01-13', name: 'Lohri' },
   { date: '2025-01-14', name: 'Makar Sankranti / Pongal' },
+  { date: '2025-01-15', name: 'Uttarayan' },
   { date: '2025-01-26', name: 'Republic Day' },
+  { date: '2025-02-12', name: 'Vasant Panchami' },
+  { date: '2025-02-26', name: 'Mahashivratri' },
   { date: '2025-03-14', name: 'Holi' },
-  { date: '2025-03-30', name: 'Eid-ul-Fitr (Tentative)' },
+  { date: '2025-03-15', name: 'Holi (Dhuleti)' },
+  { date: '2025-03-29', name: 'Gudi Padwa / Ugadi' },
+  { date: '2025-03-30', name: 'Ramadan Begins (Tentative)' },
+  { date: '2025-04-06', name: 'Ram Navami' },
   { date: '2025-04-14', name: 'Dr. Ambedkar Jayanti / Tamil New Year / Vishu' },
+  { date: '2025-04-18', name: 'Good Friday' },
+  { date: '2025-04-20', name: 'Easter Sunday' },
+  { date: '2025-04-29', name: 'Eid-ul-Fitr (Tentative)' },
   { date: '2025-05-01', name: 'Maharashtra Day / May Day' },
+  { date: '2025-05-05', name: 'Buddha Purnima' },
+  { date: '2025-06-06', name: 'Eid-ul-Adha (Bakrid) (Tentative)' },
+  { date: '2025-06-29', name: 'Rath Yatra' },
+  { date: '2025-07-06', name: 'Ashadi Ekadashi' },
+  { date: '2025-08-09', name: 'Raksha Bandhan' },
   { date: '2025-08-15', name: 'Independence Day' },
+  { date: '2025-08-18', name: 'Janmashtami' },
   { date: '2025-08-29', name: 'Ganesh Chaturthi' },
-  { date: '2025-10-02', name: 'Gandhi Jayanti' },
+  { date: '2025-09-08', name: 'Onam' },
+  { date: '2025-09-23', name: 'Navratri Begins' },
+  { date: '2025-10-02', name: 'Gandhi Jayanti / Dussehra' },
   { date: '2025-10-21', name: 'Diwali (Lakshmi Puja)' },
+  { date: '2025-10-22', name: 'Diwali (Govardhan Puja)' },
+  { date: '2025-10-23', name: 'Bhai Dooj' },
+  { date: '2025-11-05', name: 'Guru Nanak Jayanti' },
   { date: '2025-12-25', name: 'Christmas Day' },
 ];
 
