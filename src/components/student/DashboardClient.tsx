@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -278,18 +279,24 @@ export function StudentDashboardClient() {
       icon: FileText,
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
-      renderContent: (data: Notice | null) => data ? (
-        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
-          <h3 className="font-semibold text-md">{data.title}</h3>
-          <div className="text-xs text-muted-foreground">
-            Posted: {data.displayDate} by {data.postedByName}
-            {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
-            {!data.grade && ' | School Wide'}
-            {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
-          </div>
-          <p className="text-sm line-clamp-4 whitespace-pre-wrap">{data.content}</p>
+      renderContent: (data: Notice | null) => (
+        <div className="w-full h-full p-2 border-8 border-[#654321] bg-[#0a481e] rounded-md flex flex-col justify-center items-center text-center">
+          {data ? (
+            <div className="text-white font-mono space-y-2">
+              <h3 className="font-bold text-lg underline">{data.title}</h3>
+              <p className="text-xs text-slate-300">
+                Posted: {data.displayDate} by {data.postedByName}
+                {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
+              </p>
+              <p className="text-sm text-left line-clamp-4 whitespace-pre-wrap">{data.content}</p>
+            </div>
+          ) : (
+            <div className="text-white font-mono">
+              <p>No new notices relevant to you.</p>
+            </div>
+          )}
         </div>
-      ) : null,
+      ),
       emptyMessage: "No new notices relevant to you."
     },
     {
@@ -462,19 +469,18 @@ export function StudentDashboardClient() {
                <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              {card.renderContent && card.contentData?.loading && (
+              {card.contentData?.loading ? (
                 <div className="flex flex-col items-center justify-center flex-grow py-4">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
-              )}
-              {card.renderContent && !card.contentData?.loading && card.contentData?.item && (
+              ) : card.renderContent && card.contentData?.item ? (
                 card.renderContent(card.contentData.item as any)
-              )}
-              {card.renderContent && !card.contentData?.loading && !card.contentData?.item && (
-                <p className="text-muted-foreground text-sm px-4 text-center flex-grow flex items-center justify-center py-4">{card.emptyMessage}</p>
-              )}
-              {!card.renderContent && (
+              ) : card.renderContent && !card.contentData.item ? (
+                <div className="w-full h-full p-2 border-8 border-[#654321] bg-[#0a481e] rounded-md flex flex-col justify-center items-center text-center">
+                    <p className="text-white font-mono">{card.emptyMessage}</p>
+                </div>
+              ) : (
                  <div className="flex-grow flex items-center justify-center">
                  </div>
               )}
