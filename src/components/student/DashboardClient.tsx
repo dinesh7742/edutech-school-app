@@ -12,9 +12,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, LeaveApplication, LateArrivalApplication } from "@/types";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, LeaveApplication, LateArrivalApplication, HomeworkAttachment } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
 import { useToast } from "@/hooks/use-toast";
@@ -396,54 +397,6 @@ export function StudentDashboardClient() {
       ) : null,
       emptyMessage: "No live classes scheduled for you."
     },
-     {
-      id: "applyLeave",
-      title: "Leave Application Status",
-      link: "/student/apply-leave",
-      buttonText: "Apply or View History",
-      icon: MailOpen,
-      description: "View the status of your recent leave application or submit a new one.",
-      contentData: latestLeaveApplication,
-      renderContent: (data: LeaveApplication | null) => data ? (
-        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
-          <p className="text-sm"><strong>Applied:</strong> {data.applicationDate ? format(data.applicationDate.toDate(), "PP") : "N/A"}</p>
-          <p className="text-sm"><strong>Dates:</strong> {formatDateDisplay(data.leaveStartDate)} - {formatDateDisplay(data.leaveEndDate)}</p>
-          <p className="text-sm"><strong>Reason:</strong> {data.reason}</p>
-          <div className="flex items-center gap-2">
-             <p className="text-sm font-medium">Status:</p>
-            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
-          </div>
-          {data.teacherComments && (
-            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher's Comment:</strong> <span className="whitespace-pre-wrap">{data.teacherComments}</span></p>
-          )}
-        </div>
-      ) : null,
-      emptyMessage: "You haven't applied for leave recently."
-    },
-    {
-      id: "lateArrivalRequest",
-      title: "Late Arrival / Early Departure",
-      link: "/student/late-arrival",
-      buttonText: "Submit or View History",
-      icon: AlertTriangle,
-      description: "Request permission for late arrival or early departure. View status of recent requests.",
-      contentData: latestLateArrivalRequest,
-      renderContent: (data: LateArrivalApplication | null) => data ? (
-        <div className="text-left w-full space-y-1 p-1 sm:p-2 border-primary rounded-md bg-background">
-          <p className="text-sm"><strong>Requested for:</strong> {formatDateDisplay(data.requestDate)} at {data.time}</p>
-          <p className="text-sm"><strong>Type:</strong> {data.type}</p>
-          <p className="text-sm"><strong>Reason:</strong> {data.reason}</p>
-           <div className="flex items-center gap-2">
-             <p className="text-sm font-medium">Status:</p>
-            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
-          </div>
-          {data.teacherComments && (
-            <p className="text-sm mt-1 pt-1 border-t border-muted"><strong>Teacher's Comment:</strong> <span className="whitespace-pre-wrap">{data.teacherComments}</span></p>
-          )}
-        </div>
-      ) : null,
-      emptyMessage: "No recent late arrival or early departure requests."
-    },
     {
       id: "mySchoolApplications",
       title: "My School Applications",
@@ -561,3 +514,5 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
+    
