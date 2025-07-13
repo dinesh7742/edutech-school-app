@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Download, Loader2, Hourglass, CheckCircle, FileText, ClipboardList, BookOpen, 
-  Image as ImageIcon, Video, MailOpen, AlertTriangle, FileSignature, ListChecks, UserCircle 
+  Image as ImageIcon, Video, MailOpen, AlertTriangle, FileSignature, ListChecks, UserCircle, Contact 
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -68,8 +68,6 @@ export function StudentDashboardClient() {
   const [latestHomework, setLatestHomework] = useState<LatestContent<Homework>>({ item: null, loading: true });
   const [latestCircular, setLatestCircular] = useState<LatestContent<Circular>>({ item: null, loading: true });
   const [latestLiveClass, setLatestLiveClass] = useState<LatestContent<LiveClass>>({ item: null, loading: true });
-  const [latestLeaveApplication, setLatestLeaveApplication] = useState<LatestContent<LeaveApplication>>({ item: null, loading: true });
-  const [latestLateArrivalRequest, setLatestLateArrivalRequest] = useState<LatestContent<LateArrivalApplication>>({ item: null, loading: true });
 
 
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
@@ -160,7 +158,6 @@ export function StudentDashboardClient() {
             attachments: hwData.attachments || [],
             timestamp: hwData.timestamp as Timestamp,
             displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-            // Ensure dueDate is handled correctly, even if it's just a date string from Firestore
             dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
           } as Homework;
           setLatestHomework({ item: currentHomeworkItem, loading: false });
@@ -179,7 +176,6 @@ export function StudentDashboardClient() {
         console.error("Error fetching latest homework:", error);
         setLatestHomework({ item: null, loading: false });
         setIsLatestHomeworkCompleted(false);
-         // Specific error handling for missing Firestore index
          if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
              console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
              toast({title: "Error", description: "A database configuration is needed for homework. Please inform your administrator.", variant: "destructive"});
@@ -187,45 +183,6 @@ export function StudentDashboardClient() {
       }
     };
     fetchLatestHomework();
-
-    const fetchLatestApplicationStatus = async <T extends { studentUid: string; applicationDate?: Timestamp; applicationTimestamp?: Timestamp }>(
-        collectionName: string,
-        setter: React.Dispatch<React.SetStateAction<LatestContent<T>>>,
-        timestampField: keyof T // 'applicationDate' for leave, 'applicationTimestamp' for late arrival
-      ) => {
-        if (!user?.uid) {
-          setter({ item: null, loading: false });
-          return;
-        }
-        setter(prev => ({ ...prev, loading: true }));
-        try {
-          const appsRef = collection(db, collectionName);
-          const q = query(
-            appsRef,
-            where("studentUid", "==", user.uid),
-            orderBy(timestampField as string, "desc"),
-            limit(1)
-          );
-          const snapshot = await getDocs(q);
-          if (!snapshot.empty) {
-            const appDoc = snapshot.docs[0];
-            setter({ item: { id: appDoc.id, ...appDoc.data() } as T, loading: false });
-          } else {
-            setter({ item: null, loading: false });
-          }
-        } catch (error: any) {
-          console.error(`Error fetching latest ${collectionName}:`, error);
-          setter({ item: null, loading: false });
-          if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
-            console.error(`Firestore index required for ${collectionName} query. Collection: '${collectionName}', Fields: studentUid (ASC), ${timestampField as string} (DESC).`);
-            toast({title: "Error", description: `Database setup needed for ${collectionName} status. Contact admin.`, variant: "destructive"});
-          }
-        }
-      };
-
-    fetchLatestApplicationStatus<LeaveApplication>("leaveApplications", setLatestLeaveApplication, "applicationDate");
-    fetchLatestApplicationStatus<LateArrivalApplication>("lateArrivalRequests", setLatestLateArrivalRequest, "applicationTimestamp");
-
 
   }, [user, toast]);
 
@@ -471,9 +428,7 @@ export function StudentDashboardClient() {
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
                 {card.contentData?.item && isNew(
-                    (card.contentData.item as any).timestamp ||
-                    (card.contentData.item as LeaveApplication).applicationDate ||
-                    (card.contentData.item as LateArrivalApplication).applicationTimestamp
+                    (card.contentData.item as any).timestamp
                     ) && (
                   <Badge variant="highlight" className="animate-pulse">New!</Badge>
                 )}
@@ -500,6 +455,19 @@ export function StudentDashboardClient() {
             </CardContent>
           </Card>
         ))}
+        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
+            <CardHeader className="pb-2 pt-4 items-center">
+                <Contact className="h-16 w-16 text-primary mb-4" />
+                <CardTitle className="text-xl font-semibold">Download I-Card</CardTitle>
+                <CardDescription className="text-sm min-h-[3rem] px-2">Download your official school identity card.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+              <div className="flex-grow"></div>
+              <Button asChild className="w-full mt-auto">
+                <Link href="/student/icard">Get My I-Card</Link>
+              </Button>
+            </CardContent>
+        </Card>
          <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <ListChecks className="h-16 w-16 text-primary mb-4" />
