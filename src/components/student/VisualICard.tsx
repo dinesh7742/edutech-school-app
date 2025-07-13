@@ -20,8 +20,8 @@ const schoolInfo = {
 };
 
 const DetailRow = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value?: string }) => (
-  <div className="flex items-start text-xs space-x-2">
-    <Icon className="w-3.5 h-3.5 mt-0.5 text-blue-800 flex-shrink-0" />
+  <div className="flex items-start text-sm space-x-2">
+    <Icon className="w-4 h-4 mt-0.5 text-blue-800 flex-shrink-0" />
     <div className="flex-grow">
       <p className="font-bold text-gray-700">{label}:</p>
       <p className="text-gray-600 leading-tight">{value || "N/A"}</p>
@@ -92,7 +92,7 @@ export function VisualICard() {
   if (loading) {
     return (
         <div className="flex flex-col items-center space-y-4">
-            <Skeleton className="h-[21rem] w-[14rem] rounded-lg" />
+            <Skeleton className="h-[25rem] w-[17rem] rounded-lg" />
             <Skeleton className="h-10 w-40" />
         </div>
     );
@@ -104,7 +104,7 @@ export function VisualICard() {
     <div className="flex flex-col items-center space-y-4">
       <Card
         ref={iCardRef}
-        className="h-[21rem] w-[14rem] rounded-lg shadow-2xl bg-white overflow-hidden p-0 flex flex-col"
+        className="h-[26rem] w-[17rem] rounded-xl shadow-2xl bg-white overflow-hidden p-0 flex flex-col"
         style={{
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         }}
@@ -112,29 +112,29 @@ export function VisualICard() {
         {/* Header */}
         <div className="bg-blue-700 text-white p-2 text-center">
           <div className="flex items-center justify-center gap-2">
-            <School className="w-5 h-5" />
-            <h2 className="text-xs font-bold uppercase tracking-wider">{schoolInfo.name}</h2>
+            <School className="w-6 h-6" />
+            <h2 className="text-sm font-bold uppercase tracking-wider">{schoolInfo.name}</h2>
           </div>
-          <p className="text-[10px] opacity-80">{schoolInfo.address}</p>
+          <p className="text-xs opacity-80">{schoolInfo.address}</p>
         </div>
 
         {/* Content */}
-        <CardContent className="p-2 flex-grow flex flex-col items-center">
-          <Avatar className="h-24 w-24 border-4 border-blue-200 shadow-md -mt-8 bg-white">
+        <CardContent className="p-3 flex-grow flex flex-col items-center">
+          <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg -mt-10 bg-white">
             <AvatarImage src={profile?.photoUrl} alt={fullName} />
-            <AvatarFallback className="text-3xl bg-gray-200 text-gray-600">
+            <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
                 {getInitials(profile?.firstName, profile?.lastName)}
             </AvatarFallback>
           </Avatar>
           
-          <div className="text-center mt-2">
-            <p className="font-extrabold text-lg text-blue-900 uppercase">{fullName}</p>
-            <p className="text-sm font-semibold text-gray-600">
+          <div className="text-center mt-3">
+            <p className="font-extrabold text-xl text-blue-900 uppercase">{fullName}</p>
+            <p className="text-base font-semibold text-gray-600">
                 Grade: {profile?.grade} - {profile?.division}
             </p>
           </div>
 
-          <div className="mt-3 space-y-2 text-left w-full">
+          <div className="mt-4 space-y-2.5 text-left w-full">
             <DetailRow icon={Hash} label="PEN Number" value={profile?.penNumber} />
             <DetailRow icon={Calendar} label="D.O.B" value={profile?.dateOfBirth} />
             <DetailRow icon={Phone} label="Contact" value={profile?.contactNumber} />
@@ -144,8 +144,8 @@ export function VisualICard() {
         </CardContent>
 
         {/* Footer */}
-        <div className="bg-blue-700 text-white text-center p-1 mt-auto">
-            <p className="text-[10px] font-mono">UDISE: {schoolInfo.udise}</p>
+        <div className="bg-blue-700 text-white text-center p-1.5 mt-auto">
+            <p className="text-xs font-mono">UDISE: {schoolInfo.udise}</p>
         </div>
       </Card>
 
