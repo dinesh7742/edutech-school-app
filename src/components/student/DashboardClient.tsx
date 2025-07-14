@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
   Download, Loader2, Hourglass, CheckCircle, FileText, ClipboardList, BookOpen, 
-  Image as ImageIcon, Video, MailOpen, AlertTriangle, FileSignature, ListChecks, UserCircle, Contact 
+  Image as ImageIcon, Video, MailOpen, AlertTriangle, FileSignature, ListChecks, UserCircle, Contact, BarChart3
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -491,6 +491,19 @@ export function StudentDashboardClient() {
               <div className="flex-grow"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/profile">Go to Profile</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
+            <CardHeader className="pb-2 pt-4 items-center">
+                <BarChart3 className="h-16 w-16 text-primary mb-4" />
+                <CardTitle className="text-xl font-semibold">Progress Card</CardTitle>
+                <CardDescription className="text-sm min-h-[3rem] px-2">View and download your academic progress report.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+              <div className="flex-grow"></div>
+              <Button asChild className="w-full mt-auto">
+                <Link href="/student/progress-card">View Progress Card</Link>
               </Button>
             </CardContent>
           </Card>
