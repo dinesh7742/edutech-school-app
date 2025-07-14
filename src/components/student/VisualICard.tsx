@@ -74,8 +74,9 @@ export function VisualICard() {
         setIsDownloading(true);
       html2canvas(iCardRef.current, { 
         useCORS: true,
-        scale: 2, // Increase resolution
+        scale: 2.5, // Increase resolution for better quality
         backgroundColor: null, // Use component's background
+        logging: true,
       }).then(canvas => {
         const link = document.createElement("a");
         link.download = `icard_${profile?.firstName || 'student'}_${profile?.lastName || ''}.png`;
@@ -104,13 +105,13 @@ export function VisualICard() {
     <div className="flex flex-col items-center space-y-4">
       <div
         ref={iCardRef}
-        className="h-[26rem] w-[17rem] rounded-xl shadow-2xl bg-white overflow-hidden flex flex-col"
+        className="h-[26rem] w-[17rem] rounded-xl shadow-2xl bg-white flex flex-col"
         style={{
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
         }}
       >
         {/* Header */}
-        <div className="bg-blue-700 text-white p-2 text-center">
+        <div className="bg-blue-700 text-white p-2 text-center flex-grow-0">
           <div className="flex items-center justify-center gap-2">
             <School className="w-6 h-6" />
             <h2 className="text-sm font-bold uppercase tracking-wider">{schoolInfo.name}</h2>
@@ -118,37 +119,36 @@ export function VisualICard() {
           <p className="text-xs opacity-80">{schoolInfo.address}</p>
         </div>
 
-        {/* Content Area */}
-        <div className="p-3 flex-grow flex flex-col items-center relative bg-white">
-            {/* Avatar positioned absolutely relative to this container */}
-            <div className="absolute -top-14 w-full flex justify-center">
-                <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg bg-white">
-                    <AvatarImage src={profile?.photoUrl} alt={fullName} />
-                    <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
-                        {getInitials(profile?.firstName, profile?.lastName)}
-                    </AvatarFallback>
-                </Avatar>
-            </div>
-          
-            {/* Inner content with padding to clear the avatar */}
-            <div className="pt-[70px] text-center w-full">
+        {/* Main Body */}
+        <div className="flex-grow flex flex-col bg-white pt-4 px-3 pb-3">
+          {/* Avatar and Name Section */}
+          <div className="flex-grow-0 flex flex-col items-center -mt-16">
+            <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg bg-white">
+                <AvatarImage src={profile?.photoUrl} alt={fullName} />
+                <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
+                    {getInitials(profile?.firstName, profile?.lastName)}
+                </AvatarFallback>
+            </Avatar>
+            <div className="text-center mt-3">
                 <p className="font-extrabold text-xl text-blue-900 uppercase">{fullName}</p>
                 <p className="text-base font-semibold text-gray-600">
                     Grade: {profile?.grade} - {profile?.division}
                 </p>
             </div>
-
-            <div className="mt-4 space-y-2.5 text-left w-full">
-                <DetailRow icon={Hash} label="PEN Number" value={profile?.penNumber} />
-                <DetailRow icon={Calendar} label="D.O.B" value={profile?.dateOfBirth} />
-                <DetailRow icon={Phone} label="Contact" value={profile?.contactNumber} />
-                <DetailRow icon={MapPin} label="Address" value={profile?.fullAddress} />
-            </div>
+          </div>
+          
+          {/* Details Section */}
+          <div className="mt-4 space-y-2.5 text-left w-full flex-grow">
+              <DetailRow icon={Hash} label="PEN Number" value={profile?.penNumber} />
+              <DetailRow icon={Calendar} label="D.O.B" value={profile?.dateOfBirth} />
+              <DetailRow icon={Phone} label="Contact" value={profile?.contactNumber} />
+              <DetailRow icon={MapPin} label="Address" value={profile?.fullAddress} />
+          </div>
         </div>
 
 
         {/* Footer */}
-        <div className="bg-blue-700 text-white text-center p-1.5 mt-auto">
+        <div className="bg-blue-700 text-white text-center p-1.5 mt-auto flex-grow-0">
             <p className="text-xs font-mono">UDISE: {schoolInfo.udise}</p>
         </div>
       </div>
