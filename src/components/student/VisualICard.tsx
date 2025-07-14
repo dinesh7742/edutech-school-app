@@ -122,7 +122,7 @@ export function VisualICard() {
         {/* Main Body */}
         <div className="flex-grow flex flex-col bg-white pt-4 px-3 pb-3">
           {/* Avatar and Name Section */}
-          <div className="flex-grow-0 flex flex-col items-center -mt-16">
+          <div className="flex-grow-0 flex flex-col items-center -mt-12">
             <Avatar className="h-28 w-28 border-4 border-blue-200 shadow-lg bg-white">
                 <AvatarImage src={profile?.photoUrl} alt={fullName} />
                 <AvatarFallback className="text-4xl bg-gray-200 text-gray-600">
