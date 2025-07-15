@@ -12,38 +12,32 @@ import { Label } from "@/components/ui/label";
 import { Loader2, Download, Upload, FileCheck2, Info } from "lucide-react";
 import { setProgressCardData, getProgressCardData } from "@/lib/progressCardStore";
 
+// Based on the provided image format
 const studentDetailHeaders = [
-  "RollNo", "Name", "MotherName", "FatherName", "DOB(YYYY-MM-DD)", "GRNo",
+  "RollNo", "StudentName", "Gender",
 ];
 
-const subjectHeaders = (prefix: string) => [
-  `${prefix}_FirstLanguage_FA1`, `${prefix}_FirstLanguage_FA2`, `${prefix}_FirstLanguage_SA1`, `${prefix}_FirstLanguage_Total`, `${prefix}_FirstLanguage_Grade`,
-  `${prefix}_SecondLanguage_FA1`, `${prefix}_SecondLanguage_FA2`, `${prefix}_SecondLanguage_SA1`, `${prefix}_SecondLanguage_Total`, `${prefix}_SecondLanguage_Grade`,
-  `${prefix}_ThirdLanguage_FA1`, `${prefix}_ThirdLanguage_FA2`, `${prefix}_ThirdLanguage_SA1`, `${prefix}_ThirdLanguage_Total`, `${prefix}_ThirdLanguage_Grade`,
-  `${prefix}_Math_FA1`, `${prefix}_Math_FA2`, `${prefix}_Math_SA1`, `${prefix}_Math_Total`, `${prefix}_Math_Grade`,
-  `${prefix}_EVS_FA1`, `${prefix}_EVS_FA2`, `${prefix}_EVS_SA1`, `${prefix}_EVS_Total`, `${prefix}_EVS_Grade`,
+const subjectHeaders = (prefix: string, subjectName: string) => [
+  `${prefix}_${subjectName}_Formative`,
+  `${prefix}_${subjectName}_Summative`,
+  `${prefix}_${subjectName}_Total`,
+  `${prefix}_${subjectName}_Grade`,
 ];
 
-const coScholasticHeaders = (prefix: string) => [
-  `${prefix}_Scout_Grade`,
-  `${prefix}_Art_Grade`,
-  `${prefix}_WorkExperience_Grade`,
-  `${prefix}_PhysicalEdHealth_Grade`,
-];
+const scholasticSubjects = ["FirstLang", "SecondLang", "ThirdLang", "Math", "EVS"];
+const coScholasticSubjects = ["Scout", "Art", "WorkExperience", "PhysicalEdHealth"];
 
-const term1Headers = [
-  "Term1_Attendance",
-  ...subjectHeaders("Term1"),
-  ...coScholasticHeaders("Term1"),
-  "Term1_TeacherRemarks",
-];
+const generateHeaders = (prefix: string) => {
+    const headers: string[] = [];
+    scholasticSubjects.forEach(sub => headers.push(...subjectHeaders(prefix, sub)));
+    coScholasticSubjects.forEach(sub => headers.push(`${prefix}_${sub}_Grade`));
+    headers.push(`${prefix}_TeacherRemarks`);
+    headers.push(`${prefix}_Attendance`);
+    return headers;
+}
 
-const term2Headers = [
-  "Term2_Attendance",
-  ...subjectHeaders("Term2"),
-  ...coScholasticHeaders("Term2"),
-  "Term2_TeacherRemarks",
-];
+const term1Headers = generateHeaders("Term1");
+const term2Headers = generateHeaders("Term2");
 
 
 export function UploadProgressCardClient() {
@@ -76,7 +70,7 @@ export function UploadProgressCardClient() {
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" }); // Use defval to handle empty cells gracefully
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
         
         if (json.length === 0) {
             toast({ title: "Error", description: "The uploaded Excel file is empty.", variant: "destructive" });
@@ -107,51 +101,43 @@ export function UploadProgressCardClient() {
   const processAndStoreData = (jsonData: any[], term: 1 | 2) => {
     const existingData = getProgressCardData();
     const updatedData = { ...existingData };
+    const prefix = `Term${term}`;
 
     jsonData.forEach(row => {
         const rollNo = row.RollNo;
         if (!rollNo) return; 
 
-        // Initialize student entry if it doesn't exist
         if (!updatedData[rollNo]) {
             updatedData[rollNo] = { studentDetails: {}, term1: { scholastic: [], coScholastic: [] }, term2: { scholastic: [], coScholastic: [] } };
         }
         
         const student = updatedData[rollNo];
 
-        // Update student details (common to both templates)
         student.studentDetails = {
-            ...student.studentDetails, // Preserve existing details
-            name: row.Name,
+            ...student.studentDetails,
+            name: row.StudentName,
             rollNo: row.RollNo,
+            gender: row.Gender,
             grade: teacherUser?.grade,
             division: teacherUser?.division,
-            motherName: row.MotherName,
-            fatherName: row.FatherName,
-            dob: row["DOB(YYYY-MM-DD)"],
-            grNo: row.GRNo,
             attendance: {
               ...student.studentDetails.attendance,
-              [`term${term}`]: row[`Term${term}_Attendance`],
+              [`term${term}`]: row[`${prefix}_Attendance`],
             },
         };
 
-        const prefix = `Term${term}`;
-        // Update term-specific data
         student[`term${term}`] = {
-            scholastic: [
-                { subject: "First Language", fa1: row[`${prefix}_FirstLanguage_FA1`], fa2: row[`${prefix}_FirstLanguage_FA2`], sa1: row[`${prefix}_FirstLanguage_SA1`], total: row[`${prefix}_FirstLanguage_Total`], grade: row[`${prefix}_FirstLanguage_Grade`] },
-                { subject: "Second Language", fa1: row[`${prefix}_SecondLanguage_FA1`], fa2: row[`${prefix}_SecondLanguage_FA2`], sa1: row[`${prefix}_SecondLanguage_SA1`], total: row[`${prefix}_SecondLanguage_Total`], grade: row[`${prefix}_SecondLanguage_Grade`] },
-                { subject: "Third Language", fa1: row[`${prefix}_ThirdLanguage_FA1`], fa2: row[`${prefix}_ThirdLanguage_FA2`], sa1: row[`${prefix}_ThirdLanguage_SA1`], total: row[`${prefix}_ThirdLanguage_Total`], grade: row[`${prefix}_ThirdLanguage_Grade`] },
-                { subject: "Mathematics", fa1: row[`${prefix}_Math_FA1`], fa2: row[`${prefix}_Math_FA2`], sa1: row[`${prefix}_Math_SA1`], total: row[`${prefix}_Math_Total`], grade: row[`${prefix}_Math_Grade`] },
-                { subject: "E.V.S", fa1: row[`${prefix}_EVS_FA1`], fa2: row[`${prefix}_EVS_FA2`], sa1: row[`${prefix}_EVS_SA1`], total: row[`${prefix}_EVS_Total`], grade: row[`${prefix}_EVS_Grade`] },
-            ],
-            coScholastic: [
-                { area: "Scout", grade: row[`${prefix}_Scout_Grade`] },
-                { area: "Art", grade: row[`${prefix}_Art_Grade`] },
-                { area: "Work Experience", grade: row[`${prefix}_WorkExperience_Grade`] },
-                { area: "Physical Education & Health", grade: row[`${prefix}_PhysicalEdHealth_Grade`] },
-            ],
+            scholastic: scholasticSubjects.map(sub => ({
+                subject: sub.replace('Lang', ' Language'),
+                formative: row[`${prefix}_${sub}_Formative`],
+                summative: row[`${prefix}_${sub}_Summative`],
+                total: row[`${prefix}_${sub}_Total`],
+                grade: row[`${prefix}_${sub}_Grade`],
+            })),
+            coScholastic: coScholasticSubjects.map(sub => ({
+                area: sub.replace(/([A-Z])/g, ' $1').trim(), // Add space before caps
+                grade: row[`${prefix}_${sub}_Grade`],
+            })),
             teacherRemarks: row[`${prefix}_TeacherRemarks`],
         };
     });

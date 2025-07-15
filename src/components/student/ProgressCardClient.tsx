@@ -20,6 +20,18 @@ const schoolInfo = {
   udise: "27220600119",
 };
 
+const subjectTranslations: { [key: string]: string } = {
+    "First Language": "प्रथम भाषा",
+    "Second Language": "द्वितीय भाषा",
+    "Third Language": "तृतीय भाषा",
+    "Math": "गणित",
+    "EVS": "सा. वि",
+    "Scout": "स्काउट",
+    "Art": "कला",
+    "Work Experience": "कार्यानुभव",
+    "Physical Ed Health": "शा. शि.व आरोग्य",
+};
+
 export function ProgressCardClient() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -50,7 +62,7 @@ export function ProgressCardClient() {
         toast({ title: "Not Found", description: "No report card found for this roll number.", variant: "destructive" });
       }
       setIsLoading(false);
-    }, 500); // Short delay to simulate network
+    }, 500);
   };
 
   const handleDownload = useCallback(() => {
@@ -58,7 +70,7 @@ export function ProgressCardClient() {
       setIsDownloading(true);
       html2canvas(reportCardRef.current, {
         useCORS: true,
-        scale: 2, // Increase resolution for better quality
+        scale: 2, 
         backgroundColor: null,
       }).then(canvas => {
         const link = document.createElement("a");
@@ -132,42 +144,35 @@ export function ProgressCardClient() {
                 <tbody>
                   <tr>
                     <td><strong>Student's Name:</strong> {reportData.studentDetails.name}</td>
-                    <td><strong>Mother's Name:</strong> {reportData.studentDetails.motherName}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>Father's Name:</strong> {reportData.studentDetails.fatherName}</td>
-                    <td><strong>Date of Birth:</strong> {reportData.studentDetails.dob}</td>
-                  </tr>
-                  <tr>
-                    <td><strong>G.R. No:</strong> {reportData.studentDetails.grNo}</td>
-                    <td><strong>Roll No:</strong> {reportData.studentDetails.rollNo}</td>
+                    <td><strong>Gender:</strong> {reportData.studentDetails.gender}</td>
                   </tr>
                   <tr>
                     <td><strong>Class / Div:</strong> {reportData.studentDetails.grade} - {reportData.studentDetails.division}</td>
-                    <td><strong>Attendance:</strong> {reportData.studentDetails.attendance[term]}</td>
+                    <td><strong>Roll No:</strong> {reportData.studentDetails.rollNo}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Attendance:</strong> {currentTermData.attendance}</td>
                   </tr>
                 </tbody>
               </table>
               
-              <h4 className="font-bold text-center bg-gray-200 p-1 my-2">Part 1: Scholastic Areas</h4>
+              <h4 className="font-bold text-center bg-gray-200 p-1 my-2">Scholastic Areas (Part 1)</h4>
               <Table className="border border-black">
                 <TableHeader>
                   <TableRow className="border-b border-black bg-gray-100">
-                    <TableHead className="border-r border-black font-bold text-black">Subjects</TableHead>
-                    <TableHead className="border-r border-black font-bold text-black text-center">FA 1 (20)</TableHead>
-                    <TableHead className="border-r border-black font-bold text-black text-center">FA 2 (20)</TableHead>
-                    <TableHead className="border-r border-black font-bold text-black text-center">SA 1 (40)</TableHead>
-                    <TableHead className="border-r border-black font-bold text-black text-center">Total (80)</TableHead>
-                    <TableHead className="font-bold text-black text-center">Grade</TableHead>
+                    <TableHead className="border-r border-black font-bold text-black w-[25%]">Subjects (विषय)</TableHead>
+                    <TableHead className="border-r border-black font-bold text-black text-center">Formative (आकारिक)</TableHead>
+                    <TableHead className="border-r border-black font-bold text-black text-center">Summative (संकलित)</TableHead>
+                    <TableHead className="border-r border-black font-bold text-black text-center">Total (एकूण)</TableHead>
+                    <TableHead className="font-bold text-black text-center">Grade (श्रेणी)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentTermData.scholastic.map((s: any) => (
-                    <TableRow key={s.subject} className="border-b border-black">
-                      <TableCell className="border-r border-black">{s.subject}</TableCell>
-                      <TableCell className="border-r border-black text-center">{s.fa1}</TableCell>
-                      <TableCell className="border-r border-black text-center">{s.fa2}</TableCell>
-                      <TableCell className="border-r border-black text-center">{s.sa1}</TableCell>
+                  {currentTermData.scholastic?.map((s: any, index: number) => (
+                    <TableRow key={index} className="border-b border-black">
+                      <TableCell className="border-r border-black font-medium">{subjectTranslations[s.subject] || s.subject}</TableCell>
+                      <TableCell className="border-r border-black text-center">{s.formative}</TableCell>
+                      <TableCell className="border-r border-black text-center">{s.summative}</TableCell>
                       <TableCell className="border-r border-black text-center">{s.total}</TableCell>
                       <TableCell className="text-center">{s.grade}</TableCell>
                     </TableRow>
@@ -175,18 +180,18 @@ export function ProgressCardClient() {
                 </TableBody>
               </Table>
               
-              <h4 className="font-bold text-center bg-gray-200 p-1 my-2">Part 2: Co-Scholastic Areas (Grading on 3-Point Scale A-B-C)</h4>
+              <h4 className="font-bold text-center bg-gray-200 p-1 my-2">Co-Scholastic Areas (Part 2)</h4>
               <Table className="border border-black">
                 <TableHeader>
                   <TableRow className="border-b border-black bg-gray-100">
-                    <TableHead className="border-r border-black font-bold text-black">Area</TableHead>
-                    <TableHead className="font-bold text-black text-center">Grade</TableHead>
+                    <TableHead className="border-r border-black font-bold text-black">Area (विषय)</TableHead>
+                    <TableHead className="font-bold text-black text-center">Grade (श्रेणी)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentTermData.coScholastic.map((cs: any) => (
-                    <TableRow key={cs.area} className="border-b border-black">
-                      <TableCell className="border-r border-black">{cs.area}</TableCell>
+                  {currentTermData.coScholastic?.map((cs: any, index: number) => (
+                    <TableRow key={index} className="border-b border-black">
+                      <TableCell className="border-r border-black font-medium">{subjectTranslations[cs.area] || cs.area}</TableCell>
                       <TableCell className="text-center">{cs.grade}</TableCell>
                     </TableRow>
                   ))}
