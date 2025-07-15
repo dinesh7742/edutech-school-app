@@ -87,6 +87,7 @@ export function ProgressCardClient() {
   }, [reportCardRef, reportData, term, toast]);
 
   const currentTermData = reportData ? reportData[term] : null;
+  const academicYear = new Date().getFullYear();
 
   return (
     <div className="w-full max-w-4xl space-y-6">
@@ -138,7 +139,7 @@ export function ProgressCardClient() {
               <div className="text-center border-b-2 border-black pb-2 mb-2">
                 <h2 className="text-xl font-bold">{schoolInfo.name}</h2>
                 <p className="text-sm">{schoolInfo.address}</p>
-                <h3 className="text-lg font-semibold mt-1">PROGRESS REPORT: {term === 'term1' ? 'FIRST TERM' : 'SECOND TERM'} {new Date().getFullYear()}</h3>
+                <h3 className="text-lg font-semibold mt-1">PROGRESS REPORT: {term === 'term1' ? 'FIRST TERM' : 'SECOND TERM'} {academicYear} - {academicYear + 1}</h3>
               </div>
               <table className="w-full text-sm mb-2">
                 <tbody>

@@ -24,7 +24,7 @@ const subjectHeaders = (prefix: string, subjectName: string) => [
   `${prefix}_${subjectName}_Grade`,
 ];
 
-const scholasticSubjects = ["FirstLang", "SecondLang", "ThirdLang", "Math", "EVS"];
+const scholasticSubjects = ["FirstLanguage", "SecondLanguage", "ThirdLanguage", "Math", "EVS"];
 const coScholasticSubjects = ["Scout", "Art", "WorkExperience", "PhysicalEdHealth"];
 
 const generateHeaders = (prefix: string) => {
@@ -120,25 +120,37 @@ export function UploadProgressCardClient() {
             gender: row.Gender,
             grade: teacherUser?.grade,
             division: teacherUser?.division,
-            attendance: {
-              ...student.studentDetails.attendance,
-              [`term${term}`]: row[`${prefix}_Attendance`],
-            },
         };
 
-        student[`term${term}`] = {
-            scholastic: scholasticSubjects.map(sub => ({
-                subject: sub.replace('Lang', ' Language'),
+        const scholasticData = scholasticSubjects.map(sub => {
+            let subjectName = sub;
+            if (sub === 'FirstLanguage') subjectName = 'First Language';
+            if (sub === 'SecondLanguage') subjectName = 'Second Language';
+            if (sub === 'ThirdLanguage') subjectName = 'Third Language';
+            return {
+                subject: subjectName,
                 formative: row[`${prefix}_${sub}_Formative`],
                 summative: row[`${prefix}_${sub}_Summative`],
                 total: row[`${prefix}_${sub}_Total`],
                 grade: row[`${prefix}_${sub}_Grade`],
-            })),
-            coScholastic: coScholasticSubjects.map(sub => ({
-                area: sub.replace(/([A-Z])/g, ' $1').trim(), // Add space before caps
+            }
+        });
+
+        const coScholasticData = coScholasticSubjects.map(sub => {
+            let areaName = sub;
+            if (sub === 'PhysicalEdHealth') areaName = 'Physical Ed Health';
+            if (sub === 'WorkExperience') areaName = 'Work Experience';
+             return {
+                area: areaName,
                 grade: row[`${prefix}_${sub}_Grade`],
-            })),
+            }
+        });
+        
+        student[`term${term}`] = {
+            scholastic: scholasticData,
+            coScholastic: coScholasticData,
             teacherRemarks: row[`${prefix}_TeacherRemarks`],
+            attendance: row[`${prefix}_Attendance`],
         };
     });
     
@@ -159,23 +171,11 @@ export function UploadProgressCardClient() {
       <CardHeader>
         <CardTitle className="text-3xl font-bold text-primary">Manage Progress Cards</CardTitle>
         <CardDescription>
-          Upload student marks via an Excel file to automatically generate progress cards.
+          Upload student marks via an Excel file to automatically generate progress cards for students.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-8">
-        <div className="p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
-            <div className="flex">
-                <div className="flex-shrink-0">
-                    <Info className="h-5 w-5 text-blue-500" />
-                </div>
-                <div className="ml-3">
-                    <p className="text-sm text-blue-700 dark:text-blue-300">
-                        This feature uses a temporary in-browser storage. Uploaded marks data will be available until the browser tab is closed. For persistent storage, a database integration is required.
-                    </p>
-                </div>
-            </div>
-        </div>
-
+        
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Step 1: Download Template</h3>
           <p className="text-sm text-muted-foreground">
