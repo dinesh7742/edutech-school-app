@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight } from "lucide-react";
+import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -460,6 +460,13 @@ export function TeacherDashboardClient() {
       disabled: !teacherUser?.grade || !teacherUser?.division,
       disabledText: "Update profile with grade/division to enable.",
       icon: Download,
+    },
+    {
+      title: "Manage Progress Cards",
+      description: "Upload an Excel file with student marks to generate all progress cards for your class.",
+      link: "/teacher/upload-progress-cards",
+      buttonText: "Manage Marks",
+      icon: BarChart3,
     }
   ];
 
@@ -484,7 +491,7 @@ export function TeacherDashboardClient() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
          {mainActionItems.map((item) => (
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
                 <CardHeader className="pb-2 pt-4 items-center">
