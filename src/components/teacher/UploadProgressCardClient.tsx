@@ -113,7 +113,7 @@ export function UploadProgressCardClient() {
                 division: teacherUser?.division,
                 motherName: row.MotherName,
                 fatherName: row.FatherName,
-                dob: row.["DOB(YYYY-MM-DD)"],
+                dob: row["DOB(YYYY-MM-DD)"],
                 grNo: row.GRNo,
                 attendance: {
                     term1: row.Term1_Attendance,
