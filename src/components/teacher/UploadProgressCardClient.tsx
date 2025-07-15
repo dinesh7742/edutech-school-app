@@ -16,25 +16,32 @@ const studentDetailHeaders = [
   "RollNo", "Name", "MotherName", "FatherName", "DOB(YYYY-MM-DD)", "GRNo",
 ];
 
+const subjectHeaders = (prefix: string) => [
+  `${prefix}_FirstLanguage_FA1`, `${prefix}_FirstLanguage_FA2`, `${prefix}_FirstLanguage_SA1`, `${prefix}_FirstLanguage_Total`, `${prefix}_FirstLanguage_Grade`,
+  `${prefix}_SecondLanguage_FA1`, `${prefix}_SecondLanguage_FA2`, `${prefix}_SecondLanguage_SA1`, `${prefix}_SecondLanguage_Total`, `${prefix}_SecondLanguage_Grade`,
+  `${prefix}_ThirdLanguage_FA1`, `${prefix}_ThirdLanguage_FA2`, `${prefix}_ThirdLanguage_SA1`, `${prefix}_ThirdLanguage_Total`, `${prefix}_ThirdLanguage_Grade`,
+  `${prefix}_Math_FA1`, `${prefix}_Math_FA2`, `${prefix}_Math_SA1`, `${prefix}_Math_Total`, `${prefix}_Math_Grade`,
+  `${prefix}_EVS_FA1`, `${prefix}_EVS_FA2`, `${prefix}_EVS_SA1`, `${prefix}_EVS_Total`, `${prefix}_EVS_Grade`,
+];
+
+const coScholasticHeaders = (prefix: string) => [
+  `${prefix}_Scout_Grade`,
+  `${prefix}_Art_Grade`,
+  `${prefix}_WorkExperience_Grade`,
+  `${prefix}_PhysicalEdHealth_Grade`,
+];
+
 const term1Headers = [
   "Term1_Attendance",
-  "Term1_English_FA1", "Term1_English_FA2", "Term1_English_SA1", "Term1_English_Total", "Term1_English_Grade",
-  "Term1_Marathi_FA1", "Term1_Marathi_FA2", "Term1_Marathi_SA1", "Term1_Marathi_Total", "Term1_Marathi_Grade",
-  "Term1_Hindi_FA1", "Term1_Hindi_FA2", "Term1_Hindi_SA1", "Term1_Hindi_Total", "Term1_Hindi_Grade",
-  "Term1_Math_FA1", "Term1_Math_FA2", "Term1_Math_SA1", "Term1_Math_Total", "Term1_Math_Grade",
-  "Term1_EVS_FA1", "Term1_EVS_FA2", "Term1_EVS_SA1", "Term1_EVS_Total", "Term1_EVS_Grade",
-  "Term1_WorkEd_Grade", "Term1_ArtEd_Grade", "Term1_HealthPhyEd_Grade",
+  ...subjectHeaders("Term1"),
+  ...coScholasticHeaders("Term1"),
   "Term1_TeacherRemarks",
 ];
 
 const term2Headers = [
   "Term2_Attendance",
-  "Term2_English_FA1", "Term2_English_FA2", "Term2_English_SA1", "Term2_English_Total", "Term2_English_Grade",
-  "Term2_Marathi_FA1", "Term2_Marathi_FA2", "Term2_Marathi_SA1", "Term2_Marathi_Total", "Term2_Marathi_Grade",
-  "Term2_Hindi_FA1", "Term2_Hindi_FA2", "Term2_Hindi_SA1", "Term2_Hindi_Total", "Term2_Hindi_Grade",
-  "Term2_Math_FA1", "Term2_Math_FA2", "Term2_Math_SA1", "Term2_Math_Total", "Term2_Math_Grade",
-  "Term2_EVS_FA1", "Term2_EVS_FA2", "Term2_EVS_SA1", "Term2_EVS_Total", "Term2_EVS_Grade",
-  "Term2_WorkEd_Grade", "Term2_ArtEd_Grade", "Term2_HealthPhyEd_Grade",
+  ...subjectHeaders("Term2"),
+  ...coScholasticHeaders("Term2"),
   "Term2_TeacherRemarks",
 ];
 
@@ -129,21 +136,23 @@ export function UploadProgressCardClient() {
             },
         };
 
+        const prefix = `Term${term}`;
         // Update term-specific data
         student[`term${term}`] = {
             scholastic: [
-                { subject: "Language 1 (English)", fa1: row[`Term${term}_English_FA1`], fa2: row[`Term${term}_English_FA2`], sa1: row[`Term${term}_English_SA1`], total: row[`Term${term}_English_Total`], grade: row[`Term${term}_English_Grade`] },
-                { subject: "Language 2 (Marathi)", fa1: row[`Term${term}_Marathi_FA1`], fa2: row[`Term${term}_Marathi_FA2`], sa1: row[`Term${term}_Marathi_SA1`], total: row[`Term${term}_Marathi_Total`], grade: row[`Term${term}_Marathi_Grade`] },
-                { subject: "Language 3 (Hindi)", fa1: row[`Term${term}_Hindi_FA1`], fa2: row[`Term${term}_Hindi_FA2`], sa1: row[`Term${term}_Hindi_SA1`], total: row[`Term${term}_Hindi_Total`], grade: row[`Term${term}_Hindi_Grade`] },
-                { subject: "Mathematics", fa1: row[`Term${term}_Math_FA1`], fa2: row[`Term${term}_Math_FA2`], sa1: row[`Term${term}_Math_SA1`], total: row[`Term${term}_Math_Total`], grade: row[`Term${term}_Math_Grade`] },
-                { subject: "E.V.S.", fa1: row[`Term${term}_EVS_FA1`], fa2: row[`Term${term}_EVS_FA2`], sa1: row[`Term${term}_EVS_SA1`], total: row[`Term${term}_EVS_Total`], grade: row[`Term${term}_EVS_Grade`] },
+                { subject: "First Language", fa1: row[`${prefix}_FirstLanguage_FA1`], fa2: row[`${prefix}_FirstLanguage_FA2`], sa1: row[`${prefix}_FirstLanguage_SA1`], total: row[`${prefix}_FirstLanguage_Total`], grade: row[`${prefix}_FirstLanguage_Grade`] },
+                { subject: "Second Language", fa1: row[`${prefix}_SecondLanguage_FA1`], fa2: row[`${prefix}_SecondLanguage_FA2`], sa1: row[`${prefix}_SecondLanguage_SA1`], total: row[`${prefix}_SecondLanguage_Total`], grade: row[`${prefix}_SecondLanguage_Grade`] },
+                { subject: "Third Language", fa1: row[`${prefix}_ThirdLanguage_FA1`], fa2: row[`${prefix}_ThirdLanguage_FA2`], sa1: row[`${prefix}_ThirdLanguage_SA1`], total: row[`${prefix}_ThirdLanguage_Total`], grade: row[`${prefix}_ThirdLanguage_Grade`] },
+                { subject: "Mathematics", fa1: row[`${prefix}_Math_FA1`], fa2: row[`${prefix}_Math_FA2`], sa1: row[`${prefix}_Math_SA1`], total: row[`${prefix}_Math_Total`], grade: row[`${prefix}_Math_Grade`] },
+                { subject: "E.V.S", fa1: row[`${prefix}_EVS_FA1`], fa2: row[`${prefix}_EVS_FA2`], sa1: row[`${prefix}_EVS_SA1`], total: row[`${prefix}_EVS_Total`], grade: row[`${prefix}_EVS_Grade`] },
             ],
             coScholastic: [
-                { area: "Work Education", grade: row[`Term${term}_WorkEd_Grade`] },
-                { area: "Art Education", grade: row[`Term${term}_ArtEd_Grade`] },
-                { area: "Health & Phy. Education", grade: row[`Term${term}_HealthPhyEd_Grade`] },
+                { area: "Scout", grade: row[`${prefix}_Scout_Grade`] },
+                { area: "Art", grade: row[`${prefix}_Art_Grade`] },
+                { area: "Work Experience", grade: row[`${prefix}_WorkExperience_Grade`] },
+                { area: "Physical Education & Health", grade: row[`${prefix}_PhysicalEdHealth_Grade`] },
             ],
-            teacherRemarks: row[`Term${term}_TeacherRemarks`],
+            teacherRemarks: row[`${prefix}_TeacherRemarks`],
         };
     });
     
@@ -224,5 +233,3 @@ export function UploadProgressCardClient() {
     </Card>
   );
 }
-
-    
