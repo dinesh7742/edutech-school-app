@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, CheckCircle, Loader2, Users, XCircle } from "lucide-react";
+import { CalendarIcon, CheckCircle, Loader2, Users, XCircle, Search } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import type { StudentProfile, DailyAttendanceLog, AttendanceStatus } from "@/types";
@@ -27,6 +28,8 @@ export function MarkAttendanceForm() {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<StudentProfile[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -52,6 +55,7 @@ export function MarkAttendanceForm() {
       const querySnapshot = await getDocs(q);
       const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
       setStudents(fetchedStudents);
+      setFilteredStudents(fetchedStudents);
 
       // Initialize form with default values for fetched students
       const initialFormValues: FormValues = {};
@@ -71,6 +75,16 @@ export function MarkAttendanceForm() {
   useEffect(() => {
     fetchStudents();
   }, [fetchStudents]);
+
+  useEffect(() => {
+    const lowercasedFilter = searchTerm.toLowerCase();
+    const filteredData = students.filter(student => {
+      const fullName = `${student.firstName?.toLowerCase() || ''} ${student.lastName?.toLowerCase() || ''}`;
+      return fullName.includes(lowercasedFilter);
+    });
+    setFilteredStudents(filteredData);
+  }, [searchTerm, students]);
+
 
   const fetchAttendanceForDate = useCallback(async (date: Date) => {
     if (!teacherUser?.grade || !teacherUser?.division) return;
@@ -198,33 +212,49 @@ export function MarkAttendanceForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <Label htmlFor="attendanceDate">Attendance Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="attendanceDate"
-                  variant={"outline"}
-                  className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !selectedDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                  disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-grow">
+              <Label htmlFor="attendanceDate">Attendance Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    id="attendanceDate"
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    initialFocus
+                    disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex-grow">
+              <Label htmlFor="searchStudent">Search Student</Label>
+               <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="searchStudent"
+                  placeholder="Type student name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
-              </PopoverContent>
-            </Popover>
+              </div>
+            </div>
           </div>
+
 
           {loadingStudents || loadingAttendance ? (
             <div className="flex items-center justify-center py-6">
@@ -237,42 +267,46 @@ export function MarkAttendanceForm() {
              </p>
           ) : (
             <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-              {students.map((student) => (
-                <Card key={student.uid} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor={`attendance-${student.uid}`} className="text-base font-medium">
-                      {student.firstName} {student.lastName || ""}
-                    </Label>
-                    <Controller
-                      name={`${student.uid}`}
-                      control={control}
-                      defaultValue="Present" // Default to Present
-                      render={({ field }) => (
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          className="flex space-x-4"
-                          id={`attendance-${student.uid}`}
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Present" id={`${student.uid}-present`} />
-                            <Label htmlFor={`${student.uid}-present`} className="text-green-600 font-medium flex items-center">
-                              <CheckCircle className="mr-1 h-5 w-5"/> Present
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="Absent" id={`${student.uid}-absent`} />
-                            <Label htmlFor={`${student.uid}-absent`} className="text-red-600 font-medium flex items-center">
-                              <XCircle className="mr-1 h-5 w-5"/> Absent
-                            </Label>
-                          </div>
-                          {/* Add Late/Excused options if needed in future */}
-                        </RadioGroup>
-                      )}
-                    />
-                  </div>
-                </Card>
-              ))}
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map((student) => (
+                  <Card key={student.uid} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor={`attendance-${student.uid}`} className="text-base font-medium">
+                        {student.firstName} {student.lastName || ""}
+                      </Label>
+                      <Controller
+                        name={`${student.uid}`}
+                        control={control}
+                        defaultValue="Present" // Default to Present
+                        render={({ field }) => (
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            className="flex space-x-4"
+                            id={`attendance-${student.uid}`}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="Present" id={`${student.uid}-present`} />
+                              <Label htmlFor={`${student.uid}-present`} className="text-green-600 font-medium flex items-center">
+                                <CheckCircle className="mr-1 h-5 w-5"/> Present
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="Absent" id={`${student.uid}-absent`} />
+                              <Label htmlFor={`${student.uid}-absent`} className="text-red-600 font-medium flex items-center">
+                                <XCircle className="mr-1 h-5 w-5"/> Absent
+                              </Label>
+                            </div>
+                            {/* Add Late/Excused options if needed in future */}
+                          </RadioGroup>
+                        )}
+                      />
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No student found matching "{searchTerm}".</p>
+              )}
             </div>
           )}
 
