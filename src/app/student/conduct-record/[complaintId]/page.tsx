@@ -1,6 +1,4 @@
 
-"use client";
-
 import { Suspense } from 'react';
 import { ComplaintDetailsClient } from "@/components/student/ComplaintDetailsClient";
 import { Loader2 } from 'lucide-react';
