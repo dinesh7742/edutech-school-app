@@ -230,3 +230,38 @@ export interface OtherStudentApplication {
   reviewTimestamp?: Timestamp | FieldValue;
   teacherComments?: string;
 }
+
+export type ComplaintStatus = "Pending Acknowledgment" | "Acknowledged";
+export const complaintTypes = [
+    'Disobedience',
+    'Homework not done',
+    'Misbehaving with classmates',
+    'Breaking school rules',
+    'Bad language',
+    'Other'
+] as const;
+export type ComplaintType = typeof complaintTypes[number];
+
+export interface Complaint {
+  id?: string;
+  studentUid: string;
+  studentName: string;
+  grade: string;
+  division: string;
+  incidentDate: string; // YYYY-MM-DD
+  teacherUid: string;
+  teacherName: string;
+  subject: string;
+  complaintTypes: ComplaintType[];
+  otherComplaintType?: string;
+  description: string;
+  actionTaken: string;
+  status: ComplaintStatus;
+  createdAt: Timestamp | FieldValue;
+  
+  // Parent/Student acknowledgment fields
+  acknowledgedBy?: "Parent" | "Student";
+  acknowledgmentTimestamp?: Timestamp | FieldValue;
+  parentRemarks?: string;
+  parentSignature?: string; // Can be a name string or data URI of a signature
+}
