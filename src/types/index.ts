@@ -12,7 +12,7 @@ export interface AppUser extends FirebaseUser {
   photoURL?: string | null;
   email?: string | null;
   phoneNumber?: string | null;
-  whatsAppNumber?: string | null; // Added for teacher's WhatsApp number
+  whatsAppNumber?: string | null;
 }
 
 export interface Notice {
@@ -37,12 +37,12 @@ export interface Homework {
   id: string;
   title: string;
   description?: string;
-  attachments?: HomeworkAttachment[]; // Replaces fileUrl and fileName
+  attachments?: HomeworkAttachment[];
   postedByUid: string;
   postedByName: string;
   timestamp: Timestamp | FieldValue;
   displayDate?: string;
-  dueDate?: string; // YYYY-MM-DD
+  dueDate?: string;
   subject?: string;
   grade: string;
   division: string;
@@ -80,7 +80,7 @@ export interface Textbook {
   title: string;
   subject: string;
   fileUrl: string; 
-  coverImageUrl?: string; // Can store Data URI
+  coverImageUrl?: string;
   fileName?: string;
   postedByUid: string;
   postedByName: string;
@@ -92,10 +92,10 @@ export interface PhotoGalleryAlbum {
   id: string;
   title: string;
   description?: string;
-  images: { url: string; alt?: string }[]; // URLs could be Data URIs
+  images: { url: string; alt?: string }[];
   postedByUid: string;
   postedByName: string;
-  eventDate?: string; // YYYY-MM-DD
+  eventDate?: string;
   timestamp: Timestamp | FieldValue;
 }
 
@@ -107,7 +107,7 @@ export interface StudentProfile {
   motherName?: string;
   fatherOccupation?: string;
   motherOccupation?: string;
-  dateOfBirth?: string; // YYYY-MM-DD
+  dateOfBirth?: string;
   gender?: string;
   grade: string;
   division: string;
@@ -118,7 +118,7 @@ export interface StudentProfile {
   religion?: string;
   caste?: string;
   fullAddress?: string;
-  photoUrl?: string; // Can store Data URI
+  photoUrl?: string;
   email?: string; 
 }
 
@@ -143,7 +143,7 @@ export interface StudentAttendanceRecord {
 
 export interface DailyAttendanceLog {
   id?: string;
-  date: string; // YYYY-MM-DD
+  date: string;
   grade: string;
   division: string;
   studentRecords: StudentAttendanceRecord;
@@ -160,10 +160,10 @@ export interface LeaveApplication {
   studentName: string;
   grade: string;
   division: string;
-  leaveStartDate: string; // YYYY-MM-DD
-  leaveEndDate: string; // YYYY-MM-DD
+  leaveStartDate: string;
+  leaveEndDate: string;
   reason: string;
-  applicationDate: Timestamp | FieldValue; // Firestore Server Timestamp
+  applicationDate: Timestamp | FieldValue;
   status: LeaveApplicationStatus;
   reviewedByTeacherId?: string;
   reviewedByTeacherName?: string;
@@ -188,9 +188,9 @@ export interface LateArrivalApplication {
   studentName: string;
   grade: string;
   division: string;
-  requestDate: string; // YYYY-MM-DD of the incident
+  requestDate: string;
   type: LateArrivalRequestType;
-  time: string; // HH:MM format
+  time: string;
   reason: string;
   applicationTimestamp: Timestamp | FieldValue; 
   status: RequestStatus;
@@ -248,7 +248,7 @@ export interface Complaint {
   studentName: string;
   grade: string;
   division: string;
-  incidentDate: string; // YYYY-MM-DD
+  incidentDate: string;
   teacherUid: string;
   teacherName: string;
   subject: string;
@@ -258,10 +258,8 @@ export interface Complaint {
   actionTaken: string;
   status: ComplaintStatus;
   createdAt: Timestamp | FieldValue;
-  
-  // Parent/Student acknowledgment fields
   acknowledgedBy?: "Parent" | "Student";
   acknowledgmentTimestamp?: Timestamp | FieldValue;
   parentRemarks?: string;
-  parentSignature?: string; // Can be a name string or data URI of a signature
+  parentSignature?: string;
 }

@@ -37,8 +37,6 @@ export function ConductRecordList() {
       setError(null);
       try {
         const complaintsRef = collection(db, "complaints");
-        // The query requires a composite index on teacherUid and createdAt.
-        // To avoid this, we fetch and then sort client-side.
         const q = query(
           complaintsRef,
           where("teacherUid", "==", teacherUser.uid)
@@ -49,7 +47,6 @@ export function ConductRecordList() {
           ...doc.data()
         } as Complaint));
         
-        // Sort client-side
         fetchedComplaints.sort((a, b) => {
             const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate().getTime() : 0;
             const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate().getTime() : 0;
@@ -174,7 +171,7 @@ export function ConductRecordList() {
                     </TableCell>
                     <TableCell className="text-right">
                        <Button asChild variant="outline" size="sm">
-                          <Link href={`/student/conduct-record/${complaint.id}`}>View Details</Link>
+                          <Link href={`/teacher/conduct-record/${complaint.id}`}>View Details</Link>
                        </Button>
                     </TableCell>
                   </TableRow>
