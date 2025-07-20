@@ -37,16 +37,25 @@ export function ConductRecordList() {
       setError(null);
       try {
         const complaintsRef = collection(db, "complaints");
+        // The query requires a composite index on teacherUid and createdAt.
+        // To avoid this, we fetch and then sort client-side.
         const q = query(
           complaintsRef,
-          where("teacherUid", "==", teacherUser.uid),
-          orderBy("createdAt", "desc")
+          where("teacherUid", "==", teacherUser.uid)
         );
         const querySnapshot = await getDocs(q);
         const fetchedComplaints = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         } as Complaint));
+        
+        // Sort client-side
+        fetchedComplaints.sort((a, b) => {
+            const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toDate().getTime() : 0;
+            const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toDate().getTime() : 0;
+            return dateB - dateA;
+        });
+
         setComplaints(fetchedComplaints);
         setFilteredComplaints(fetchedComplaints);
       } catch (err: any) {
