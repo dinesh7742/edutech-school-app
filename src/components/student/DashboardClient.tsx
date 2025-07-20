@@ -204,7 +204,7 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      lottieUrl: "https://lottie.host/18b87a07-2856-427c-b172-3c8287a9359e/KCaV3od5j0.json",
+      lottieUrl: "https://assets1.lottiefiles.com/packages/lf20_w7n7zeop.json",
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -232,7 +232,7 @@ export function StudentDashboardClient() {
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
-      lottieUrl: "https://lottie.host/a8678b87-48f5-4654-be8d-af198114f85e/y1aQyCq4lW.json",
+      lottieUrl: "https://assets10.lottiefiles.com/packages/lf20_vo3h2i2n.json",
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
@@ -287,7 +287,7 @@ export function StudentDashboardClient() {
       title: "Circulars",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      lottieUrl: "https://lottie.host/88029a73-d02f-48d1-8179-63304192a0a2/x3n2i6uVOr.json",
+      lottieUrl: "https://assets9.lottiefiles.com/packages/lf20_z4s3ba7w.json",
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
@@ -322,7 +322,7 @@ export function StudentDashboardClient() {
       title: "Live Class",
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
-      lottieUrl: "https://lottie.host/020a169a-65b8-4b36-a859-28a1c0f0a5f9/VqS2a4z0b8.json",
+      lottieUrl: "https://assets1.lottiefiles.com/packages/lf20_m2erahco.json",
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => (
@@ -355,7 +355,7 @@ export function StudentDashboardClient() {
       title: "My School Applications",
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
-      lottieUrl: "https://lottie.host/8192a544-2396-48c0-82d8-21f579979d63/1fRkI5gUeX.json",
+      lottieUrl: "https://assets8.lottiefiles.com/packages/lf20_cykjfxtv.json",
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
       contentData: null, 
       renderContent: null,
@@ -366,7 +366,7 @@ export function StudentDashboardClient() {
       title: "Textbooks",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      lottieUrl: "https://lottie.host/170b99f3-803a-4123-9529-688b1b86d997/l9G043o6tV.json",
+      lottieUrl: "https://assets3.lottiefiles.com/packages/lf20_vjmjkbyt.json",
       description: "Access your digital textbooks for all subjects.",
       contentData: null,
       renderContent: null,
@@ -377,7 +377,7 @@ export function StudentDashboardClient() {
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      lottieUrl: "https://lottie.host/e26861f1-337b-42a1-b425-a13187216a69/CglfI1a1z7.json",
+      lottieUrl: "https://assets7.lottiefiles.com/packages/lf20_l3qg9hax.json",
       description: "Explore photos from school events and activities.",
       contentData: null,
       renderContent: null,
@@ -431,7 +431,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://lottie.host/7e0281b9-a6a3-48ae-8a8b-a3d548b26e7a/2ITiLz1iL6.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://assets7.lottiefiles.com/packages/lf20_u மண்டtf.json" loop={true} style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Parent Notifications</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and acknowledge conduct reports from teachers.</CardDescription>
@@ -446,7 +446,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://lottie.host/b001a8b3-33e1-487c-a44e-a7455d3ea956/xKikGfVwjD.json" loop={true} style={{height: 110, width: 110}} />
+                    <Lottie path="https://assets5.lottiefiles.com/packages/lf20_s72pykxb.json" loop={true} style={{height: 110, width: 110}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Download I-Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Download your official school identity card.</CardDescription>
@@ -461,7 +461,7 @@ export function StudentDashboardClient() {
          <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://lottie.host/e0600bba-1549-430c-8e89-980b6b8d5f66/e1s1YvR5D1.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://assets1.lottiefiles.com/packages/lf20_bzo2B4.json" loop={true} style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
@@ -476,7 +476,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://lottie.host/020a169a-65b8-4b36-a859-28a1c0f0a5f9/VqS2a4z0b8.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://assets2.lottiefiles.com/packages/lf20_puciaact.json" loop={true} style={{height: 120, width: 120}} />
                  </div>
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
@@ -491,7 +491,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://lottie.host/523899f8-a831-4148-9584-9f29cf9f0e13/oV58ccA5Tq.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://assets4.lottiefiles.com/packages/lf20_m8xb6hpk.json" loop={true} style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Progress Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and download your academic progress report.</CardDescription>
