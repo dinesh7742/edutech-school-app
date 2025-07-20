@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Lottie from "lottie-react";
+import { Player } from "@lottiefiles/react-lottie-player";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -396,7 +396,7 @@ export function StudentDashboardClient() {
           <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                <div className="h-28 w-28 flex items-center justify-center">
-                  <Lottie path={card.lottieUrl} loop={true} style={{height: 120, width: 120}} />
+                  <Player src={card.lottieUrl} loop autoplay style={{height: 120, width: 120}} />
                </div>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
@@ -410,16 +410,20 @@ export function StudentDashboardClient() {
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               {card.contentData?.loading ? (
-                <div className="flex flex-col items-center justify-center flex-grow py-4">
+                <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
               ) : card.renderContent && card.contentData?.item ? (
-                card.renderContent(card.contentData.item as any)
+                 <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
+                    {card.renderContent(card.contentData.item as any)}
+                 </div>
               ) : card.renderContent && !card.contentData.item ? (
-                card.renderContent(null)
+                 <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
+                    {card.renderContent(null)}
+                 </div>
               ) : (
-                 <div className="flex-grow flex items-center justify-center">
+                 <div className="flex-grow flex items-center justify-center min-h-[150px]">
                  </div>
               )}
               <Button asChild className="w-full mt-auto">
@@ -431,13 +435,13 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://assets7.lottiefiles.com/packages/lf20_u மண்டtf.json" loop={true} style={{height: 120, width: 120}} />
+                    <Player src="https://assets7.lottiefiles.com/packages/lf20_u மண்டtf.json" loop autoplay style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Parent Notifications</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and acknowledge conduct reports from teachers.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow"></div>
+              <div className="flex-grow min-h-[150px]"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/conduct-record">View Notifications</Link>
               </Button>
@@ -446,13 +450,13 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://assets5.lottiefiles.com/packages/lf20_s72pykxb.json" loop={true} style={{height: 110, width: 110}} />
+                    <Player src="https://assets5.lottiefiles.com/packages/lf20_s72pykxb.json" loop autoplay style={{height: 110, width: 110}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Download I-Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Download your official school identity card.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow"></div>
+              <div className="flex-grow min-h-[150px]"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/icard">Get My I-Card</Link>
               </Button>
@@ -461,13 +465,13 @@ export function StudentDashboardClient() {
          <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://assets1.lottiefiles.com/packages/lf20_bzo2B4.json" loop={true} style={{height: 120, width: 120}} />
+                    <Player src="https://assets1.lottiefiles.com/packages/lf20_bzo2B4.json" loop autoplay style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow"></div>
+              <div className="flex-grow min-h-[150px]"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/attendance">View Detailed Attendance</Link>
               </Button>
@@ -476,13 +480,13 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://assets2.lottiefiles.com/packages/lf20_puciaact.json" loop={true} style={{height: 120, width: 120}} />
+                    <Player src="https://assets2.lottiefiles.com/packages/lf20_puciaact.json" loop autoplay style={{height: 120, width: 120}} />
                  </div>
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow"></div>
+              <div className="flex-grow min-h-[150px]"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/profile">Go to Profile</Link>
               </Button>
@@ -491,13 +495,13 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie path="https://assets4.lottiefiles.com/packages/lf20_m8xb6hpk.json" loop={true} style={{height: 120, width: 120}} />
+                    <Player src="https://assets4.lottiefiles.com/packages/lf20_m8xb6hpk.json" loop autoplay style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Progress Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and download your academic progress report.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow"></div>
+              <div className="flex-grow min-h-[150px]"></div>
               <Button asChild className="w-full mt-auto">
                 <Link href="/student/progress-card">View Progress Card</Link>
               </Button>
