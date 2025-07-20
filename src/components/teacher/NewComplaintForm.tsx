@@ -117,12 +117,17 @@ export function NewComplaintForm() {
         teacherName: teacherUser.displayName || "N/A",
         subject: data.subject,
         complaintTypes: data.complaintTypes as ComplaintType[],
-        otherComplaintType: data.complaintTypes.includes("Other") ? data.otherComplaintType : undefined,
+        otherComplaintType: data.complaintTypes.includes("Other") ? data.otherComplaintType : "",
         description: data.description,
         actionTaken: data.actionTaken,
         status: "Pending Acknowledgment",
         createdAt: serverTimestamp(),
     };
+
+    if (!complaintData.complaintTypes.includes("Other")) {
+        delete (complaintData as Partial<Complaint>).otherComplaintType;
+    }
+
 
     try {
         await addDoc(collection(db, "complaints"), complaintData);
