@@ -396,7 +396,7 @@ export function StudentDashboardClient() {
           <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                <div className="h-28 w-28 flex items-center justify-center">
-                  <Lottie animationURL={card.lottieUrl} loop={true} style={{height: 120, width: 120}} />
+                  <Lottie path={card.lottieUrl} loop={true} style={{height: 120, width: 120}} />
                </div>
               <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                 {card.title}
@@ -431,7 +431,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie animationURL="https://lottie.host/7e0281b9-a6a3-48ae-8a8b-a3d548b26e7a/2ITiLz1iL6.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://lottie.host/7e0281b9-a6a3-48ae-8a8b-a3d548b26e7a/2ITiLz1iL6.json" loop={true} style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Parent Notifications</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and acknowledge conduct reports from teachers.</CardDescription>
@@ -446,7 +446,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie animationURL="https://lottie.host/b001a8b3-33e1-487c-a44e-a7455d3ea956/xKikGfVwjD.json" loop={true} style={{height: 110, width: 110}} />
+                    <Lottie path="https://lottie.host/b001a8b3-33e1-487c-a44e-a7455d3ea956/xKikGfVwjD.json" loop={true} style={{height: 110, width: 110}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Download I-Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Download your official school identity card.</CardDescription>
@@ -461,7 +461,7 @@ export function StudentDashboardClient() {
          <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie animationURL="https://lottie.host/e0600bba-1549-430c-8e89-980b6b8d5f66/e1s1YvR5D1.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://lottie.host/e0600bba-1549-430c-8e89-980b6b8d5f66/e1s1YvR5D1.json" loop={true} style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
@@ -476,7 +476,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie animationURL="https://lottie.host/020a169a-65b8-4b36-a859-28a1c0f0a5f9/VqS2a4z0b8.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://lottie.host/020a169a-65b8-4b36-a859-28a1c0f0a5f9/VqS2a4z0b8.json" loop={true} style={{height: 120, width: 120}} />
                  </div>
                 <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
@@ -491,7 +491,7 @@ export function StudentDashboardClient() {
         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Lottie animationURL="https://lottie.host/523899f8-a831-4148-9584-9f29cf9f0e13/oV58ccA5Tq.json" loop={true} style={{height: 120, width: 120}} />
+                    <Lottie path="https://lottie.host/523899f8-a831-4148-9584-9f29cf9f0e13/oV58ccA5Tq.json" loop={true} style={{height: 120, width: 120}} />
                 </div>
                 <CardTitle className="text-xl font-semibold">Progress Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and download your academic progress report.</CardDescription>
@@ -507,5 +507,3 @@ export function StudentDashboardClient() {
     </div>
   );
 }
-
-    
