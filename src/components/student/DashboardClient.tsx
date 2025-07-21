@@ -8,19 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Download, Loader2, CheckCircle, FileText, ClipboardList, BookOpen, 
-  Image as ImageIcon, Video, FileSignature, ListChecks, UserCircle, Contact, BarChart3, MessageSquareWarning
+  Download, Loader2, CheckCircle, ArrowRight
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { db, storage } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, LeaveApplication, LateArrivalApplication, HomeworkAttachment } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from "date-fns";
 
 
 interface LatestContent<T> {
@@ -197,14 +194,13 @@ export function StudentDashboardClient() {
     }
   };
 
-
   const dashboardCards = [
     {
       id: "notices",
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      lottieUrl: "https://assets1.lottiefiles.com/packages/lf20_w7n7zeop.json",
+      lottieUrl: "https://lottie.host/804b2457-b355-4720-9159-6f103847a956/P2OLw5GSUC.json",
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -225,14 +221,13 @@ export function StudentDashboardClient() {
           )}
         </div>
       ),
-      emptyMessage: "No new notices relevant to you."
     },
     {
       id: "homework",
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
-      lottieUrl: "https://assets10.lottiefiles.com/packages/lf20_vo3h2i2n.json",
+      lottieUrl: "https://lottie.host/57530491-382a-430c-b7cb-3b1a45749a21/6bTVLgJ52h.json",
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
@@ -280,7 +275,6 @@ export function StudentDashboardClient() {
             )}
         </div>
       ),
-      emptyMessage: "No new homework for your class."
     },
     {
       id: "circulars",
@@ -315,7 +309,6 @@ export function StudentDashboardClient() {
             )}
         </div>
       ),
-      emptyMessage: "No new circulars relevant to you."
     },
      {
       id: "liveClass",
@@ -348,43 +341,73 @@ export function StudentDashboardClient() {
             )}
         </div>
       ),
-      emptyMessage: "No live classes scheduled for you."
     },
     {
       id: "mySchoolApplications",
       title: "My School Applications",
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
-      lottieUrl: "https://assets8.lottiefiles.com/packages/lf20_cykjfxtv.json",
+      lottieUrl: "https://lottie.host/804b2457-b355-4720-9159-6f103847a956/P2OLw5GSUC.json",
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
-      contentData: null, 
-      renderContent: null,
-      emptyMessage: "" 
     },
     {
       id: "textbooks",
       title: "Textbooks",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      lottieUrl: "https://assets3.lottiefiles.com/packages/lf20_vjmjkbyt.json",
+      lottieUrl: "https://lottie.host/57530491-382a-430c-b7cb-3b1a45749a21/6bTVLgJ52h.json",
       description: "Access your digital textbooks for all subjects.",
-      contentData: null,
-      renderContent: null,
-      emptyMessage: ""
     },
     {
       id: "gallery",
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      lottieUrl: "https://assets7.lottiefiles.com/packages/lf20_l3qg9hax.json",
+      lottieUrl: "https://lottie.host/5f532a22-359f-4315-a6e5-42289f6e5229/4ED7b7FQCk.json",
       description: "Explore photos from school events and activities.",
-      contentData: null,
-      renderContent: null,
-      emptyMessage: ""
-    }
+    },
+    {
+      id: "conductRecord",
+      title: "Parent Notifications",
+      link: "/student/conduct-record",
+      buttonText: "View Notifications",
+      lottieUrl: "https://lottie.host/813f569f-3616-466d-89e4-a13480749e7b/H5s3LwKZyT.json",
+      description: "View and acknowledge conduct reports from teachers.",
+    },
+    {
+      id: "icard",
+      title: "Download I-Card",
+      link: "/student/icard",
+      buttonText: "Get My I-Card",
+      lottieUrl: "https://lottie.host/80e9275a-3532-4759-9944-a038f069542a/s0UnF3i0a8.json",
+      description: "Download your official school identity card.",
+    },
+    {
+      id: "attendance",
+      title: "My Attendance",
+      link: "/student/attendance",
+      buttonText: "View Detailed Attendance",
+      lottieUrl: "https://lottie.host/81f4a96c-0a1f-46ff-a5d6-a21239c4a852/4jJj7uT4wD.json",
+      description: "View your detailed attendance records.",
+    },
+    {
+      id: "profile",
+      title: "My Profile",
+      link: "/student/profile",
+      buttonText: "Go to Profile",
+      lottieUrl: "https://lottie.host/9f518e11-5f5c-4340-9a2c-9609f9e316a7/2LgQDA5sNI.json",
+      description: "Manage your personal information and settings.",
+    },
+    {
+      id: "progressCard",
+      title: "Progress Card",
+      link: "/student/progress-card",
+      buttonText: "View Progress Card",
+      lottieUrl: "https://lottie.host/a86f9f91-534f-4318-8745-a75d16c14175/VdKj5SMbIf.json",
+      description: "View and download your academic progress report.",
+    },
   ];
-
+  
   return (
     <div className="space-y-8">
       <WelcomeMessage />
@@ -414,99 +437,20 @@ export function StudentDashboardClient() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                 </div>
-              ) : card.renderContent && card.contentData?.item ? (
+              ) : card.renderContent ? (
                  <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
                     {card.renderContent(card.contentData.item as any)}
-                 </div>
-              ) : card.renderContent && !card.contentData.item ? (
-                 <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
-                    {card.renderContent(null)}
                  </div>
               ) : (
                  <div className="flex-grow flex items-center justify-center min-h-[150px]">
                  </div>
               )}
               <Button asChild className="w-full mt-auto">
-                <Link href={card.link}>{card.buttonText}</Link>
+                <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-2 h-4 w-4" /></Link>
               </Button>
             </CardContent>
           </Card>
         ))}
-        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-                <div className="h-28 w-28 flex items-center justify-center">
-                    <Player src="https://assets7.lottiefiles.com/packages/lf20_u மண்டtf.json" loop autoplay style={{height: 120, width: 120}} />
-                </div>
-                <CardTitle className="text-xl font-semibold">Parent Notifications</CardTitle>
-                <CardDescription className="text-sm min-h-[3rem] px-2">View and acknowledge conduct reports from teachers.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow min-h-[150px]"></div>
-              <Button asChild className="w-full mt-auto">
-                <Link href="/student/conduct-record">View Notifications</Link>
-              </Button>
-            </CardContent>
-        </Card>
-        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-                <div className="h-28 w-28 flex items-center justify-center">
-                    <Player src="https://assets5.lottiefiles.com/packages/lf20_s72pykxb.json" loop autoplay style={{height: 110, width: 110}} />
-                </div>
-                <CardTitle className="text-xl font-semibold">Download I-Card</CardTitle>
-                <CardDescription className="text-sm min-h-[3rem] px-2">Download your official school identity card.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow min-h-[150px]"></div>
-              <Button asChild className="w-full mt-auto">
-                <Link href="/student/icard">Get My I-Card</Link>
-              </Button>
-            </CardContent>
-        </Card>
-         <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-                <div className="h-28 w-28 flex items-center justify-center">
-                    <Player src="https://assets1.lottiefiles.com/packages/lf20_bzo2B4.json" loop autoplay style={{height: 120, width: 120}} />
-                </div>
-                <CardTitle className="text-xl font-semibold">My Attendance</CardTitle>
-                <CardDescription className="text-sm min-h-[3rem] px-2">View your detailed attendance records.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow min-h-[150px]"></div>
-              <Button asChild className="w-full mt-auto">
-                <Link href="/student/attendance">View Detailed Attendance</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-                 <div className="h-28 w-28 flex items-center justify-center">
-                    <Player src="https://assets2.lottiefiles.com/packages/lf20_puciaact.json" loop autoplay style={{height: 120, width: 120}} />
-                 </div>
-                <CardTitle className="text-xl font-semibold">My Profile</CardTitle>
-                <CardDescription className="text-sm min-h-[3rem] px-2">Manage your personal information and settings.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow min-h-[150px]"></div>
-              <Button asChild className="w-full mt-auto">
-                <Link href="/student/profile">Go to Profile</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        <Card className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-                <div className="h-28 w-28 flex items-center justify-center">
-                    <Player src="https://assets4.lottiefiles.com/packages/lf20_m8xb6hpk.json" loop autoplay style={{height: 120, width: 120}} />
-                </div>
-                <CardTitle className="text-xl font-semibold">Progress Card</CardTitle>
-                <CardDescription className="text-sm min-h-[3rem] px-2">View and download your academic progress report.</CardDescription>
-            </CardContent>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              <div className="flex-grow min-h-[150px]"></div>
-              <Button asChild className="w-full mt-auto">
-                <Link href="/student/progress-card">View Progress Card</Link>
-              </Button>
-            </CardContent>
-          </Card>
       </div>
     </div>
   );
