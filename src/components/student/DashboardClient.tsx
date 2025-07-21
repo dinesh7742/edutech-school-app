@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   Download, Loader2, CheckCircle, ArrowRight,
   FileText, ClipboardList, BookOpen, Image as ImageIcon, Video,
-  FileSignature, Award, User, BarChart3, ListChecks
+  FileSignature, User, BarChart3, ListChecks, BellRing, BookMarked, ScrollText, ShieldAlert, Camera, CalendarCheck, UserCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -199,7 +199,8 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      icon: FileText,
+      icon: BellRing,
+      iconClass: "w-16 h-16 text-primary animate-pulse",
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -226,7 +227,8 @@ export function StudentDashboardClient() {
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
-      icon: ClipboardList,
+      icon: BookMarked,
+      iconClass: "w-16 h-16 text-primary animate-bounce",
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
@@ -280,7 +282,8 @@ export function StudentDashboardClient() {
       title: "Circulars",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      icon: FileText,
+      icon: ScrollText,
+      iconClass: "w-16 h-16 text-primary animate-pulse",
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
@@ -315,6 +318,7 @@ export function StudentDashboardClient() {
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
       icon: Video,
+      iconClass: "w-16 h-16 text-destructive animate-pulse",
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => (
@@ -347,6 +351,7 @@ export function StudentDashboardClient() {
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
       icon: FileSignature,
+      iconClass: "w-16 h-16 text-primary",
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
     },
     {
@@ -355,6 +360,7 @@ export function StudentDashboardClient() {
       link: "/student/textbooks",
       buttonText: "View Textbooks",
       icon: BookOpen,
+      iconClass: "w-16 h-16 text-primary",
       description: "Access your digital textbooks for all subjects.",
     },
     {
@@ -362,7 +368,8 @@ export function StudentDashboardClient() {
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      icon: ImageIcon,
+      icon: Camera,
+      iconClass: "w-16 h-16 text-primary animate-pulse",
       description: "Explore photos from school events and activities.",
     },
     {
@@ -370,7 +377,8 @@ export function StudentDashboardClient() {
       title: "Parent Notifications",
       link: "/student/conduct-record",
       buttonText: "View Notifications",
-      icon: Award,
+      icon: ShieldAlert,
+      iconClass: "w-16 h-16 text-destructive animate-pulse",
       description: "View and acknowledge conduct reports from teachers.",
     },
     {
@@ -379,6 +387,7 @@ export function StudentDashboardClient() {
       link: "/student/icard",
       buttonText: "Get My I-Card",
       icon: User,
+      iconClass: "w-16 h-16 text-primary",
       description: "Download your official school identity card.",
     },
     {
@@ -386,7 +395,8 @@ export function StudentDashboardClient() {
       title: "My Attendance",
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
-      icon: ListChecks,
+      icon: CalendarCheck,
+      iconClass: "w-16 h-16 text-primary",
       description: "View your detailed attendance records.",
     },
     {
@@ -394,7 +404,8 @@ export function StudentDashboardClient() {
       title: "My Profile",
       link: "/student/profile",
       buttonText: "Go to Profile",
-      icon: User,
+      icon: UserCircle2,
+      iconClass: "w-16 h-16 text-primary animate-spin-slow",
       description: "Manage your personal information and settings.",
     },
     {
@@ -403,6 +414,7 @@ export function StudentDashboardClient() {
       link: "/student/progress-card",
       buttonText: "View Progress Card",
       icon: BarChart3,
+      iconClass: "w-16 h-16 text-primary",
       description: "View and download your academic progress report.",
     },
   ];
@@ -420,7 +432,7 @@ export function StudentDashboardClient() {
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
               <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                  <Icon className="w-16 h-16 text-primary animate-pulse" />
+                  <Icon className={card.iconClass} />
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                   {card.title}
