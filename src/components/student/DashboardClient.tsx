@@ -499,7 +499,7 @@ export function StudentDashboardClient() {
                 </div>
                 <CardTitle className="text-xl font-semibold">Progress Card</CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">View and download your academic progress report.</CardDescription>
-            </CardHeader>
+            </CardContent>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
               <div className="flex-grow min-h-[150px]"></div>
               <Button asChild className="w-full mt-auto">
