@@ -31,16 +31,24 @@ export function StudentComplaintList() {
       setError(null);
       try {
         const complaintsRef = collection(db, "complaints");
+        // Removed orderBy to prevent missing index error. Sorting will be done client-side.
         const q = query(
           complaintsRef,
-          where("studentUid", "==", user.uid),
-          orderBy("createdAt", "desc")
+          where("studentUid", "==", user.uid)
         );
         const querySnapshot = await getDocs(q);
         const fetchedComplaints = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         } as Complaint));
+
+        // Sort complaints by date on the client-side
+        fetchedComplaints.sort((a, b) => {
+          const dateA = a.createdAt instanceof Timestamp ? a.createdAt.toMillis() : 0;
+          const dateB = b.createdAt instanceof Timestamp ? b.createdAt.toMillis() : 0;
+          return dateB - dateA; // Sort descending (newest first)
+        });
+
         setComplaints(fetchedComplaints);
       } catch (err: any) {
         console.error("Error fetching student complaints:", err);
