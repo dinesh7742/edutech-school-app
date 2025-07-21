@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
@@ -39,14 +39,39 @@ export function StudentDashboardClient() {
   const [latestHomework, setLatestHomework] = useState<LatestContent<Homework>>({ item: null, loading: true });
   const [latestCircular, setLatestCircular] = useState<LatestContent<Circular>>({ item: null, loading: true });
   const [latestLiveClass, setLatestLiveClass] = useState<LatestContent<LiveClass>>({ item: null, loading: true });
-
+  const [pendingNotificationCount, setPendingNotificationCount] = useState(0);
+  const [loadingNotifications, setLoadingNotifications] = useState(true);
 
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
   const [completingHomework, setCompletingHomework] = useState(false);
 
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) {
+      setLoadingNotifications(false);
+      return;
+    }
+
+    const fetchPendingNotifications = async () => {
+      setLoadingNotifications(true);
+      try {
+        const complaintsRef = collection(db, "complaints");
+        const q = query(
+          complaintsRef,
+          where("studentUid", "==", user.uid),
+          where("status", "==", "Pending Acknowledgment")
+        );
+        const snapshot = await getCountFromServer(q);
+        setPendingNotificationCount(snapshot.data().count);
+      } catch (error) {
+        console.error("Error fetching pending notification count:", error);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    };
+    
+    fetchPendingNotifications();
+
 
     const fetchGenericLatestItem = async <T extends { grade?: string | null; division?: string | null; timestamp?: Timestamp }>(
       collectionName: string,
@@ -428,6 +453,7 @@ export function StudentDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => {
           const Icon = card.icon;
+          const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
               <CardHeader className="pb-2 pt-4 items-center">
@@ -440,6 +466,9 @@ export function StudentDashboardClient() {
                       (card.contentData.item as any).timestamp
                       ) && (
                     <Badge variant="highlight" className="animate-pulse">New!</Badge>
+                  )}
+                  {showNotificationBadge && (
+                    <Badge variant="destructive" className="animate-pulse">New!</Badge>
                   )}
                 </CardTitle>
                 <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
