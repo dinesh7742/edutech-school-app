@@ -2,13 +2,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Player } from "@lottiefiles/react-lottie-player";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Download, Loader2, CheckCircle, ArrowRight
+  Download, Loader2, CheckCircle, ArrowRight,
+  FileText, ClipboardList, BookOpen, Image as ImageIcon, Video,
+  FileSignature, Award, User, BarChart3, ListChecks
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -18,7 +19,6 @@ import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, Homewor
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
 import { useToast } from "@/hooks/use-toast";
-
 
 interface LatestContent<T> {
   item: T | null;
@@ -31,7 +31,6 @@ const isNew = (timestamp: Timestamp | undefined): boolean => {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   return itemDate > twentyFourHoursAgo;
 };
-
 
 export function StudentDashboardClient() {
   const { user } = useAuth();
@@ -200,7 +199,7 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      lottieUrl: "https://lottie.host/804b2457-b355-4720-9159-6f103847a956/P2OLw5GSUC.json",
+      icon: FileText,
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -227,7 +226,7 @@ export function StudentDashboardClient() {
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
-      lottieUrl: "https://lottie.host/57530491-382a-430c-b7cb-3b1a45749a21/6bTVLgJ52h.json",
+      icon: ClipboardList,
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
@@ -281,7 +280,7 @@ export function StudentDashboardClient() {
       title: "Circulars",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      lottieUrl: "https://assets9.lottiefiles.com/packages/lf20_z4s3ba7w.json",
+      icon: FileText,
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
@@ -315,7 +314,7 @@ export function StudentDashboardClient() {
       title: "Live Class",
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
-      lottieUrl: "https://assets1.lottiefiles.com/packages/lf20_m2erahco.json",
+      icon: Video,
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => (
@@ -347,7 +346,7 @@ export function StudentDashboardClient() {
       title: "My School Applications",
       link: "/student/my-applications",
       buttonText: "Access Forms & Applications",
-      lottieUrl: "https://lottie.host/804b2457-b355-4720-9159-6f103847a956/P2OLw5GSUC.json",
+      icon: FileSignature,
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
     },
     {
@@ -355,7 +354,7 @@ export function StudentDashboardClient() {
       title: "Textbooks",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      lottieUrl: "https://lottie.host/57530491-382a-430c-b7cb-3b1a45749a21/6bTVLgJ52h.json",
+      icon: BookOpen,
       description: "Access your digital textbooks for all subjects.",
     },
     {
@@ -363,7 +362,7 @@ export function StudentDashboardClient() {
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      lottieUrl: "https://lottie.host/5f532a22-359f-4315-a6e5-42289f6e5229/4ED7b7FQCk.json",
+      icon: ImageIcon,
       description: "Explore photos from school events and activities.",
     },
     {
@@ -371,7 +370,7 @@ export function StudentDashboardClient() {
       title: "Parent Notifications",
       link: "/student/conduct-record",
       buttonText: "View Notifications",
-      lottieUrl: "https://lottie.host/813f569f-3616-466d-89e4-a13480749e7b/H5s3LwKZyT.json",
+      icon: Award,
       description: "View and acknowledge conduct reports from teachers.",
     },
     {
@@ -379,7 +378,7 @@ export function StudentDashboardClient() {
       title: "Download I-Card",
       link: "/student/icard",
       buttonText: "Get My I-Card",
-      lottieUrl: "https://lottie.host/80e9275a-3532-4759-9944-a038f069542a/s0UnF3i0a8.json",
+      icon: User,
       description: "Download your official school identity card.",
     },
     {
@@ -387,7 +386,7 @@ export function StudentDashboardClient() {
       title: "My Attendance",
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
-      lottieUrl: "https://lottie.host/81f4a96c-0a1f-46ff-a5d6-a21239c4a852/4jJj7uT4wD.json",
+      icon: ListChecks,
       description: "View your detailed attendance records.",
     },
     {
@@ -395,7 +394,7 @@ export function StudentDashboardClient() {
       title: "My Profile",
       link: "/student/profile",
       buttonText: "Go to Profile",
-      lottieUrl: "https://lottie.host/9f518e11-5f5c-4340-9a2c-9609f9e316a7/2LgQDA5sNI.json",
+      icon: User,
       description: "Manage your personal information and settings.",
     },
     {
@@ -403,7 +402,7 @@ export function StudentDashboardClient() {
       title: "Progress Card",
       link: "/student/progress-card",
       buttonText: "View Progress Card",
-      lottieUrl: "https://lottie.host/a86f9f91-534f-4318-8745-a75d16c14175/VdKj5SMbIf.json",
+      icon: BarChart3,
       description: "View and download your academic progress report.",
     },
   ];
@@ -415,42 +414,45 @@ export function StudentDashboardClient() {
       <TodaySpecial />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {dashboardCards.map((card) => (
-          <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-               <div className="h-28 w-28 flex items-center justify-center">
-                  <Player src={card.lottieUrl} loop autoplay style={{height: 120, width: 120}} />
-               </div>
-              <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
-                {card.title}
-                {card.contentData?.item && isNew(
-                    (card.contentData.item as any).timestamp
-                    ) && (
-                  <Badge variant="highlight" className="animate-pulse">New!</Badge>
-                )}
-              </CardTitle>
-               <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-              {card.contentData?.loading ? (
-                <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
+        {dashboardCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
+              <CardHeader className="pb-2 pt-4 items-center">
+                <div className="h-28 w-28 flex items-center justify-center">
+                  <Icon className="w-16 h-16 text-primary animate-pulse" />
                 </div>
-              ) : card.renderContent ? (
-                 <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
-                    {card.renderContent(card.contentData.item as any)}
-                 </div>
-              ) : (
-                 <div className="flex-grow flex items-center justify-center min-h-[150px]">
-                 </div>
-              )}
-              <Button asChild className="w-full mt-auto">
-                <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-2 h-4 w-4" /></Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+                  {card.title}
+                  {card.contentData?.item && isNew(
+                      (card.contentData.item as any).timestamp
+                      ) && (
+                    <Badge variant="highlight" className="animate-pulse">New!</Badge>
+                  )}
+                </CardTitle>
+                <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+                {card.contentData?.loading ? (
+                  <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
+                  </div>
+                ) : card.renderContent ? (
+                  <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
+                      {card.renderContent(card.contentData.item as any)}
+                  </div>
+                ) : (
+                  <div className="flex-grow flex items-center justify-center min-h-[150px]">
+                  </div>
+                )}
+                <Button asChild className="w-full mt-auto">
+                  <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
