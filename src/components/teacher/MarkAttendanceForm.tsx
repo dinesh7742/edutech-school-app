@@ -12,16 +12,23 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, CheckCircle, Loader2, Users, XCircle, Search } from "lucide-react";
+import { CalendarIcon, CheckCircle, Loader2, Users, XCircle, Search, MessageSquare, Send } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import type { StudentProfile, DailyAttendanceLog, AttendanceStatus } from "@/types";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 type FormValues = {
   [studentUid: string]: AttendanceStatus;
 };
+
+interface AbsentStudentInfo {
+  uid: string;
+  name: string;
+  contactNumber?: string;
+}
 
 export function MarkAttendanceForm() {
   const { user: teacherUser } = useAuth();
@@ -33,6 +40,7 @@ export function MarkAttendanceForm() {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [absentStudentsForSms, setAbsentStudentsForSms] = useState<AbsentStudentInfo[]>([]);
 
   const { control, handleSubmit, reset, watch, setValue } = useForm<FormValues>({
     defaultValues: {},
@@ -57,12 +65,11 @@ export function MarkAttendanceForm() {
       setStudents(fetchedStudents);
       setFilteredStudents(fetchedStudents);
 
-      // Initialize form with default values for fetched students
       const initialFormValues: FormValues = {};
       fetchedStudents.forEach(student => {
-        initialFormValues[student.uid] = "Present"; // Default to Present
+        initialFormValues[student.uid] = "Present";
       });
-      reset(initialFormValues); // Reset form with defaults
+      reset(initialFormValues);
 
     } catch (error: any) {
       console.error("Error fetching students:", error);
@@ -87,6 +94,7 @@ export function MarkAttendanceForm() {
 
 
   const fetchAttendanceForDate = useCallback(async (date: Date) => {
+    setAbsentStudentsForSms([]); // Clear SMS list when date changes
     if (!teacherUser?.grade || !teacherUser?.division) return;
     setLoadingAttendance(true);
     const formattedDate = format(date, "yyyy-MM-dd");
@@ -97,16 +105,15 @@ export function MarkAttendanceForm() {
       const attendanceDocSnap = await getDoc(attendanceDocRef);
 
       const newFormValues: FormValues = {};
-      students.forEach(student => { // Ensure all current students have a default
+      students.forEach(student => {
          newFormValues[student.uid] = "Present";
       });
 
       if (attendanceDocSnap.exists()) {
         const data = attendanceDocSnap.data() as DailyAttendanceLog;
-        // Override defaults with existing records
         for (const studentUid in data.studentRecords) {
           if (Object.prototype.hasOwnProperty.call(data.studentRecords, studentUid)) {
-             if (newFormValues.hasOwnProperty(studentUid)) { // Only set for current students in class
+             if (newFormValues.hasOwnProperty(studentUid)) {
                 newFormValues[studentUid] = data.studentRecords[studentUid];
              }
           }
@@ -115,11 +122,10 @@ export function MarkAttendanceForm() {
       } else {
          toast({ title: "Info", description: `No prior attendance found for ${formattedDate}. Defaulting all to Present.` });
       }
-      reset(newFormValues); // Reset form with fetched or new default values
+      reset(newFormValues);
     } catch (error: any) {
       console.error("Error fetching attendance:", error);
       toast({ title: "Error", description: "Could not fetch existing attendance. " + error.message, variant: "destructive" });
-      // Reset to default 'Present' for all students if fetch fails
       const defaultValues: FormValues = {};
       students.forEach(student => { defaultValues[student.uid] = "Present"; });
       reset(defaultValues);
@@ -133,7 +139,6 @@ export function MarkAttendanceForm() {
     if (selectedDate && students.length > 0) {
       fetchAttendanceForDate(selectedDate);
     } else if (students.length > 0) {
-      // If date is cleared or no students, reset form to default 'Present' for all
       const initialFormValues: FormValues = {};
       students.forEach(student => {
         initialFormValues[student.uid] = "Present";
@@ -149,6 +154,7 @@ export function MarkAttendanceForm() {
       return;
     }
     setIsSubmitting(true);
+    setAbsentStudentsForSms([]); // Reset on new submission
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     const attendanceDocId = `${formattedDate}_${teacherUser.grade}_${teacherUser.division}`;
     
@@ -164,35 +170,34 @@ export function MarkAttendanceForm() {
 
     try {
       const attendanceDocRef = doc(db, "dailyAttendance", attendanceDocId);
-      await setDoc(attendanceDocRef, attendanceData, { merge: true }); // Use merge true to update if exists or create new
+      await setDoc(attendanceDocRef, attendanceData, { merge: true });
       toast({ title: "Success", description: `Attendance for ${formattedDate} saved successfully.` });
 
-      // --- SMS Simulation Logic ---
+      // --- Prepare list for SMS buttons ---
       const studentMap = new Map(students.map(s => [s.uid, s]));
-      const absentStudentsWithNumbers: string[] = [];
+      const absentees: AbsentStudentInfo[] = [];
 
       for (const studentUid in data) {
         if (data[studentUid] === "Absent") {
           const student = studentMap.get(studentUid);
-          if (student && student.contactNumber) {
-            absentStudentsWithNumbers.push(student.firstName || "Unnamed Student");
-            // This is where a real backend call to an SMS service would be made.
-            const message = `Dear Parent, your child ${student.firstName} ${student.lastName || ''} was absent from school today, ${formattedDate}. - PM SHRI MPS Varsha Nagar`;
-            console.log(
-              `SIMULATING SMS: Sending to parent of ${student.firstName} at ${student.contactNumber}. Message: "${message}"`
-            );
+          if (student) {
+            absentees.push({
+                uid: student.uid,
+                name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+                contactNumber: student.contactNumber,
+            });
           }
         }
       }
-
-      if (absentStudentsWithNumbers.length > 0) {
+      setAbsentStudentsForSms(absentees);
+      if (absentees.length > 0) {
         toast({
-          title: "Absentee Notifications (Simulated)",
-          description: `An SMS would be sent to the parents of: ${absentStudentsWithNumbers.join(", ")}.`,
-          duration: 8000, // Longer duration for visibility
+          title: "Action Required",
+          description: "Please send SMS notifications to the parents of absent students below.",
+          duration: 7000,
         });
       }
-      // --- End SMS Simulation Logic ---
+      // --- End SMS preparation ---
 
     } catch (error: any) {
       console.error("Error saving attendance:", error);
@@ -200,6 +205,14 @@ export function MarkAttendanceForm() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const generateSmsLink = (contactNumber: string, studentName: string) => {
+    if (!selectedDate) return "#";
+    const formattedDate = format(selectedDate, "PPP");
+    const message = `Dear Parent, this is to inform you that your child, ${studentName}, was absent from school today, ${formattedDate}. - PM SHRI MPS Varsha Nagar`;
+    // For iOS, use '&'. For Android, use '?'. '?' is more broadly supported.
+    return `sms:${contactNumber}?body=${encodeURIComponent(message)}`;
   };
 
   return (
@@ -278,10 +291,13 @@ export function MarkAttendanceForm() {
                       <Controller
                         name={`${student.uid}`}
                         control={control}
-                        defaultValue="Present" // Default to Present
+                        defaultValue="Present"
                         render={({ field }) => (
                           <RadioGroup
-                            onValueChange={field.onChange}
+                            onValueChange={(value) => {
+                                field.onChange(value);
+                                setAbsentStudentsForSms([]); // Reset SMS list on change
+                            }}
                             value={field.value}
                             className="flex space-x-4"
                             id={`attendance-${student.uid}`}
@@ -298,7 +314,6 @@ export function MarkAttendanceForm() {
                                 <XCircle className="mr-1 h-5 w-5"/> Absent
                               </Label>
                             </div>
-                            {/* Add Late/Excused options if needed in future */}
                           </RadioGroup>
                         )}
                       />
@@ -313,10 +328,40 @@ export function MarkAttendanceForm() {
 
           <Button type="submit" className="w-full" disabled={isSubmitting || loadingStudents || loadingAttendance || students.length === 0}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Attendance
+            Save Attendance & Prepare Notifications
           </Button>
         </form>
+
+        {absentStudentsForSms.length > 0 && (
+            <div className="mt-8 pt-6 border-t">
+                <h3 className="text-xl font-semibold text-destructive flex items-center gap-2">
+                    <MessageSquare className="h-6 w-6"/>
+                    Absentee Notifications
+                </h3>
+                <p className="text-muted-foreground mt-1">Click to send a pre-filled SMS to the parent of each absent student.</p>
+                <div className="mt-4 space-y-3">
+                    {absentStudentsForSms.map(student => (
+                        <div key={student.uid} className="p-3 border rounded-md flex justify-between items-center">
+                            <span className="font-medium">{student.name}</span>
+                            {student.contactNumber ? (
+                                <Button asChild size="sm">
+                                    <a href={generateSmsLink(student.contactNumber, student.name)} target="_blank" rel="noopener noreferrer">
+                                        <Send className="mr-2 h-4 w-4" />
+                                        Send SMS
+                                    </a>
+                                </Button>
+                            ) : (
+                                <span className="text-xs text-muted-foreground italic">No contact number</span>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        )}
+
       </CardContent>
     </Card>
   );
 }
+
+    
