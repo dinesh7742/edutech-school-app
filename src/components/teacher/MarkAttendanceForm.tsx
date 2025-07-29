@@ -208,9 +208,14 @@ export function MarkAttendanceForm() {
   };
   
   const generateSmsLink = (contactNumber: string, studentName: string) => {
-    if (!selectedDate) return "#";
+    if (!selectedDate || !teacherUser) return "#";
     const formattedDate = format(selectedDate, "PPP");
-    const message = `Dear Parent, this is to inform you that your child, ${studentName}, was absent from school today, ${formattedDate}. - PM SHRI MPS Varsha Nagar`;
+    const teacherName = teacherUser.displayName || "The Class Teacher";
+    const grade = teacherUser.grade || "N/A";
+    const division = teacherUser.division || "N/A";
+    
+    const message = `Dear Parent, this is to inform you that your child, ${studentName} of Grade ${grade}-${division}, was absent from school today, ${formattedDate}. Regards, ${teacherName}, PM SHRI MPS Varsha Nagar.`;
+    
     // For iOS, use '&'. For Android, use '?'. '?' is more broadly supported.
     return `sms:${contactNumber}?body=${encodeURIComponent(message)}`;
   };
@@ -363,5 +368,7 @@ export function MarkAttendanceForm() {
     </Card>
   );
 }
+
+    
 
     
