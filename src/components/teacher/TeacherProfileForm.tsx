@@ -20,8 +20,9 @@ const teacherProfileSchema = z.object({
   displayName: z.string().min(3, "Name must be at least 3 characters"),
   whatsAppNumber: z.string().optional().refine(val => {
     if (!val) return true; // Optional field
-    return /^\+[1-9]\d{1,14}$/.test(val); // Basic E.164 format check
-  }, "Invalid WhatsApp number. Must be in international format (e.g., +91XXXXXXXXXX)."),
+    // Basic E.164 format check, simplified for usability, allows numbers without '+'
+    return /^\+?[1-9]\d{1,14}$/.test(val.replace(/\s/g, ''));
+  }, "Invalid WhatsApp number. Please enter in a valid international format (e.g., +91XXXXXXXXXX or 91XXXXXXXXXX)."),
 });
 
 type TeacherProfileFormValues = z.infer<typeof teacherProfileSchema>;
