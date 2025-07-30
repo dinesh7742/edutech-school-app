@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, ChangeEvent, useEffect } from "react";
+import { useState, ChangeEvent, useEffect, Suspense } from "react";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useSearchParams } from "next/navigation";
 
 const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB for Firestore field limit
 const MAX_RAW_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB for file uploads
@@ -102,13 +103,21 @@ const liveClassSchema = z.object({
 });
 type LiveClassFormValues = z.infer<typeof liveClassSchema>;
 
-
-export function PostContentForm() {
+function PostContentFormLogic() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("notice");
+  const [activeTab, setActiveTab] = useState(tabFromUrl || "notice");
+
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   const defaultGradeDivision = { grade: user?.grade || "1", division: user?.division || "A" };
 
@@ -929,4 +938,12 @@ export function PostContentForm() {
     </Card>
     </>
   );
+}
+
+export function PostContentForm() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PostContentFormLogic />
+        </Suspense>
+    )
 }

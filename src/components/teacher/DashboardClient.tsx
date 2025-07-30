@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare } from "lucide-react";
+import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, ClipboardCheck as ExamIcon } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -457,11 +457,11 @@ export function TeacherDashboardClient() {
       icon: MessageSquareWarning,
     },
     {
-      title: "Manage Progress Cards",
-      description: "Upload an Excel file with student marks to generate all progress cards for your class.",
-      link: "/teacher/upload-progress-cards",
-      buttonText: "Manage Marks",
-      icon: BarChart3,
+      title: "Manage Online Exams",
+      description: "Create and post online exams for your class using Google Forms.",
+      link: "/teacher/post-content?tab=exam",
+      buttonText: "Manage Exams",
+      icon: ExamIcon,
     },
      {
       title: "Download Class Data",
