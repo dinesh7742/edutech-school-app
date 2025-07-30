@@ -24,11 +24,11 @@ export function ExamListClient() {
       setLoading(true);
       try {
         const examsCollection = collection(db, "exams");
+        // The orderBy was removed to prevent the missing index error. Sorting is now done client-side.
         const q = query(
           examsCollection, 
           where("grade", "==", user.grade),
-          where("division", "==", user.division),
-          orderBy("timestamp", "desc")
+          where("division", "==", user.division)
         );
         const querySnapshot = await getDocs(q);
         
@@ -42,6 +42,14 @@ export function ExamListClient() {
             dueDate: data.dueDate ? format(new Date(data.dueDate + 'T00:00:00'), "PPP") : 'N/A',
           } as Exam;
         });
+
+        // Sort the exams by date on the client side
+        fetchedExams.sort((a, b) => {
+            const dateA = a.timestamp instanceof Timestamp ? a.timestamp.toMillis() : 0;
+            const dateB = b.timestamp instanceof Timestamp ? b.timestamp.toMillis() : 0;
+            return dateB - dateA;
+        });
+
         setExams(fetchedExams);
       } catch (error) {
         console.error("Error fetching exams:", error);
