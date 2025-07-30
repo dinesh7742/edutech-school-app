@@ -263,3 +263,23 @@ export interface Complaint {
   parentRemarks?: string;
   parentSignature?: string;
 }
+
+export interface ChatMessage {
+  text: string;
+  senderId: string;
+  senderName: string;
+  timestamp: Timestamp | FieldValue;
+}
+
+export interface Chat {
+  id: string;
+  participants: string[];
+  participantInfo: {
+    [uid: string]: {
+      name: string;
+      role: 'student' | 'teacher';
+    }
+  };
+  messages: ChatMessage[];
+  lastMessageTimestamp: Timestamp | FieldValue;
+}
