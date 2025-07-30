@@ -295,15 +295,6 @@ export function TeacherDashboardClient() {
   
   const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
   
-  const submissionColorClasses = [
-    "bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700/50",
-    "bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-700/50",
-    "bg-amber-100 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700/50",
-    "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-700/50",
-    "bg-pink-100 dark:bg-pink-900/30 border-pink-200 dark:border-pink-700/50",
-  ];
-
-
   const quickStatsItems = [
     {
       id: "studentCount",
@@ -351,8 +342,8 @@ export function TeacherDashboardClient() {
       ) : (
         <div className="w-full h-full max-h-[150px] overflow-y-auto pr-2">
             <ul className="space-y-2 text-xs text-left">
-              {recentSubmissions.map((sub, index) => (
-                <li key={sub.id} className={`p-2 border rounded-md shadow-sm ${submissionColorClasses[index % submissionColorClasses.length]}`}>
+              {recentSubmissions.map((sub) => (
+                <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
                   <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
                   <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
                   <p className="text-muted-foreground">Completed: {sub.completedAt ? format(sub.completedAt.toDate(), "PP pp") : "N/A"}</p>

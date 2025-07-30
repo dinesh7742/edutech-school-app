@@ -6,9 +6,8 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Player } from "@lottiefiles/react-lottie-player";
 import { 
-  Loader2, CheckCircle, ArrowRight
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -223,22 +222,22 @@ export function StudentDashboardClient() {
       title: "Notice Board",
       link: "/student/notices",
       buttonText: "View All Notices",
-      lottieUrl: "https://lottie.host/8172929b-a393-41a4-8f0a-e832d2077978/QAM7Nwu195.json",
+      icon: FileText,
       description: "Latest school announcements and updates.",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
-        <div className="w-full h-full p-2 border-4 border-amber-800 bg-green-900 rounded-md flex flex-col justify-center items-center text-center shadow-inner" style={{background: 'linear-gradient(to bottom right, #0a481e, #0c5c28)'}}>
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center shadow-inner bg-background">
           {data ? (
-            <div className="text-white font-mono space-y-2">
+            <div className="text-foreground space-y-2">
               <h3 className="font-bold text-lg underline">{data.title}</h3>
-              <p className="text-xs text-slate-300">
+              <p className="text-xs text-muted-foreground">
                 Posted: {data.displayDate} by {data.postedByName}
                 {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
               </p>
               <p className="text-sm text-left line-clamp-4 whitespace-pre-wrap">{data.content}</p>
             </div>
           ) : (
-            <div className="text-white font-mono">
+            <div className="text-muted-foreground">
               <p>No new notices relevant to you.</p>
             </div>
           )}
@@ -250,20 +249,20 @@ export function StudentDashboardClient() {
       title: "Homework",
       link: "/student/homework",
       buttonText: "View All Homework",
-      lottieUrl: "https://lottie.host/57530491-382a-430c-b7cb-3b1a45749a21/6bTVLgJ52h.json",
+      icon: ClipboardList,
       description: "Check your latest assignments and due dates.",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
-        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-[#f0f4f8] bg-cover" style={{backgroundImage: "linear-gradient(90deg, #d3e0f0 1px, transparent 1px), linear-gradient(180deg, #d3e0f0 1px, transparent 1px)", backgroundSize: '1.5rem 1.5rem'}}>
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
            {data ? (
-              <div className="text-left w-full space-y-1 p-1 sm:p-2 rounded-md bg-white/80 backdrop-blur-sm">
-                <h3 className="font-semibold text-md text-gray-800">{data.title}</h3>
+              <div className="text-left w-full space-y-1 p-1 sm:p-2 rounded-md bg-card">
+                <h3 className="font-semibold text-md text-card-foreground">{data.title}</h3>
                 <div className="text-xs text-muted-foreground">
                   Subject: {data.subject} | Due: {data.dueDate} <br/>
                   Posted: {data.displayDate} by {data.postedByName}
                   {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                 </div>
-                {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap text-gray-700">{data.description}</p>}
+                {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap text-card-foreground">{data.description}</p>}
                 
                 {data.attachments && data.attachments.length > 0 && (
                   <Button asChild variant="outline" size="sm" className="mt-2">
@@ -303,13 +302,13 @@ export function StudentDashboardClient() {
       title: "Circulars",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      lottieUrl: "https://lottie.host/762e3f5c-8961-4662-a631-f53e6b701be5/i52E9L4hN9.json",
+      icon: FileText,
       description: "Important circulars and official communications.",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
-         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-gray-50">
+         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
             {data ? (
-                <div className="text-left w-full space-y-1 p-1 sm:p-2 border rounded-md bg-white/90 shadow-sm">
+                <div className="text-left w-full space-y-1 p-1 sm:p-2 border rounded-md bg-card shadow-sm">
                     <h3 className="font-semibold text-md">{data.title}</h3>
                     <div className="text-xs text-muted-foreground">
                     Posted: {data.displayDate} by {data.postedByName}
@@ -337,15 +336,15 @@ export function StudentDashboardClient() {
       title: "Live Class",
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
-      lottieUrl: "https://lottie.host/1709cc5b-80a2-4a7b-a3a8-4c8d03063462/kGv0j2sS6h.json",
+      icon: Video,
       description: "Join scheduled live classes and sessions.",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => (
-        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-gray-800 text-white">
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
             {data ? (
-                <div className="text-left w-full space-y-2 p-1 sm:p-2 rounded-md bg-gray-900/80">
+                <div className="text-left w-full space-y-2 p-1 sm:p-2 rounded-md bg-card">
                 <h3 className="font-semibold text-md">{data.subject}</h3>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-muted-foreground">
                     Posted: {data.displayDate} by {data.postedByName}
                     {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
                     {!data.grade && ' | School Wide'}
@@ -359,7 +358,7 @@ export function StudentDashboardClient() {
                 </Button>
                 </div>
             ) : (
-                 <p className="text-gray-400 font-medium">No live classes scheduled for you.</p>
+                 <p className="text-muted-foreground font-medium">No live classes scheduled for you.</p>
             )}
         </div>
       ),
@@ -369,7 +368,7 @@ export function StudentDashboardClient() {
       title: "My School Applications",
       link: "/student/my-applications",
       buttonText: "Access Forms",
-      lottieUrl: "https://lottie.host/5965a3e1-c906-4447-b12a-3b6a22055615/jYm38WN1qk.json",
+      icon: FileSignature,
       description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
     },
     {
@@ -377,7 +376,7 @@ export function StudentDashboardClient() {
       title: "Textbooks",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      lottieUrl: "https://lottie.host/2275685a-48a5-42a1-8d59-33512280d0b0/oQ4eCqMX6c.json",
+      icon: BookOpen,
       description: "Access your digital textbooks for all subjects.",
     },
     {
@@ -385,7 +384,7 @@ export function StudentDashboardClient() {
       title: "Photo Gallery",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      lottieUrl: "https://lottie.host/79017c66-4147-4939-b9d9-5f1066d5be9b/x4t6Vv7aVd.json",
+      icon: ImageIcon,
       description: "Explore photos from school events and activities.",
     },
     {
@@ -393,7 +392,7 @@ export function StudentDashboardClient() {
       title: "Parent Notifications",
       link: "/student/conduct-record",
       buttonText: "View Notifications",
-      lottieUrl: "https://lottie.host/6e02611e-81f7-4143-a616-e52b21c43632/Y2kIuL9M1L.json",
+      icon: FileSignature,
       description: "View and acknowledge conduct reports from teachers.",
     },
     {
@@ -401,7 +400,7 @@ export function StudentDashboardClient() {
       title: "Download I-Card",
       link: "/student/icard",
       buttonText: "Get My I-Card",
-      lottieUrl: "https://lottie.host/d6b359a1-6a4a-471a-bc0b-9c2b9f39b69b/gBVR2s2277.json",
+      icon: Contact,
       description: "Download your official school identity card.",
     },
     {
@@ -409,7 +408,7 @@ export function StudentDashboardClient() {
       title: "My Attendance",
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
-      lottieUrl: "https://lottie.host/28a9b3d0-a083-4217-a068-a40552b7c6c4/y71U59yM9Z.json",
+      icon: CheckCircle,
       description: "View your detailed attendance records.",
     },
     {
@@ -417,7 +416,7 @@ export function StudentDashboardClient() {
       title: "My Profile",
       link: "/student/profile",
       buttonText: "Go to Profile",
-      lottieUrl: "https://lottie.host/6f7e452a-1918-47c3-b295-a28a1c97a5b3/t2Qv9kvvM1.json",
+      icon: Users,
       description: "Manage your personal information and settings.",
     },
     {
@@ -425,7 +424,7 @@ export function StudentDashboardClient() {
       title: "Progress Card",
       link: "/student/progress-card",
       buttonText: "View Progress Card",
-      lottieUrl: "https://lottie.host/9d311cf5-814a-4f11-995a-bd5811776992/5k5mY2j2rT.json",
+      icon: BarChart3,
       description: "View and download your academic progress report.",
     },
   ];
@@ -443,12 +442,7 @@ export function StudentDashboardClient() {
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
               <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                  <Player
-                    autoplay
-                    loop
-                    src={card.lottieUrl}
-                    style={{ height: '112px', width: '112px' }}
-                  />
+                  <card.icon className="h-16 w-16 text-primary" />
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                   {card.title}
