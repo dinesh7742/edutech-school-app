@@ -44,7 +44,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 // Phone Login Schemas
 const phoneSchema = z.object({
-  phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number with country code."),
+  phoneNumber: z.string().regex(/^\+[1-9]\d{1,14}$/, "Phone number must be in E.164 format (e.g., +919876543210)."),
 });
 type PhoneFormValues = z.infer<typeof phoneSchema>;
 
