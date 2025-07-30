@@ -268,7 +268,7 @@ export interface ChatMessage {
   text: string;
   senderId: string;
   senderName: string;
-  timestamp: Timestamp | FieldValue;
+  timestamp: Timestamp; // FIX: Changed from Timestamp | FieldValue
 }
 
 export interface Chat {

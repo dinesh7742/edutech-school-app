@@ -105,7 +105,7 @@ export function ChatClient() {
       text: newMessage,
       senderId: user.uid,
       senderName: user.displayName || "Student",
-      timestamp: serverTimestamp(),
+      timestamp: Timestamp.now(), // FIX: Use client-side timestamp
     };
 
     try {
@@ -113,8 +113,10 @@ export function ChatClient() {
       const chatDoc = await getDoc(chatDocRef);
 
       if (chatDoc.exists()) {
+        const existingMessages = chatDoc.data().messages || [];
         await setDoc(chatDocRef, {
-          messages: [...messages, messageData]
+          messages: [...existingMessages, messageData],
+          lastMessageTimestamp: serverTimestamp(),
         }, { merge: true });
       } else {
         await setDoc(chatDocRef, {
