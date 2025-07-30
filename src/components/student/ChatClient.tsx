@@ -1,19 +1,22 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, Timestamp } from "firebase/firestore";
-import type { ChatMessage, AppUser } from "@/types";
+import type { ChatMessage, AppUser, Attachment } from "@/types";
+import Image from "next/image";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, MessageSquare } from "lucide-react";
+import { Loader2, Send, MessageSquare, Paperclip, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+
+const MAX_ATTACHMENT_SIZE_BYTES = 1024 * 1024; // 1MB
 
 export function ChatClient() {
   const { user } = useAuth();
@@ -25,6 +28,10 @@ export function ChatClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,43 +103,88 @@ export function ChatClient() {
 
   }, [chatId, toast]);
 
+  const handleAttachmentChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+        toast({
+          title: "File too large",
+          description: `Please select a file smaller than ${MAX_ATTACHMENT_SIZE_BYTES / 1024 / 1024}MB.`,
+          variant: "destructive"
+        });
+        return;
+      }
+      setAttachmentFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAttachmentPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeAttachment = () => {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = "";
+    }
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newMessage.trim() === "" || !user || !teacher || !chatId) return;
+    if ((newMessage.trim() === "" && !attachmentFile) || !user || !teacher || !chatId) return;
 
     setIsSending(true);
+    
+    let attachmentData: Attachment | null = null;
+    if (attachmentFile && attachmentPreview) {
+        attachmentData = {
+            url: attachmentPreview,
+            type: attachmentFile.type,
+            name: attachmentFile.name,
+        };
+    }
+
     const messageData: ChatMessage = {
       text: newMessage,
       senderId: user.uid,
       senderName: user.displayName || "Student",
-      timestamp: Timestamp.now(), // FIX: Use client-side timestamp
+      timestamp: Timestamp.now(),
+      attachment: attachmentData,
     };
 
     try {
       const chatDocRef = doc(db, "chats", chatId);
       const chatDoc = await getDoc(chatDocRef);
 
+      const participantInfo = {
+            [user.uid]: { name: user.displayName, role: 'student', photoURL: user.photoURL || null },
+            [teacher.uid]: { name: teacher.displayName, role: 'teacher', photoURL: teacher.photoURL || null }
+      };
+
       if (chatDoc.exists()) {
         const existingMessages = chatDoc.data().messages || [];
         await setDoc(chatDocRef, {
           messages: [...existingMessages, messageData],
+          participantInfo, // Update participant info in case of profile changes
           lastMessageTimestamp: serverTimestamp(),
+          lastMessageText: newMessage.trim() || `Attachment: ${attachmentFile?.name}`,
         }, { merge: true });
       } else {
         await setDoc(chatDocRef, {
           participants: [user.uid, teacher.uid],
-          participantInfo: {
-            [user.uid]: { name: user.displayName, role: 'student' },
-            [teacher.uid]: { name: teacher.displayName, role: 'teacher' }
-          },
+          participantInfo,
           messages: [messageData],
           lastMessageTimestamp: serverTimestamp(),
+          lastMessageText: newMessage.trim() || `Attachment: ${attachmentFile?.name}`,
         });
       }
       setNewMessage("");
-    } catch (error) {
+      removeAttachment();
+    } catch (error: any) {
       console.error("Error sending message:", error);
-      toast({ title: "Error", description: "Could not send message.", variant: "destructive" });
+      toast({ title: "Error", description: `Could not send message. ${error.message.includes('exceeds the maximum') ? 'The attachment is too large.' : ''}`, variant: "destructive" });
     } finally {
       setIsSending(false);
     }
@@ -188,11 +240,18 @@ export function ChatClient() {
                        <AvatarFallback>{getInitials(teacher?.displayName)}</AvatarFallback>
                      </Avatar>
                   )}
-                  <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${isSender ? "bg-primary text-primary-foreground rounded-br-none" : "bg-background rounded-bl-none border"}`}>
-                    <p className="text-sm">{msg.text}</p>
-                    <p className={`text-xs mt-1 ${isSender ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {format(timestamp, 'p')}
-                    </p>
+                  <div className={`max-w-xs md:max-w-md p-1 rounded-2xl ${isSender ? "bg-primary text-primary-foreground rounded-br-none" : "bg-background rounded-bl-none border"}`}>
+                    <div className="p-2">
+                      {msg.attachment && msg.attachment.type.startsWith("image/") && (
+                        <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer" className="block mb-2">
+                            <Image src={msg.attachment.url} alt={msg.attachment.name} width={200} height={200} className="rounded-lg object-cover" />
+                        </a>
+                      )}
+                      {msg.text && <p className="text-sm whitespace-pre-wrap">{msg.text}</p>}
+                      <p className={`text-xs mt-1 text-right ${isSender ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                        {format(timestamp, 'p')}
+                      </p>
+                    </div>
                   </div>
                    {isSender && (
                      <Avatar className="h-8 w-8">
@@ -206,14 +265,34 @@ export function ChatClient() {
           )}
            <div ref={messagesEndRef} />
         </div>
+        
+        {attachmentPreview && (
+            <div className="relative mb-2 p-2 border rounded-md w-fit">
+                <Image src={attachmentPreview} alt="attachment preview" width={80} height={80} className="rounded" />
+                <Button variant="ghost" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={removeAttachment}>
+                    <X className="h-4 w-4" />
+                </Button>
+            </div>
+        )}
+
         <form onSubmit={handleSendMessage} className="flex gap-2">
+            <Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()}>
+                <Paperclip className="h-5 w-5" />
+            </Button>
+            <Input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleAttachmentChange}
+            />
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
             disabled={!teacher || isSending}
           />
-          <Button type="submit" disabled={!teacher || isSending || newMessage.trim() === ''}>
+          <Button type="submit" disabled={!teacher || isSending || (newMessage.trim() === '' && !attachmentFile)}>
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             <span className="sr-only">Send</span>
           </Button>

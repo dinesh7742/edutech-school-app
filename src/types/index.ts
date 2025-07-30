@@ -264,11 +264,18 @@ export interface Complaint {
   parentSignature?: string;
 }
 
+export interface Attachment {
+  url: string;
+  type: string;
+  name: string;
+}
+
 export interface ChatMessage {
   text: string;
   senderId: string;
   senderName: string;
-  timestamp: Timestamp; // FIX: Changed from Timestamp | FieldValue
+  timestamp: Timestamp;
+  attachment?: Attachment | null;
 }
 
 export interface Chat {
@@ -278,8 +285,10 @@ export interface Chat {
     [uid: string]: {
       name: string;
       role: 'student' | 'teacher';
+      photoURL?: string | null;
     }
   };
   messages: ChatMessage[];
   lastMessageTimestamp: Timestamp | FieldValue;
+  lastMessageText?: string;
 }
