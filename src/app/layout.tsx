@@ -24,7 +24,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </AuthProvider>
-        <Script src="https://www.google.com/recaptcha/api.js" async defer />
+        {/* The reCAPTCHA script is no longer needed for email-only auth */}
       </body>
     </html>
   );
