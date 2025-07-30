@@ -96,29 +96,27 @@ export function StudentDataList() {
     if (!studentId) return;
     setIsDeleting(studentId);
     try {
-      // Delete from studentProfiles collection
+      // This function only deletes Firestore data, not the authentication account.
+      // This is a client-side limitation. Full user deletion requires a backend function.
       const studentProfileDocRef = doc(db, "studentProfiles", studentId);
       await deleteDoc(studentProfileDocRef);
 
-      // Delete from users collection
       const userDocRef = doc(db, "users", studentId);
       await deleteDoc(userDocRef);
-
-      // TODO: Implement Firebase Authentication user deletion (requires Admin SDK on backend/Cloud Function)
-      // Example: await deleteUser(auth, studentId); - THIS WILL NOT WORK CLIENT-SIDE FOR OTHER USERS
 
       setStudents(prevStudents => prevStudents.filter(student => student.uid !== studentId));
       setFilteredStudents(prevFiltered => prevFiltered.filter(student => student.uid !== studentId));
       
       toast({
-        title: "Student Deleted",
-        description: `${studentName} has been removed successfully.`,
+        title: "Student Data Deleted",
+        description: `All database records for ${studentName} have been removed. Their login account still exists.`,
+        duration: 7000,
       });
     } catch (error: any) {
-      console.error("Error deleting student:", error);
+      console.error("Error deleting student data:", error);
       toast({
-        title: "Error Deleting Student",
-        description: `Could not remove ${studentName}. ${error.message}`,
+        title: "Error Deleting Student Data",
+        description: `Could not remove ${studentName}'s data. ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -232,8 +230,9 @@ export function StudentDataList() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the student's profile ({student.firstName} {student.lastName || ''}) and their user record from Firestore.
-                            It will NOT delete their Firebase Authentication account (login credentials).
+                            This will permanently delete all of the student's data records (profile, etc.) from the database.
+                            <br/><br/>
+                            <strong className="text-destructive">IMPORTANT:</strong> This action <strong className="underline">cannot</strong> delete the user's login account. They will NOT be able to sign up again with the same credentials. Full user deletion requires administrative action on the backend.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -242,7 +241,7 @@ export function StudentDataList() {
                             onClick={() => handleDeleteStudent(student.uid, `${student.firstName} ${student.lastName || ''}`)}
                             className={isDeleting === student.uid ? "bg-destructive/80" : "bg-destructive hover:bg-destructive/90"}
                           >
-                            {isDeleting === student.uid ? "Deleting..." : "Yes, delete student"}
+                            {isDeleting === student.uid ? "Deleting..." : "Yes, delete student data"}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
