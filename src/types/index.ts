@@ -292,3 +292,18 @@ export interface Chat {
   lastMessageTimestamp: Timestamp | FieldValue;
   lastMessageText?: string;
 }
+
+export interface Exam {
+  id: string;
+  title: string;
+  subject: string;
+  totalMarks: number;
+  dueDate: string;
+  googleFormLink: string;
+  grade: string;
+  division: string;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue;
+  displayDate?: string;
+}

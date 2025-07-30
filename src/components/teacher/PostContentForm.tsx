@@ -14,11 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus } from "lucide-react";
+import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus, ClipboardCheck } from "lucide-react";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
-import type { Notice, Homework, HomeworkAttachment } from "@/types";
+import type { Notice, Homework, HomeworkAttachment, Exam } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,6 +54,16 @@ const homeworkSchema = z.object({
   description: z.string().optional(),
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
+
+const examSchema = z.object({
+  title: z.string().min(3, "Exam title is required"),
+  subject: z.string().min(1, "Subject is required"),
+  totalMarks: z.coerce.number().min(1, "Total marks must be at least 1."),
+  dueDate: z.string().refine((val) => !!val, "Due date is required."),
+  googleFormLink: z.string().url("Please enter a valid Google Form URL."),
+});
+type ExamFormValues = z.infer<typeof examSchema>;
+
 
 const circularSchema = z.object({
   title: z.string().min(3, "Title is required"),
@@ -108,6 +118,7 @@ export function PostContentForm() {
   const [homeworkFiles, setHomeworkFiles] = useState<File[]>([]);
   const [homeworkFilePreviews, setHomeworkFilePreviews] = useState<{name: string, type: string, url: string}[]>([]);
 
+  const formExam = useForm<ExamFormValues>({ resolver: zodResolver(examSchema) });
 
   const formCircular = useForm<CircularFormValues>({ resolver: zodResolver(circularSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   
@@ -271,55 +282,55 @@ export function PostContentForm() {
         timestamp: serverTimestamp(),
       };
 
-      if (type === "homework") {
+      if (type === "homework" || type === "exam") {
         if (!user.grade || !user.division) {
             toast({ title: "Error", description: "Your teacher profile is missing a grade/division.", variant: "destructive" });
             setIsLoading(false);
             return;
         }
-        collectionName = "homework";
+        collectionName = type === "homework" ? "homework" : "exams";
 
         documentData = {
           ...documentData,
-          subject: data.subject,
-          dueDate: data.dueDate,
-          title: `Homework: ${data.subject} - ${data.dueDate}`,
           grade: user.grade,
           division: user.division,
         };
         
-        const uploadedAttachments: HomeworkAttachment[] = [];
-        if (homeworkFiles.length > 0) {
-            for (const file of homeworkFiles) {
-                const fileDataUri = await new Promise<string>((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.onerror = reject;
-                    reader.readAsDataURL(file);
-                });
+        if (type === "homework") {
+          documentData.title = `Homework: ${data.subject} - ${data.dueDate}`;
+          const uploadedAttachments: HomeworkAttachment[] = [];
+          if (homeworkFiles.length > 0) {
+              for (const file of homeworkFiles) {
+                  const fileDataUri = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(file);
+                  });
 
-                if (fileDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
-                    toast({
-                      title: "File Skipped",
-                      description: `${file.name} is too large (>1MB) to save directly and was skipped.`,
-                      variant: "destructive",
-                    });
-                    continue;
-                }
+                  if (fileDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
+                      toast({
+                        title: "File Skipped",
+                        description: `${file.name} is too large (>1MB) to save directly and was skipped.`,
+                        variant: "destructive",
+                      });
+                      continue;
+                  }
 
-                let fileType: HomeworkAttachment['type'] = 'other';
-                if (file.type.startsWith('image/')) fileType = 'image';
-                else if (file.type.startsWith('video/')) fileType = 'video';
-                else if (file.type === 'application/pdf') fileType = 'pdf';
+                  let fileType: HomeworkAttachment['type'] = 'other';
+                  if (file.type.startsWith('image/')) fileType = 'image';
+                  else if (file.type.startsWith('video/')) fileType = 'video';
+                  else if (file.type === 'application/pdf') fileType = 'pdf';
 
-                uploadedAttachments.push({
-                    name: file.name,
-                    url: fileDataUri,
-                    type: fileType,
-                });
-            }
+                  uploadedAttachments.push({
+                      name: file.name,
+                      url: fileDataUri,
+                      type: fileType,
+                  });
+              }
+          }
+          documentData.attachments = uploadedAttachments;
         }
-        documentData.attachments = uploadedAttachments;
 
       } else if (type === "textbook") {
         collectionName = "textbooks";
@@ -420,6 +431,9 @@ export function PostContentForm() {
         setHomeworkFiles([]);
         setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
+      }
+      if (type === 'exam') {
+        formExam.reset();
       }
       if (type === 'circular') formCircular.reset({ title: "", description: "", fileUrl: "", fileName: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
       if (type === 'textbook') {
@@ -555,9 +569,10 @@ export function PostContentForm() {
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardContent className="pt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mb-6 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-6 h-auto">
             <TabsTrigger value="notice" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Notices</TabsTrigger>
             <TabsTrigger value="homework" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Homework</TabsTrigger>
+            <TabsTrigger value="exam" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Exams</TabsTrigger>
             <TabsTrigger value="circular" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Circulars</TabsTrigger>
             <TabsTrigger value="textbook" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Textbooks</TabsTrigger>
             <TabsTrigger value="gallery" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Gallery</TabsTrigger>
@@ -633,6 +648,42 @@ export function PostContentForm() {
                 )}
               <Button type="submit" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Homework
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="exam">
+            <form onSubmit={formExam.handleSubmit(data => handleFormSubmit(data, "exam"))} className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Exams will be posted for your assigned class: Grade {user?.grade || 'N/A'}-{user?.division || 'N/A'}.
+                </p>
+                <div>
+                  <Label htmlFor="examTitle">Exam Title *</Label>
+                  <Input id="examTitle" {...formExam.register("title")} placeholder="e.g., Mid-Term Science Exam" />
+                  {formExam.formState.errors.title && <p className="text-sm text-destructive mt-1">{formExam.formState.errors.title.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="examSubject">Subject *</Label>
+                  <Input id="examSubject" {...formExam.register("subject")} placeholder="e.g., Science"/>
+                  {formExam.formState.errors.subject && <p className="text-sm text-destructive mt-1">{formExam.formState.errors.subject.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="examTotalMarks">Total Marks *</Label>
+                  <Input id="examTotalMarks" type="number" {...formExam.register("totalMarks")} />
+                  {formExam.formState.errors.totalMarks && <p className="text-sm text-destructive mt-1">{formExam.formState.errors.totalMarks.message}</p>}
+                </div>
+                 <div>
+                  <Label htmlFor="examDueDate">Due Date *</Label>
+                  <Input id="examDueDate" type="date" {...formExam.register("dueDate")} />
+                  {formExam.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{formExam.formState.errors.dueDate.message}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="examGoogleFormLink">Google Form Link *</Label>
+                  <Input id="examGoogleFormLink" {...formExam.register("googleFormLink")} placeholder="https://docs.google.com/forms/..." />
+                  {formExam.formState.errors.googleFormLink && <p className="text-sm text-destructive mt-1">{formExam.formState.errors.googleFormLink.message}</p>}
+                </div>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Post Exam
               </Button>
             </form>
           </TabsContent>

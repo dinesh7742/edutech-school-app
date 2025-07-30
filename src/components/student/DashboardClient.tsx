@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -296,6 +296,14 @@ export function StudentDashboardClient() {
             )}
         </div>
       ),
+    },
+    {
+      id: "exams",
+      title: "Online Exams / ऑनलाइन परीक्षा",
+      link: "/student/exams",
+      buttonText: "View All Exams",
+      icon: ExamIcon,
+      description: "Take online exams and tests assigned to your class. / अपनी कक्षा को सौंपे गए ऑनलाइन परीक्षा और टेस्ट दें।",
     },
     {
       id: "circulars",
