@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, Timestamp, orderBy } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, Timestamp, orderBy, writeBatch } from "firebase/firestore";
 import type { ChatMessage, AppUser, Chat, Attachment } from "@/types";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -40,6 +40,30 @@ export function TeacherChatClient() {
       ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
       : name.substring(0, 2).toUpperCase();
   };
+  
+    const markMessagesAsRead = async (chatId: string, currentMessages: ChatMessage[]) => {
+      if (!teacherUser) return;
+      const batch = writeBatch(db);
+      const chatDocRef = doc(db, "chats", chatId);
+      let needsUpdate = false;
+
+      const updatedMessages = currentMessages.map(msg => {
+          if (msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid)) {
+              needsUpdate = true;
+              return { ...msg, readBy: [...(msg.readBy || []), teacherUser.uid] };
+          }
+          return msg;
+      });
+
+      if (needsUpdate) {
+          batch.update(chatDocRef, { messages: updatedMessages });
+          try {
+              await batch.commit();
+          } catch (error) {
+              console.error("Error marking messages as read: ", error);
+          }
+      }
+  };
 
   useEffect(() => {
     if (!teacherUser) return;
@@ -70,12 +94,14 @@ export function TeacherChatClient() {
 
     const unsub = onSnapshot(doc(db, "chats", selectedChat.id), (doc) => {
       if (doc.exists()) {
-        setMessages(doc.data().messages || []);
+        const currentMessages = doc.data().messages || [];
+        setMessages(currentMessages);
+        markMessagesAsRead(selectedChat.id, currentMessages);
       }
     });
 
     return () => unsub();
-  }, [selectedChat]);
+  }, [selectedChat, teacherUser]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -122,6 +148,7 @@ export function TeacherChatClient() {
       senderName: teacherUser.displayName || "Teacher",
       timestamp: Timestamp.now(),
       attachment: attachmentData,
+      readBy: [teacherUser.uid], // Mark as read by sender
     };
 
     try {
@@ -252,6 +279,7 @@ export function TeacherChatClient() {
             {conversations.map(chat => {
               const otherUserId = chat.participants.find(p => p !== teacherUser?.uid);
               const otherUserInfo = otherUserId ? chat.participantInfo[otherUserId] : null;
+              const hasUnread = chat.messages.some(msg => msg.senderId !== teacherUser?.uid && !msg.readBy?.includes(teacherUser?.uid || ''));
 
               return (
                 <button
@@ -267,9 +295,12 @@ export function TeacherChatClient() {
                     <p className="font-semibold truncate">{otherUserInfo?.name || 'Unknown Student'}</p>
                     <p className="text-sm text-muted-foreground truncate">{chat.lastMessageText || '...'}</p>
                   </div>
-                  {chat.lastMessageTimestamp && (
-                    <p className="text-xs text-muted-foreground self-start">{format((chat.lastMessageTimestamp as Timestamp).toDate(), 'p')}</p>
-                  )}
+                  <div className="flex flex-col items-end">
+                    {chat.lastMessageTimestamp && (
+                      <p className="text-xs text-muted-foreground self-start mb-1">{format((chat.lastMessageTimestamp as Timestamp).toDate(), 'p')}</p>
+                    )}
+                    {hasUnread && <span className="h-3 w-3 rounded-full bg-destructive animate-pulse"></span>}
+                  </div>
                 </button>
               );
             })}

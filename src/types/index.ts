@@ -276,6 +276,7 @@ export interface ChatMessage {
   senderName: string;
   timestamp: Timestamp;
   attachment?: Attachment | null;
+  readBy?: string[]; // Array of UIDs who have read the message
 }
 
 export interface Chat {

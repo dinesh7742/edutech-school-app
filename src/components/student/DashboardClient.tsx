@@ -12,8 +12,8 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment } from "@/types";
+import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot } from "firebase/firestore";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,7 @@ export function StudentDashboardClient() {
   const [latestLiveClass, setLatestLiveClass] = useState<LatestContent<LiveClass>>({ item: null, loading: true });
   const [pendingNotificationCount, setPendingNotificationCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
   const [completingHomework, setCompletingHomework] = useState(false);
@@ -173,6 +174,27 @@ export function StudentDashboardClient() {
       }
     };
     fetchLatestHomework();
+
+    // Check for unread messages
+    const chatsRef = collection(db, "chats");
+    const chatsQuery = query(chatsRef, where("participants", "array-contains", user.uid));
+    const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+      let unreadFound = false;
+      snapshot.forEach((chatDoc) => {
+        const messages = (chatDoc.data().messages || []) as ChatMessage[];
+        for (const msg of messages) {
+          if (msg.senderId !== user.uid && !msg.readBy?.includes(user.uid)) {
+            unreadFound = true;
+            break;
+          }
+        }
+        if (unreadFound) return;
+      });
+      setHasUnreadMessages(unreadFound);
+    });
+    
+    return () => unsubscribe();
+
 
   }, [user, toast]);
 
@@ -454,6 +476,7 @@ export function StudentDashboardClient() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {dashboardCards.map((card) => {
           const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
+          const showChatBadge = card.id === "chat" && hasUnreadMessages;
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
               <CardHeader className="pb-2 pt-4 items-center">
@@ -468,6 +491,9 @@ export function StudentDashboardClient() {
                     <Badge variant="highlight" className="animate-pulse">New!</Badge>
                   )}
                   {showNotificationBadge && (
+                    <Badge variant="destructive" className="animate-pulse">New!</Badge>
+                  )}
+                  {showChatBadge && (
                     <Badge variant="destructive" className="animate-pulse">New!</Badge>
                   )}
                 </CardTitle>

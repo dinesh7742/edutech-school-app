@@ -10,8 +10,8 @@ import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy, limit, Timestamp, getCountFromServer, doc, getDoc } from "firebase/firestore";
-import type { StudentProfile, HomeworkSubmission } from "@/types";
+import { collection, query, where, getDocs, orderBy, limit, Timestamp, getCountFromServer, doc, getDoc, onSnapshot } from "firebase/firestore";
+import type { StudentProfile, HomeworkSubmission, ChatMessage } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -37,6 +37,8 @@ export function TeacherDashboardClient() {
 
   const [todaysAttendanceMarked, setTodaysAttendanceMarked] = useState<boolean | null>(null);
   const [loadingTodaysAttendanceStatus, setLoadingTodaysAttendanceStatus] = useState(true);
+  
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   const handleDownloadStudentData = async () => {
     if (!teacherUser?.grade || !teacherUser?.division) {
@@ -125,6 +127,8 @@ export function TeacherDashboardClient() {
 
 
   useEffect(() => {
+    if (!teacherUser) return;
+
     const fetchStudentData = async () => {
       if (teacherUser && teacherUser.grade && teacherUser.division) {
         setLoadingStudentCount(true);
@@ -274,6 +278,26 @@ export function TeacherDashboardClient() {
     fetchRecentSubmissions();
     fetchPendingCounts();
     checkTodaysAttendance();
+
+    // Set up listener for unread messages
+    const chatsRef = collection(db, "chats");
+    const chatsQuery = query(chatsRef, where("participants", "array-contains", teacherUser.uid));
+    const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+        let unreadFound = false;
+        snapshot.forEach((chatDoc) => {
+            const messages = (chatDoc.data().messages || []) as ChatMessage[];
+            for (const msg of messages) {
+                if (msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid)) {
+                    unreadFound = true;
+                    break;
+                }
+            }
+            if (unreadFound) return;
+        });
+        setHasUnreadMessages(unreadFound);
+    });
+
+    return () => unsubscribe();
   }, [teacherUser, toast]);
 
   const getAttendanceCardDescription = () => {
@@ -448,6 +472,7 @@ export function TeacherDashboardClient() {
       link: "/teacher/chat",
       buttonText: "Open Chats",
       icon: MessageSquare,
+      hasNotification: hasUnreadMessages,
     },
     {
       title: "Student Conduct",
@@ -506,6 +531,9 @@ export function TeacherDashboardClient() {
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
                         {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
+                           <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                        )}
+                        {item.title === "Student Chats" && item.hasNotification && (
                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
                     </CardTitle>

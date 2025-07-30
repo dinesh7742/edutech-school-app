@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, ChangeEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, Timestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, serverTimestamp, Timestamp, writeBatch } from "firebase/firestore";
 import type { ChatMessage, AppUser, Attachment } from "@/types";
 import Image from "next/image";
 
@@ -36,6 +36,31 @@ export function ChatClient() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const markMessagesAsRead = async (chatId: string, currentMessages: ChatMessage[]) => {
+      if (!user) return;
+      const batch = writeBatch(db);
+      const chatDocRef = doc(db, "chats", chatId);
+      let needsUpdate = false;
+
+      const updatedMessages = currentMessages.map(msg => {
+          if (msg.senderId !== user.uid && !msg.readBy?.includes(user.uid)) {
+              needsUpdate = true;
+              return { ...msg, readBy: [...(msg.readBy || []), user.uid] };
+          }
+          return msg;
+      });
+
+      if (needsUpdate) {
+          batch.update(chatDocRef, { messages: updatedMessages });
+          try {
+              await batch.commit();
+          } catch (error) {
+              console.error("Error marking messages as read: ", error);
+          }
+      }
+  };
+
 
   useEffect(() => {
     if (!user || !user.grade || !user.division) {
@@ -87,7 +112,9 @@ export function ChatClient() {
     const unsubscribe = onSnapshot(chatDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const chatData = docSnap.data();
-        setMessages(chatData.messages || []);
+        const currentMessages = chatData.messages || [];
+        setMessages(currentMessages);
+        markMessagesAsRead(chatId, currentMessages);
       } else {
         // Chat doesn't exist yet, so no messages
         setMessages([]);
@@ -101,7 +128,7 @@ export function ChatClient() {
 
     return () => unsubscribe();
 
-  }, [chatId, toast]);
+  }, [chatId, toast, user]);
 
   const handleAttachmentChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -152,6 +179,7 @@ export function ChatClient() {
       senderName: user.displayName || "Student",
       timestamp: Timestamp.now(),
       attachment: attachmentData,
+      readBy: [user.uid], // Mark as read by sender initially
     };
 
     try {
