@@ -219,11 +219,11 @@ export function StudentDashboardClient() {
   const dashboardCards = [
     {
       id: "notices",
-      title: "Notice Board",
+      title: "Notice Board / सूचना पट्ट",
       link: "/student/notices",
       buttonText: "View All Notices",
       icon: FileText,
-      description: "Latest school announcements and updates.",
+      description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center shadow-inner bg-background">
@@ -246,11 +246,11 @@ export function StudentDashboardClient() {
     },
     {
       id: "homework",
-      title: "Homework",
+      title: "Homework / गृहकार्य",
       link: "/student/homework",
       buttonText: "View All Homework",
       icon: ClipboardList,
-      description: "Check your latest assignments and due dates.",
+      description: "Check your latest assignments and due dates. / अपने नवीनतम असाइनमेंट और देय तिथियों की जांच करें।",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -299,11 +299,11 @@ export function StudentDashboardClient() {
     },
     {
       id: "circulars",
-      title: "Circulars",
+      title: "Circulars / परिपत्र",
       link: "/student/circulars",
       buttonText: "View All Circulars",
       icon: FileText,
-      description: "Important circulars and official communications.",
+      description: "Important circulars and official communications. / महत्वपूर्ण परिपत्र और आधिकारिक संचार।",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
          <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -333,11 +333,11 @@ export function StudentDashboardClient() {
     },
      {
       id: "liveClass",
-      title: "Live Class",
+      title: "Live Class / लाइव क्लास",
       link: "/student/live-classes",
       buttonText: "View All Live Classes",
       icon: Video,
-      description: "Join scheduled live classes and sessions.",
+      description: "Join scheduled live classes and sessions. / निर्धारित लाइव कक्षाओं और सत्रों में शामिल हों।",
       contentData: latestLiveClass,
       renderContent: (data: LiveClass | null) => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -365,67 +365,67 @@ export function StudentDashboardClient() {
     },
     {
       id: "mySchoolApplications",
-      title: "My School Applications",
+      title: "My School Applications / मेरे स्कूल आवेदन",
       link: "/student/my-applications",
       buttonText: "Access Forms",
       icon: FileSignature,
-      description: "Submit online applications for leave, late arrivals, TC, etc., or download various blank PDF forms.",
+      description: "Apply for leave, late arrivals, etc., or download forms. / छुट्टी, देर से आने आदि के लिए आवेदन करें, या फॉर्म डाउनलोड करें।",
     },
     {
       id: "textbooks",
-      title: "Textbooks",
+      title: "Textbooks / पाठ्यपुस्तकें",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
       icon: BookOpen,
-      description: "Access your digital textbooks for all subjects.",
+      description: "Access your digital textbooks for all subjects. / सभी विषयों के लिए अपनी डिजिटल पाठ्यपुस्तकें एक्सेस करें।",
     },
     {
       id: "gallery",
-      title: "Photo Gallery",
+      title: "Photo Gallery / फोटो गैलरी",
       link: "/student/gallery",
       buttonText: "View Gallery",
       icon: ImageIcon,
-      description: "Explore photos from school events and activities.",
+      description: "Explore photos from school events and activities. / स्कूल की घटनाओं और गतिविधियों की तस्वीरें देखें।",
     },
     {
       id: "conductRecord",
-      title: "Parent Notifications",
+      title: "Parent Notifications / अभिभावक सूचनाएं",
       link: "/student/conduct-record",
       buttonText: "View Notifications",
       icon: FileSignature,
-      description: "View and acknowledge conduct reports from teachers.",
+      description: "View and acknowledge conduct reports from teachers. / शिक्षकों से आचरण रिपोर्ट देखें और स्वीकार करें।",
     },
     {
       id: "icard",
-      title: "Download I-Card",
+      title: "Download I-Card / आई-कार्ड डाउनलोड करें",
       link: "/student/icard",
       buttonText: "Get My I-Card",
       icon: Contact,
-      description: "Download your official school identity card.",
+      description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
     },
     {
       id: "attendance",
-      title: "My Attendance",
+      title: "My Attendance / मेरी उपस्थिति",
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
       icon: CheckCircle,
-      description: "View your detailed attendance records.",
+      description: "View your detailed attendance records. / अपने विस्तृत उपस्थिति रिकॉर्ड देखें।",
     },
     {
       id: "profile",
-      title: "My Profile",
+      title: "My Profile / मेरी प्रोफाइल",
       link: "/student/profile",
       buttonText: "Go to Profile",
       icon: Users,
-      description: "Manage your personal information and settings.",
+      description: "Manage your personal information and settings. / अपनी व्यक्तिगत जानकारी और सेटिंग्स प्रबंधित करें।",
     },
     {
       id: "progressCard",
-      title: "Progress Card",
+      title: "Progress Card / प्रगति कार्ड",
       link: "/student/progress-card",
       buttonText: "View Progress Card",
       icon: BarChart3,
-      description: "View and download your academic progress report.",
+      description: "View and download your academic progress report. / अपनी शैक्षणिक प्रगति रिपोर्ट देखें और डाउनलोड करें।",
     },
   ];
   
@@ -455,7 +455,7 @@ export function StudentDashboardClient() {
                     <Badge variant="destructive" className="animate-pulse">New!</Badge>
                   )}
                 </CardTitle>
-                <CardDescription className="text-sm min-h-[3rem] px-2">{card.description}</CardDescription>
+                <CardDescription className="text-sm min-h-[4.5rem] px-2">{card.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
                 {card.contentData?.loading ? (
