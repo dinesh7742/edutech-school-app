@@ -15,10 +15,3 @@ export default function SignupPage() {
     </div>
   );
 }
-
-// CSS for bg-grid-pattern (add to globals.css or keep here if specific)
-// This is an example, you might want a more subtle pattern
-// For simplicity, this style can be inlined or managed with Tailwind config extensions if needed
-// Since it's a small utility, keeping it here for now.
-// It's better to add to globals.css or tailwind.config.js for cleanliness.
-// Adding this to globals.css instead.

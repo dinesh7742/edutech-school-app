@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/context/AuthContext';
 import { Toaster } from "@/components/ui/toaster";
+import Script from 'next/script';
 
 // const geistSans = GeistSans; // Removed GeistSans initialization
 
@@ -23,6 +24,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </AuthProvider>
+        <Script src="https://www.google.com/recaptcha/api.js" async defer />
       </body>
     </html>
   );
