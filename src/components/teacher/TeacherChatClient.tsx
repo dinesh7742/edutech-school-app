@@ -72,12 +72,21 @@ export function TeacherChatClient() {
     const chatsRef = collection(db, "chats");
     const q = query(
       chatsRef,
-      where("participants", "array-contains", teacherUser.uid),
-      orderBy("lastMessageTimestamp", "desc")
+      where("participants", "array-contains", teacherUser.uid)
+      // The orderBy clause is removed to prevent the missing index error.
+      // Sorting is now handled on the client-side.
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const convos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Chat));
+      
+      // Sort conversations client-side
+      convos.sort((a, b) => {
+        const timeA = (a.lastMessageTimestamp as Timestamp)?.toDate()?.getTime() || 0;
+        const timeB = (b.lastMessageTimestamp as Timestamp)?.toDate()?.getTime() || 0;
+        return timeB - timeA;
+      });
+
       setConversations(convos);
       setIsLoading(false);
     }, (error) => {
