@@ -9,12 +9,14 @@ import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Homework, HomeworkAttachment } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentHomeworkPage() {
   const [allHomework, setAllHomework] = useState<Homework[]>([]);
   const [filteredHomework, setFilteredHomework] = useState<Homework[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchHomework = async () => {
@@ -70,15 +72,35 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
+  const handleDownload = (dataUrl: string, fileName: string) => {
+    try {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+    } catch (error) {
+        console.error("Download failed:", error);
+        toast({ title: "Download Failed", description: "Could not start the file download.", variant: "destructive"});
+        // As a fallback, open the data in a new tab
+        window.open(dataUrl, '_blank');
+    }
+  };
+
+
   const renderAttachment = (attachment: HomeworkAttachment, index: number) => {
     switch(attachment.type) {
       case 'image':
         return (
           <div key={index} className="relative w-full aspect-video border rounded-md overflow-hidden my-2">
             <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="cover" />
-             <a href={attachment.url} target="_blank" rel="noopener noreferrer" download={attachment.name} className="absolute bottom-1 right-1">
-                <Button size="sm" variant="outline"><Download className="mr-2 h-4 w-4" /> View Full / Download</Button>
-            </a>
+             <div className="absolute bottom-1 right-1">
+                <Button size="sm" variant="outline" onClick={() => handleDownload(attachment.url, attachment.name)}>
+                    <Download className="mr-2 h-4 w-4" /> View Full / Download
+                </Button>
+            </div>
           </div>
         )
       case 'video':
@@ -86,19 +108,17 @@ export default function StudentHomeworkPage() {
           <div key={index} className="my-2">
             <video controls src={attachment.url} className="w-full rounded-md border bg-black"></video>
             <p className="text-xs text-muted-foreground mt-1">{attachment.name}</p>
-             <a href={attachment.url} target="_blank" rel="noopener noreferrer" download={attachment.name}>
-                <Button size="sm" variant="outline" className="w-full mt-1"><Download className="mr-2 h-4 w-4" /> Download Video</Button>
-            </a>
+             <Button size="sm" variant="outline" className="w-full mt-1" onClick={() => handleDownload(attachment.url, attachment.name)}>
+                <Download className="mr-2 h-4 w-4" /> Download Video
+            </Button>
           </div>
         )
       case 'pdf':
       default:
         return (
-          <Button key={index} asChild variant="outline" className="mt-2">
-            <a href={attachment.url} target="_blank" rel="noopener noreferrer" download={attachment.name} data-ai-hint="document sheet">
-              {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
-              {`Download ${attachment.name}`}
-            </a>
+          <Button key={index} variant="outline" className="mt-2" onClick={() => handleDownload(attachment.url, attachment.name)} data-ai-hint="document sheet">
+            {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
+            {`Download ${attachment.name}`}
           </Button>
         )
     }
