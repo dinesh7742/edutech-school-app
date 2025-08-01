@@ -72,20 +72,28 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
-  const handleDownload = (dataUrl: string, fileName: string) => {
+  const handleDownload = (url: string, fileName: string) => {
     try {
-        const link = document.createElement('a');
-        link.href = dataUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
     } catch (error) {
-        console.error("Download failed:", error);
-        toast({ title: "Download Failed", description: "Could not start the file download.", variant: "destructive"});
-        // As a fallback, open the data in a new tab
-        window.open(dataUrl, '_blank');
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not start the file download. Please try opening the file in a new tab if possible.",
+        variant: "destructive"
+      });
+       // Fallback for browsers/WebViews where programmatic click might be blocked
+       try {
+         window.open(url, '_blank');
+       } catch (e) {
+          console.error("Fallback window.open failed:", e);
+       }
     }
   };
 
@@ -94,21 +102,21 @@ export default function StudentHomeworkPage() {
     switch(attachment.type) {
       case 'image':
         return (
-          <div key={index} className="relative w-full aspect-video border rounded-md overflow-hidden my-2">
-            <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="cover" />
-             <div className="absolute bottom-1 right-1">
-                <Button size="sm" variant="outline" onClick={() => handleDownload(attachment.url, attachment.name)}>
-                    <Download className="mr-2 h-4 w-4" /> View Full / Download
-                </Button>
+          <div key={index} className="my-2 space-y-2">
+            <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
+                <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="contain" />
             </div>
+            <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload(attachment.url, attachment.name)}>
+                <Download className="mr-2 h-4 w-4" /> Download Image
+            </Button>
           </div>
         )
       case 'video':
         return (
-          <div key={index} className="my-2">
+          <div key={index} className="my-2 space-y-2">
             <video controls src={attachment.url} className="w-full rounded-md border bg-black"></video>
             <p className="text-xs text-muted-foreground mt-1">{attachment.name}</p>
-             <Button size="sm" variant="outline" className="w-full mt-1" onClick={() => handleDownload(attachment.url, attachment.name)}>
+             <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload(attachment.url, attachment.name)}>
                 <Download className="mr-2 h-4 w-4" /> Download Video
             </Button>
           </div>
@@ -116,7 +124,7 @@ export default function StudentHomeworkPage() {
       case 'pdf':
       default:
         return (
-          <Button key={index} variant="outline" className="mt-2" onClick={() => handleDownload(attachment.url, attachment.name)} data-ai-hint="document sheet">
+          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => handleDownload(attachment.url, attachment.name)} data-ai-hint="document sheet">
             {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
             {`Download ${attachment.name}`}
           </Button>

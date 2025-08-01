@@ -8,12 +8,14 @@ import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Circular } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentCircularsPage() {
   const [allCirculars, setAllCirculars] = useState<Circular[]>([]);
   const [filteredCirculars, setFilteredCirculars] = useState<Circular[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCirculars = async () => {
@@ -97,6 +99,31 @@ export default function StudentCircularsPage() {
 
   }, [user, allCirculars]);
 
+  const handleDownload = (url: string, fileName: string) => {
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not start the file download. Please try opening the file in a new tab if possible.",
+        variant: "destructive"
+      });
+       // Fallback for browsers/WebViews where programmatic click might be blocked
+       try {
+         window.open(url, '_blank');
+       } catch (e) {
+          console.error("Fallback window.open failed:", e);
+       }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
@@ -129,11 +156,13 @@ export default function StudentCircularsPage() {
               <CardContent>
                 {circ.description && <p className="text-sm mb-3 whitespace-pre-wrap">{circ.description}</p>}
                 {circ.fileUrl && (
-                  <Button asChild variant="outline">
-                    <a href={circ.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document letter">
-                      <Download className="mr-2 h-4 w-4" /> 
-                      {circ.fileName ? `Download ${circ.fileName}` : 'Download Circular'}
-                    </a>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDownload(circ.fileUrl!, circ.fileName || 'circular.pdf')}
+                    data-ai-hint="document letter"
+                  >
+                    <Download className="mr-2 h-4 w-4" /> 
+                    {circ.fileName ? `Download ${circ.fileName}` : 'Download Circular'}
                   </Button>
                 )}
               </CardContent>

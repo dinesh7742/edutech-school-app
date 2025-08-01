@@ -5,6 +5,7 @@ import type { SchoolForm } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, FileText } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const availableForms: SchoolForm[] = [
   {
@@ -52,6 +53,32 @@ const availableForms: SchoolForm[] = [
 ];
 
 export function SchoolFormsList() {
+  const { toast } = useToast();
+
+  const handleDownload = (url: string, fileName: string) => {
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not start the file download. Please try opening the file in a new tab if possible.",
+        variant: "destructive"
+      });
+      try {
+        window.open(url, '_blank');
+      } catch (e) {
+        console.error("Fallback window.open failed:", e);
+      }
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {availableForms.map((form) => (
@@ -64,11 +91,12 @@ export function SchoolFormsList() {
             <CardDescription>{form.description}</CardDescription>
           </CardHeader>
           <CardContent className="mt-auto">
-            <Button asChild className="w-full">
-              <a href={form.pdfUrl} download target="_blank" rel="noopener noreferrer">
-                <Download className="mr-2 h-4 w-4" />
-                Download PDF
-              </a>
+            <Button
+              className="w-full"
+              onClick={() => handleDownload(form.pdfUrl, `${form.id}_form.pdf`)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Download PDF
             </Button>
           </CardContent>
         </Card>
