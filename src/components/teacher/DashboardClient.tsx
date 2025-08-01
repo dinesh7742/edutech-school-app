@@ -95,22 +95,12 @@ export function TeacherDashboardClient() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, `Grade_${teacherUser.grade}${teacherUser.division}`);
       
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const dataBlob = new Blob([excelBuffer], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'});
-      
-      const downloadUrl = window.URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.setAttribute('download', `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
-
+      // Use XLSX.writeFile for a more robust download, especially for mobile/webview
+      XLSX.writeFile(workbook, `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
 
       toast({
         title: "Download Started",
-        description: "Student data Excel sheet is being downloaded.",
+        description: "Student data Excel sheet is being prepared for download.",
       });
 
     } catch (error: any) {
@@ -560,3 +550,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    
