@@ -513,8 +513,11 @@ export function StudentDashboardClient() {
                   <div className="flex-grow flex items-center justify-center min-h-[150px]">
                   </div>
                 )}
-                <Button asChild className="w-full mt-auto">
-                  <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                <Button asChild className="w-full mt-auto group" variant="outline">
+                  <Link href={card.link}>
+                    {card.buttonText}
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
