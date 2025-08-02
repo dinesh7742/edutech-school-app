@@ -1,6 +1,6 @@
 
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon, ExternalLink } from "lucide-react";
@@ -10,6 +10,36 @@ import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firesto
 import type { Homework, HomeworkAttachment } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+
+// A simple component to find and render links in text
+const LinkifiedText = memo(({ text }: { text: string }) => {
+  if (!text) return null;
+
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return (
+    <p className="text-sm mb-3 whitespace-pre-wrap break-words">
+      {parts.map((part, i) =>
+        urlRegex.test(part) ? (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary underline hover:text-accent transition-colors"
+          >
+            {part}
+          </a>
+        ) : (
+          part
+        )
+      )}
+    </p>
+  );
+});
+LinkifiedText.displayName = "LinkifiedText";
+
 
 export default function StudentHomeworkPage() {
   const [allHomework, setAllHomework] = useState<Homework[]>([]);
@@ -145,7 +175,7 @@ export default function StudentHomeworkPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {hw.description && <p className="text-sm mb-3 whitespace-pre-wrap">{hw.description}</p>}
+                {hw.description && <LinkifiedText text={hw.description} />}
                 
                 {hw.attachments && hw.attachments.length > 0 && (
                   <div className="space-y-2">
@@ -161,5 +191,3 @@ export default function StudentHomeworkPage() {
     </div>
   );
 }
-
-    
