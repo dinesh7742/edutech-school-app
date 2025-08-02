@@ -91,24 +91,43 @@ export function DropoutListClient() {
     try {
         const batch = writeBatch(db);
 
+        // Reference to the documents in the "dropped" collections
         const droppedProfileRef = doc(db, "droppedStudentProfiles", studentToReAdmit.uid);
-        const droppedProfileSnap = await getDoc(droppedProfileRef);
-
         const droppedUserRef = doc(db, "droppedUsers", studentToReAdmit.uid);
+
+        // Fetch the data from the "dropped" collections
+        const droppedProfileSnap = await getDoc(droppedProfileRef);
         const droppedUserSnap = await getDoc(droppedUserRef);
 
+        // Reference to where the documents will be moved back to
+        const studentProfileRef = doc(db, "studentProfiles", studentToReAdmit.uid);
+        const userRef = doc(db, "users", studentToReAdmit.uid);
+
+        // Restore profile if it exists
         if (droppedProfileSnap.exists()) {
-            const studentProfileRef = doc(db, "studentProfiles", studentToReAdmit.uid);
             const { deletionReason, deletedAt, deletedBy, ...profileData } = droppedProfileSnap.data();
             batch.set(studentProfileRef, { ...profileData, grade: newGrade, division: newDivision });
             batch.delete(droppedProfileRef);
         }
 
+        // Restore user record if it exists
         if (droppedUserSnap.exists()) {
-            const userRef = doc(db, "users", studentToReAdmit.uid);
             const userData = { ...droppedUserSnap.data(), grade: newGrade, division: newDivision };
             batch.set(userRef, userData);
             batch.delete(droppedUserRef);
+        } else if (!droppedUserSnap.exists() && droppedProfileSnap.exists()) {
+            // If user record is missing but profile exists, create a basic user record
+             const profileData = droppedProfileSnap.data() as DroppedStudentProfile;
+             const basicUserData = {
+                uid: profileData.uid,
+                email: profileData.email,
+                displayName: `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim(),
+                role: 'student',
+                grade: newGrade,
+                division: newDivision,
+                createdAt: profileData.deletedAt, // Use deletion time as a rough creation time
+             };
+             batch.set(userRef, basicUserData);
         }
 
         await batch.commit();
