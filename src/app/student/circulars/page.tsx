@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Loader2 } from "lucide-react";
+import { FileText, Download, Loader2, ExternalLink } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Circular } from "@/types";
@@ -99,28 +99,17 @@ export default function StudentCircularsPage() {
 
   }, [user, allCirculars]);
 
-  const handleDownload = (url: string, fileName: string) => {
+  const handleOpenFile = (url: string, fileName: string) => {
     try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+      window.open(url, '_blank');
+      toast({ title: "Opening File", description: `Attempting to open ${fileName} in a new tab...` });
     } catch (error) {
-      console.error("Download failed:", error);
+      console.error("Failed to open file:", error);
       toast({
-        title: "Download Failed",
-        description: "Could not start the file download. Please try opening the file in a new tab if possible.",
+        title: "Open Failed",
+        description: "Could not open the file. Please check your browser's popup blocker settings.",
         variant: "destructive"
       });
-       // Fallback for browsers/WebViews where programmatic click might be blocked
-       try {
-         window.open(url, '_blank');
-       } catch (e) {
-          console.error("Fallback window.open failed:", e);
-       }
     }
   };
 
@@ -158,11 +147,11 @@ export default function StudentCircularsPage() {
                 {circ.fileUrl && (
                   <Button
                     variant="outline"
-                    onClick={() => handleDownload(circ.fileUrl!, circ.fileName || 'circular.pdf')}
+                    onClick={() => handleOpenFile(circ.fileUrl!, circ.fileName || 'circular.pdf')}
                     data-ai-hint="document letter"
                   >
-                    <Download className="mr-2 h-4 w-4" /> 
-                    {circ.fileName ? `Download ${circ.fileName}` : 'Download Circular'}
+                    <ExternalLink className="mr-2 h-4 w-4" /> 
+                    {circ.fileName ? `Open ${circ.fileName}` : 'Open Circular'}
                   </Button>
                 )}
               </CardContent>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon } from "lucide-react";
+import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon, ExternalLink } from "lucide-react";
 import NextImage from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
@@ -72,28 +72,15 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
-  const handleDownload = async (url: string, fileName: string) => {
+  const handleOpenInNewTab = (url: string, fileName: string) => {
     try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.setAttribute('download', fileName);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the blob URL after the download has been initiated
-        window.URL.revokeObjectURL(blobUrl);
-
-        toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+        window.open(url, '_blank');
+        toast({ title: "Opening File", description: `Attempting to open ${fileName} in a new tab...` });
     } catch (error) {
-        console.error("Download failed:", error);
+        console.error("Failed to open in new tab:", error);
         toast({
-            title: "Download Failed",
-            description: "Could not start the file download. Please try again or check browser permissions.",
+            title: "Failed to Open",
+            description: "Could not open the file. Please check your browser's popup blocker settings.",
             variant: "destructive"
         });
     }
@@ -105,12 +92,10 @@ export default function StudentHomeworkPage() {
       case 'image':
         return (
           <div key={index} className="my-2 space-y-2">
-            <div className="relative w-full aspect-video border rounded-md overflow-hidden bg-muted">
+            <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="block relative w-full aspect-video border rounded-md overflow-hidden bg-muted hover:opacity-90 transition-opacity">
                 <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="contain" />
-            </div>
-            <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload(attachment.url, attachment.name)}>
-                <Download className="mr-2 h-4 w-4" /> Download Image
-            </Button>
+            </a>
+            <p className="text-xs text-muted-foreground text-center">Click image to view full size</p>
           </div>
         )
       case 'video':
@@ -118,17 +103,14 @@ export default function StudentHomeworkPage() {
           <div key={index} className="my-2 space-y-2">
             <video controls src={attachment.url} className="w-full rounded-md border bg-black"></video>
             <p className="text-xs text-muted-foreground mt-1">{attachment.name}</p>
-             <Button size="sm" variant="outline" className="w-full" onClick={() => handleDownload(attachment.url, attachment.name)}>
-                <Download className="mr-2 h-4 w-4" /> Download Video
-            </Button>
           </div>
         )
       case 'pdf':
       default:
         return (
-          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => handleDownload(attachment.url, attachment.name)} data-ai-hint="document sheet">
-            {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />}
-            {`Download ${attachment.name}`}
+          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => handleOpenInNewTab(attachment.url, attachment.name)} data-ai-hint="document sheet">
+            {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <ExternalLink className="mr-2 h-4 w-4" />}
+            {`Open ${attachment.name}`}
           </Button>
         )
     }
