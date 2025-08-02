@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Eye, UserCircle, Trash2, Loader2, MoreVertical } from "lucide-react";
+import { Eye, UserCircle, Trash2, Loader2, MoreVertical, Search } from "lucide-react";
 import type { StudentProfile } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 
 type DeletionReason = "Duplicate Entry" | "Left with LC" | "Continuous Absent";
 
@@ -42,6 +43,9 @@ export function StudentDataList() {
   const [students, setStudents] = useState<StudentProfile[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<StudentProfile[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [gradeFilter, setGradeFilter] = useState("All");
+  const [divisionFilter, setDivisionFilter] = useState("All");
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -54,19 +58,10 @@ export function StudentDataList() {
     const fetchStudentProfiles = async () => {
       setLoading(true);
       setError(null);
-
-      if (!teacherUser?.grade || !teacherUser?.division) {
-        setError("Your teacher profile is missing an assigned grade or division.");
-        setLoading(false);
-        return;
-      }
-
       try {
         const profilesCollectionRef = collection(db, "studentProfiles");
         const q = query(
-            profilesCollectionRef, 
-            where("grade", "==", teacherUser.grade),
-            where("division", "==", teacherUser.division),
+            profilesCollectionRef,
             orderBy("firstName")
         );
         const querySnapshot = await getDocs(q);
@@ -91,24 +86,32 @@ export function StudentDataList() {
       }
     };
 
-    if (teacherUser) {
-      fetchStudentProfiles();
-    }
-  }, [teacherUser]);
+    fetchStudentProfiles();
+  }, []);
 
   useEffect(() => {
-    const lowercasedFilter = searchTerm.toLowerCase();
-    const filteredData = students.filter(item => {
-      const fullName = `${item.firstName?.toLowerCase() || ''} ${item.lastName?.toLowerCase() || ''}`;
-      return (
-        fullName.includes(lowercasedFilter) ||
-        (item.firstName && item.firstName.toLowerCase().includes(lowercasedFilter)) ||
-        (item.lastName && item.lastName.toLowerCase().includes(lowercasedFilter)) ||
-        (item.email && item.email.toLowerCase().includes(lowercasedFilter))
-      );
-    });
-    setFilteredStudents(filteredData);
-  }, [searchTerm, students]);
+    let tempStudents = students;
+
+    if (gradeFilter !== "All") {
+        tempStudents = tempStudents.filter(s => s.grade === gradeFilter);
+    }
+    if (divisionFilter !== "All") {
+        tempStudents = tempStudents.filter(s => s.division === divisionFilter);
+    }
+    
+    if (searchTerm) {
+        const lowercasedFilter = searchTerm.toLowerCase();
+        tempStudents = tempStudents.filter(item => {
+            const fullName = `${item.firstName?.toLowerCase() || ''} ${item.lastName?.toLowerCase() || ''}`;
+            return (
+                fullName.includes(lowercasedFilter) ||
+                (item.email && item.email.toLowerCase().includes(lowercasedFilter))
+            );
+        });
+    }
+
+    setFilteredStudents(tempStudents);
+  }, [searchTerm, gradeFilter, divisionFilter, students]);
 
   const getInitials = (firstName?: string, lastName?: string) => {
     const firstInitial = firstName ? firstName[0] : "";
@@ -118,16 +121,11 @@ export function StudentDataList() {
   
   const handleSoftDeleteStudent = async () => {
     if (!studentToDelete || !deletionReason) return;
-
     setIsDeleting(studentToDelete.uid);
-    
     try {
       const batch = writeBatch(db);
-
-      // Get original documents
       const studentProfileRef = doc(db, "studentProfiles", studentToDelete.uid);
       const studentProfileSnap = await getDoc(studentProfileRef);
-      
       const userRef = doc(db, "users", studentToDelete.uid);
       const userSnap = await getDoc(userRef);
 
@@ -150,15 +148,11 @@ export function StudentDataList() {
       }
       
       await batch.commit();
-
       setStudents(prev => prev.filter(s => s.uid !== studentToDelete.uid));
-      setFilteredStudents(prev => prev.filter(s => s.uid !== studentToDelete.uid));
-      
       toast({
         title: "Student Moved to Dropout Box",
         description: `${studentToDelete.firstName} has been removed from the active list.`,
       });
-
     } catch (error: any) {
       console.error("Error moving student to dropout:", error);
       toast({
@@ -219,17 +213,31 @@ export function StudentDataList() {
     <>
       <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-primary">Student Data for Grade {teacherUser?.grade}-{teacherUser?.division} (Academic Year: 2025-26)</CardTitle>
-          <CardDescription>View and manage student profiles for your assigned class.</CardDescription>
+          <CardTitle className="text-3xl font-bold text-primary">Student Database</CardTitle>
+          <CardDescription>View, search, and manage all student profiles in the school.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6 flex items-center gap-4">
-            <Input
-              placeholder="Search students in your class..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
+          <div className="mb-6 flex flex-col sm:flex-row items-center gap-4">
+            <div className="relative flex-grow w-full">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+               <Input
+                  placeholder="Search by student name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+            </div>
+            <div className="flex-grow w-full">
+                <GradeDivisionSelector
+                    grade={gradeFilter}
+                    onGradeChange={(val) => {
+                        setGradeFilter(val);
+                        if (val === "All") setDivisionFilter("All");
+                    }}
+                    division={divisionFilter}
+                    onDivisionChange={setDivisionFilter}
+                />
+            </div>
           </div>
 
           {filteredStudents.length === 0 ? (
@@ -237,7 +245,9 @@ export function StudentDataList() {
               <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />
               <h3 className="mt-2 text-lg font-medium">No Students Found</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {searchTerm ? "No students match your search." : "No student profiles have been created for this class yet."}
+                {searchTerm || gradeFilter !== "All" || divisionFilter !== "All"
+                  ? "No students match your search criteria."
+                  : "No student profiles have been created yet."}
               </p>
             </div>
           ) : (
@@ -247,6 +257,7 @@ export function StudentDataList() {
                 <TableRow>
                   <TableHead className="w-[80px]">Avatar</TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead>Class</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -261,11 +272,12 @@ export function StudentDataList() {
                       </Avatar>
                     </TableCell>
                     <TableCell className="font-medium">{student.firstName} {student.lastName || ''}</TableCell>
+                    <TableCell>{student.grade}-{student.division}</TableCell>
                     <TableCell>{student.email || 'N/A'}</TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/teacher/student-data/${student.uid}`}>
-                          <Eye className="mr-2 h-4 w-4" /> View
+                          <Eye className="mr-2 h-4 w-4" /> View/Edit
                         </Link>
                       </Button>
                       <DropdownMenu>

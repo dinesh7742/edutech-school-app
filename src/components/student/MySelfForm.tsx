@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { StudentProfile } from "@/types";
 import { Loader2, UploadCloud, UserCircle, Briefcase, CalendarDays, Mail, Phone, Award, ShieldCheck, BookUser, Hash, Users, Edit, X } from "lucide-react";
@@ -265,19 +265,24 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
         ...data, 
         photoUrl: finalPhotoUrlToSave, 
       };
-      await setDoc(doc(db, "studentProfiles", profileUidToSave), profileDataForFirestore, { merge: true });
+      
+      const profileDocRef = doc(db, "studentProfiles", profileUidToSave);
+      await setDoc(profileDocRef, profileDataForFirestore, { merge: true });
+
+      const userDocRef = doc(db, "users", profileUidToSave);
+      await updateDoc(userDocRef, {
+        grade: data.grade,
+        division: data.division,
+        displayName: `${data.firstName} ${data.lastName || ''}`.trim()
+      });
 
       if (!isTeacherEditing && userToUpdateAuth && userToUpdateAuth.uid === profileUidToSave) {
-        const updatesToAuth: { displayName?: string; photoURL?: string | null } = {};
         const newDisplayName = `${data.firstName} ${data.lastName || ''}`.trim();
-        
         if (userToUpdateAuth.displayName !== newDisplayName) {
-            updatesToAuth.displayName = newDisplayName;
-        }
-        
-        // We no longer update Firebase Auth photoURL with Data URIs to avoid length limits
-        if (setAuthUser && Object.keys(updatesToAuth).length > 0) {
-            setAuthUser(prevUser => prevUser ? { ...prevUser, ...updatesToAuth } : null);
+            await updateAuthProfile(userToUpdateAuth, { displayName: newDisplayName });
+            if (setAuthUser) {
+              setAuthUser(prevUser => prevUser ? { ...prevUser, displayName: newDisplayName } : null);
+            }
         }
       }
 
@@ -448,15 +453,28 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="grade">Grade *</Label>
-              <Input id="grade" {...register("grade")} disabled={!isTeacherEditing} className="bg-muted/50" />
-            </div>
-            <div>
-              <Label htmlFor="division">Division *</Label>
-              <Input id="division" {...register("division")} disabled={!isTeacherEditing} className="bg-muted/50" />
-            </div>
+          <div className="grid grid-cols-1 gap-4">
+             <Label>Grade & Division *</Label>
+              <Controller
+                name="grade"
+                control={control}
+                render={({ field: gradeField }) => (
+                  <Controller
+                    name="division"
+                    control={control}
+                    render={({ field: divisionField }) => (
+                      <GradeDivisionSelector
+                        grade={gradeField.value || ""}
+                        onGradeChange={gradeField.onChange}
+                        division={divisionField.value || ""}
+                        onDivisionChange={divisionField.onChange}
+                        showDivision={true}
+                      />
+                    )}
+                  />
+                )}
+              />
+               {!isTeacherEditing && <p className="text-xs text-muted-foreground mt-1">Grade and Division are managed by the school.</p>}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
