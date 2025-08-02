@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, limit, Timestamp, getCountFromServer, doc, getDoc, onSnapshot } from "firebase/firestore";
-import type { StudentProfile, HomeworkSubmission, ChatMessage } from "@/types";
+import type { StudentProfile, HomeworkSubmission, ChatMessage, AppUser } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -95,7 +95,6 @@ export function TeacherDashboardClient() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, `Grade_${teacherUser.grade}${teacherUser.division}`);
       
-      // Use XLSX.writeFile for a more robust download, especially for mobile/webview
       XLSX.writeFile(workbook, `Student_Data_Grade_${teacherUser.grade}${teacherUser.division}.xlsx`);
 
       toast({
@@ -120,39 +119,47 @@ export function TeacherDashboardClient() {
     if (!teacherUser) return;
 
     const fetchStudentData = async () => {
-      if (teacherUser && teacherUser.grade && teacherUser.division) {
+      if (teacherUser.grade && teacherUser.division) {
         setLoadingStudentCount(true);
         setStudentCountError(null);
         try {
-          const profilesCollectionRef = collection(db, "studentProfiles");
+          // Query the 'users' collection which is the source of truth for registered students
+          const usersCollectionRef = collection(db, "users");
           const q = query(
-            profilesCollectionRef,
+            usersCollectionRef,
+            where("role", "==", "student"),
             where("grade", "==", teacherUser.grade),
             where("division", "==", teacherUser.division)
           );
           
           const querySnapshot = await getDocs(q);
-          const students = querySnapshot.docs.map(doc => doc.data() as StudentProfile);
-          
-          setTotalStudentsInClass(students.length);
-          
+          const studentUids = querySnapshot.docs.map(doc => doc.id);
+          setTotalStudentsInClass(studentUids.length);
+
+          // For gender count, we still need to check the profiles
           let males = 0;
           let females = 0;
-          students.forEach(student => {
-            if (student.gender === "Male") {
-              males++;
-            } else if (student.gender === "Female") {
-              females++;
-            }
-          });
+          if (studentUids.length > 0) {
+            const profilesCollectionRef = collection(db, "studentProfiles");
+            const profilesQuery = query(profilesCollectionRef, where("uid", "in", studentUids));
+            const profilesSnapshot = await getDocs(profilesQuery);
+            profilesSnapshot.forEach(doc => {
+                const studentProfile = doc.data() as StudentProfile;
+                if (studentProfile.gender === "Male") {
+                    males++;
+                } else if (studentProfile.gender === "Female") {
+                    females++;
+                }
+            });
+          }
           setMaleStudents(males);
           setFemaleStudents(females);
 
         } catch (err: any) {
-          console.error("Error fetching student data for teacher's class:", err);
+          console.error("Error fetching student count for teacher's class:", err);
           if (err.code === 'failed-precondition') {
              setStudentCountError(
-              `Firestore index required for 'grade' & 'division' on 'studentProfiles'. Please create this index.`
+              `Firestore index required for users collection. Please create this index.`
             );
           } else {
             setStudentCountError("Failed to fetch student data.");
