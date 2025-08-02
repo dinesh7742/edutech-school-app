@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Eye, UserCircle, Trash2, Loader2, MoreVertical, Search } from "lucide-react";
-import type { StudentProfile } from "@/types";
+import type { StudentProfile, AppUser } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
@@ -37,11 +37,15 @@ import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 
 type DeletionReason = "Duplicate Entry" | "Left with LC" | "Continuous Absent";
 
+// Combined type to handle both full profiles and basic user data
+type CombinedStudentData = StudentProfile & AppUser;
+
+
 export function StudentDataList() {
   const { user: teacherUser } = useAuth();
   const { toast } = useToast();
-  const [students, setStudents] = useState<StudentProfile[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<StudentProfile[]>([]);
+  const [students, setStudents] = useState<CombinedStudentData[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<CombinedStudentData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [gradeFilter, setGradeFilter] = useState("All");
   const [divisionFilter, setDivisionFilter] = useState("All");
@@ -51,42 +55,64 @@ export function StudentDataList() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<StudentProfile | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<CombinedStudentData | null>(null);
   const [deletionReason, setDeletionReason] = useState<DeletionReason | null>(null);
 
   useEffect(() => {
-    const fetchStudentProfiles = async () => {
+    const fetchStudentData = async () => {
       setLoading(true);
       setError(null);
       try {
+        // Step 1: Fetch all users who are students
+        const usersCollectionRef = collection(db, "users");
+        const usersQuery = query(usersCollectionRef, where("role", "==", "student"));
+        const usersSnapshot = await getDocs(usersQuery);
+        const userMap = new Map<string, AppUser>();
+        usersSnapshot.forEach(doc => {
+          userMap.set(doc.id, { uid: doc.id, ...doc.data() } as AppUser);
+        });
+
+        // Step 2: Fetch all student profiles
         const profilesCollectionRef = collection(db, "studentProfiles");
-        const q = query(
-            profilesCollectionRef,
-            orderBy("firstName")
-        );
-        const querySnapshot = await getDocs(q);
-        
-        const fetchedProfiles: StudentProfile[] = querySnapshot.docs.map(doc => {
-          return {
-            uid: doc.id,
-            ...doc.data()
-          } as StudentProfile;
+        const profilesSnapshot = await getDocs(profilesCollectionRef);
+        const profileMap = new Map<string, StudentProfile>();
+        profilesSnapshot.forEach(doc => {
+          profileMap.set(doc.id, { uid: doc.id, ...doc.data() } as StudentProfile);
+        });
+
+        // Step 3: Merge the two maps
+        const combinedData: CombinedStudentData[] = [];
+        userMap.forEach((user, uid) => {
+          const profile = profileMap.get(uid);
+          // Combine user and profile data, giving preference to profile data if it exists
+          const combined: CombinedStudentData = {
+            ...user, // Start with base user data (email, role, default grade/div)
+            ...profile, // Override with specific profile data if present
+            uid: uid,
+            // Ensure essential fields from user data are kept if profile is incomplete
+            firstName: profile?.firstName || user.displayName?.split(' ')[0] || '',
+            lastName: profile?.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
+            grade: profile?.grade || user.grade || 'N/A',
+            division: profile?.division || user.division || 'N/A',
+          };
+          combinedData.push(combined);
         });
         
-        setStudents(fetchedProfiles);
-        setFilteredStudents(fetchedProfiles);
+        // Sort the combined list
+        combinedData.sort((a, b) => (a.firstName || "").localeCompare(b.firstName || ""));
+
+        setStudents(combinedData);
+        setFilteredStudents(combinedData);
+
       } catch (err: any) {
-        console.error("Error fetching student profiles:", err);
+        console.error("Error fetching student data:", err);
         setError("Failed to load student data. Please try again later.");
-        if (err.code === 'failed-precondition' && err.message.includes('index')) {
-            setError("A Firestore index is required to sort students. Please check the console for a link to create it.");
-        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchStudentProfiles();
+    fetchStudentData();
   }, []);
 
   useEffect(() => {
@@ -168,7 +194,7 @@ export function StudentDataList() {
     }
   };
 
-  const startDeletionProcess = (student: StudentProfile, reason: DeletionReason) => {
+  const startDeletionProcess = (student: CombinedStudentData, reason: DeletionReason) => {
     setStudentToDelete(student);
     setDeletionReason(reason);
     setShowConfirmDialog(true);
