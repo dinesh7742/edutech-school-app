@@ -123,7 +123,7 @@ function PostContentFormLogic() {
 
   const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   
-  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema) });
+  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: { description: "" } });
   const [homeworkFiles, setHomeworkFiles] = useState<File[]>([]);
   const [homeworkFilePreviews, setHomeworkFilePreviews] = useState<{name: string, type: string, url: string}[]>([]);
 
@@ -306,7 +306,7 @@ function PostContentFormLogic() {
         };
         
         if (type === "homework") {
-          documentData.title = `Homework: ${data.subject} - ${data.dueDate}`;
+          documentData.title = data.title || `Homework: ${data.subject} - ${data.dueDate}`;
           const uploadedAttachments: HomeworkAttachment[] = [];
           if (homeworkFiles.length > 0) {
               for (const file of homeworkFiles) {
@@ -436,7 +436,7 @@ function PostContentFormLogic() {
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
-        formHomework.reset({ subject: "", dueDate: "" });
+        formHomework.reset({ subject: "", dueDate: "", description: "" });
         setHomeworkFiles([]);
         setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
@@ -611,6 +611,14 @@ function PostContentFormLogic() {
                   <Label htmlFor="homeworkDueDate">Due Date *</Label>
                   <Input id="homeworkDueDate" type="date" {...formHomework.register("dueDate")} />
                   {formHomework.formState.errors.dueDate && <p className="text-sm text-destructive mt-1">{(formHomework.formState.errors.dueDate as any).message}</p>}
+                </div>
+                 <div>
+                  <Label htmlFor="homeworkTitle">Title (Optional)</Label>
+                  <Input id="homeworkTitle" {...formHomework.register("title")} placeholder={`e.g., Chapter 5 Questions`} />
+                </div>
+                <div>
+                  <Label htmlFor="homeworkDescription">Description / Instructions (Optional)</Label>
+                  <Textarea id="homeworkDescription" {...formHomework.register("description")} placeholder="e.g., Complete questions 1-5 from page 62."/>
                 </div>
               <div className="space-y-2">
                 <Label htmlFor="homeworkFiles">Attachments (PDFs, Images, Videos)</Label>
@@ -947,3 +955,5 @@ export function PostContentForm() {
         </Suspense>
     )
 }
+
+    
