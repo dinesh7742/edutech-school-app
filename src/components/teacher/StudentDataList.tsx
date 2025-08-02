@@ -13,7 +13,7 @@ import type { StudentProfile } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, orderBy, doc, deleteDoc } from "firebase/firestore";
+import { collection, query, getDocs, orderBy, doc, deleteDoc, where } from "firebase/firestore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,9 +41,21 @@ export function StudentDataList() {
     const fetchStudentProfiles = async () => {
       setLoading(true);
       setError(null);
+
+      if (!teacherUser?.grade || !teacherUser?.division) {
+        setError("Your teacher profile is missing an assigned grade or division.");
+        setLoading(false);
+        return;
+      }
+
       try {
         const profilesCollectionRef = collection(db, "studentProfiles");
-        const q = query(profilesCollectionRef, orderBy("grade"), orderBy("division"), orderBy("firstName"));
+        const q = query(
+            profilesCollectionRef, 
+            where("grade", "==", teacherUser.grade),
+            where("division", "==", teacherUser.division),
+            orderBy("firstName")
+        );
         const querySnapshot = await getDocs(q);
         
         const fetchedProfiles: StudentProfile[] = querySnapshot.docs.map(doc => {
@@ -79,8 +91,7 @@ export function StudentDataList() {
         fullName.includes(lowercasedFilter) ||
         (item.firstName && item.firstName.toLowerCase().includes(lowercasedFilter)) ||
         (item.lastName && item.lastName.toLowerCase().includes(lowercasedFilter)) ||
-        (item.email && item.email.toLowerCase().includes(lowercasedFilter)) ||
-        (item.grade && item.division && `${item.grade}${item.division}`.toLowerCase().includes(lowercasedFilter))
+        (item.email && item.email.toLowerCase().includes(lowercasedFilter))
       );
     });
     setFilteredStudents(filteredData);
@@ -162,13 +173,13 @@ export function StudentDataList() {
   return (
     <Card className="shadow-xl">
       <CardHeader>
-        <CardTitle className="text-3xl font-bold text-primary">Student Data</CardTitle>
-        <CardDescription>View and manage student profiles. Click on a student to see full details.</CardDescription>
+        <CardTitle className="text-3xl font-bold text-primary">Student Data for Grade {teacherUser?.grade}-{teacherUser?.division}</CardTitle>
+        <CardDescription>View and manage student profiles for your assigned class.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="mb-6 flex items-center gap-4">
           <Input
-            placeholder="Search students (Name, Email, Grade/Div)..."
+            placeholder="Search students in your class..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm"
@@ -180,7 +191,7 @@ export function StudentDataList() {
             <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-2 text-lg font-medium">No Students Found</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {searchTerm ? "Try adjusting your search or filter criteria." : "No student profiles available, or none match your current view."}
+              {searchTerm ? "No students match your search." : "No student profiles have been created for your class yet."}
             </p>
           </div>
         ) : (
@@ -190,8 +201,6 @@ export function StudentDataList() {
               <TableRow>
                 <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Grade</TableHead>
-                <TableHead>Division</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -206,8 +215,6 @@ export function StudentDataList() {
                     </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">{student.firstName} {student.lastName || ''}</TableCell>
-                  <TableCell>{student.grade}</TableCell>
-                  <TableCell>{student.division}</TableCell>
                   <TableCell>{student.email || 'N/A'}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="ghost" size="sm" asChild>
