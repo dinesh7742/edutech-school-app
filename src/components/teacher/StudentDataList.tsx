@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Eye, UserCircle, Trash2, Loader2, MoreVertical, Search } from "lucide-react";
+import { Eye, UserCircle, Trash2, Loader2, MoreVertical, Search, ArrowUpCircle } from "lucide-react";
 import type { StudentProfile, AppUser } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, orderBy, doc, deleteDoc, where, writeBatch, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, query, getDocs, orderBy, doc, deleteDoc, where, writeBatch, serverTimestamp, getDoc, updateDoc } from "firebase/firestore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,12 +34,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
+import { Label } from "@/components/ui/label";
 
 type DeletionReason = "Duplicate Entry" | "Left with LC" | "Continuous Absent";
-
-// Combined type to handle both full profiles and basic user data
 type CombinedStudentData = StudentProfile & AppUser;
-
 
 export function StudentDataList() {
   const { user: teacherUser } = useAuth();
@@ -53,17 +51,23 @@ export function StudentDataList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isPromoting, setIsPromoting] = useState<string | null>(null);
 
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState<CombinedStudentData | null>(null);
   const [deletionReason, setDeletionReason] = useState<DeletionReason | null>(null);
+
+  const [showPromoteDialog, setShowPromoteDialog] = useState(false);
+  const [studentToPromote, setStudentToPromote] = useState<CombinedStudentData | null>(null);
+  const [newGrade, setNewGrade] = useState("");
+  const [newDivision, setNewDivision] = useState("");
+
 
   useEffect(() => {
     const fetchStudentData = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Step 1: Fetch all users who are students
         const usersCollectionRef = collection(db, "users");
         const usersQuery = query(usersCollectionRef, where("role", "==", "student"));
         const usersSnapshot = await getDocs(usersQuery);
@@ -72,7 +76,6 @@ export function StudentDataList() {
           userMap.set(doc.id, { uid: doc.id, ...doc.data() } as AppUser);
         });
 
-        // Step 2: Fetch all student profiles
         const profilesCollectionRef = collection(db, "studentProfiles");
         const profilesSnapshot = await getDocs(profilesCollectionRef);
         const profileMap = new Map<string, StudentProfile>();
@@ -80,16 +83,13 @@ export function StudentDataList() {
           profileMap.set(doc.id, { uid: doc.id, ...doc.data() } as StudentProfile);
         });
 
-        // Step 3: Merge the two maps
         const combinedData: CombinedStudentData[] = [];
         userMap.forEach((user, uid) => {
           const profile = profileMap.get(uid);
-          // Combine user and profile data, giving preference to profile data if it exists
           const combined: CombinedStudentData = {
-            ...user, // Start with base user data (email, role, default grade/div)
-            ...profile, // Override with specific profile data if present
+            ...user, 
+            ...profile, 
             uid: uid,
-            // Ensure essential fields from user data are kept if profile is incomplete
             firstName: profile?.firstName || user.displayName?.split(' ')[0] || '',
             lastName: profile?.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
             grade: profile?.grade || user.grade || 'N/A',
@@ -98,7 +98,6 @@ export function StudentDataList() {
           combinedData.push(combined);
         });
         
-        // Sort the combined list
         combinedData.sort((a, b) => (a.firstName || "").localeCompare(b.firstName || ""));
 
         setStudents(combinedData);
@@ -198,6 +197,48 @@ export function StudentDataList() {
     setStudentToDelete(student);
     setDeletionReason(reason);
     setShowConfirmDialog(true);
+  };
+  
+  const startPromotionProcess = (student: CombinedStudentData) => {
+    setStudentToPromote(student);
+    setNewGrade(student.grade || '1');
+    setNewDivision(student.division || 'A');
+    setShowPromoteDialog(true);
+  };
+  
+  const handlePromoteStudent = async () => {
+    if (!studentToPromote || !newGrade || !newDivision) return;
+    setIsPromoting(studentToPromote.uid);
+
+    try {
+        const batch = writeBatch(db);
+        const userRef = doc(db, "users", studentToPromote.uid);
+        batch.update(userRef, { grade: newGrade, division: newDivision });
+
+        const profileRef = doc(db, "studentProfiles", studentToPromote.uid);
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+            batch.update(profileRef, { grade: newGrade, division: newDivision });
+        }
+
+        await batch.commit();
+        
+        setStudents(prev => prev.map(s => 
+            s.uid === studentToPromote.uid ? { ...s, grade: newGrade, division: newDivision } : s
+        ));
+
+        toast({
+            title: "Student Promoted",
+            description: `${studentToPromote.firstName} has been moved to Grade ${newGrade}-${newDivision}.`
+        });
+
+    } catch(err: any) {
+        toast({ title: "Promotion Failed", description: err.message, variant: "destructive" });
+    } finally {
+        setIsPromoting(null);
+        setShowPromoteDialog(false);
+        setStudentToPromote(null);
+    }
   };
 
 
@@ -308,22 +349,29 @@ export function StudentDataList() {
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" disabled={isDeleting === student.uid}>
-                            {isDeleting === student.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+                          <Button variant="ghost" size="icon" disabled={isDeleting === student.uid || isPromoting === student.uid}>
+                            {isDeleting === student.uid || isPromoting === student.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Move to Dropout</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => startDeletionProcess(student, "Duplicate Entry")}>
-                            Duplicate Entry
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => startDeletionProcess(student, "Left with LC")}>
-                            Left with LC
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => startDeletionProcess(student, "Continuous Absent")}>
-                            Continuous Absent
-                          </DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => startPromotionProcess(student)}>
+                                <ArrowUpCircle className="mr-2 h-4 w-4"/>
+                                Promote Student
+                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuLabel>Move to Dropout</DropdownMenuLabel>
+                           <DropdownMenuItem onSelect={() => startDeletionProcess(student, "Duplicate Entry")}>
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Duplicate Entry
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => startDeletionProcess(student, "Left with LC")}>
+                               <Trash2 className="mr-2 h-4 w-4"/>
+                                Left with LC
+                           </DropdownMenuItem>
+                           <DropdownMenuItem onSelect={() => startDeletionProcess(student, "Continuous Absent")}>
+                               <Trash2 className="mr-2 h-4 w-4"/>
+                                Continuous Absent
+                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -350,6 +398,32 @@ export function StudentDataList() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleSoftDeleteStudent} className="bg-destructive hover:bg-destructive/90">
               Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showPromoteDialog} onOpenChange={setShowPromoteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Promote Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Promote or move <span className="font-bold">{studentToPromote?.firstName}</span> to a new class.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4 py-4">
+              <Label>Assign to new class</Label>
+              <GradeDivisionSelector
+                grade={newGrade}
+                onGradeChange={setNewGrade}
+                division={newDivision}
+                onDivisionChange={setNewDivision}
+              />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePromoteStudent} disabled={!newGrade || !newDivision || !!isPromoting}>
+              {isPromoting ? "Promoting..." : "Confirm & Promote"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

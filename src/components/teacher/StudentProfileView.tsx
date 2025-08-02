@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Mail, Phone, MapPin, CalendarDays, User, Award, ShieldCheck, BookUser, Hash, Users, Edit, X, Briefcase, FileText, Loader2, UserCircle, ListChecks } from "lucide-react"; 
-import type { StudentProfile, LeaveApplication, DailyAttendanceLog, AttendanceStatus } from "@/types";
+import type { StudentProfile, LeaveApplication, DailyAttendanceLog, AttendanceStatus, AppUser } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/firebase";
@@ -64,7 +64,6 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   const [loadingLeaveApps, setLoadingLeaveApps] = useState(true);
   const [leaveAppsError, setLeaveAppsError] = useState<string | null>(null);
 
-  // New state for monthly attendance
   const [monthlyAttendance, setMonthlyAttendance] = useState<AttendanceRecord[]>([]);
   const [attendancePercentage, setAttendancePercentage] = useState<number | null>(null);
   const [loadingMonthlyAttendance, setLoadingMonthlyAttendance] = useState(true);
@@ -88,8 +87,26 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         const fetchedData = profileDocSnap.data();
         setProfile({ uid: profileDocSnap.id, ...fetchedData } as StudentProfile);
       } else {
-        setProfileError("Student profile not found.");
-        setProfile(null);
+        // Profile does not exist, fetch from users collection to pre-fill
+        const userDocRef = doc(db, "users", studentId);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+            const userData = userDocSnap.data() as AppUser;
+            const fallbackProfile: StudentProfile = {
+                uid: studentId,
+                email: userData.email || "",
+                firstName: userData.displayName?.split(' ')[0] || "",
+                lastName: userData.displayName?.split(' ').slice(1).join(' ') || "",
+                grade: userData.grade || "",
+                division: userData.division || "",
+            };
+            setProfile(fallbackProfile);
+            // Automatically enter edit mode if the detailed profile is missing
+            setIsEditing(true); 
+        } else {
+            setProfileError("Student record not found in users or profiles.");
+            setProfile(null);
+        }
       }
     } catch (err: any) {
       console.error("[StudentProfileView] Error fetching student profile for studentId " + studentId + ":", err);
@@ -101,7 +118,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   }, [studentId]);
 
   useEffect(() => {
-    if (profile) {
+    if (profile && !isEditing) { // Only fetch attendance if not in edit mode
       const fetchMonthlyAttendance = async () => {
         setLoadingMonthlyAttendance(true);
         setMonthlyAttendanceError(null);
@@ -159,7 +176,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
       fetchMonthlyAttendance();
     }
-  }, [profile, studentId, selectedMonth, selectedYear]);
+  }, [profile, studentId, selectedMonth, selectedYear, isEditing]);
 
   const fetchLeaveApplications = useCallback(async () => {
     if (!studentId) {
@@ -197,13 +214,14 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
   useEffect(() => {
     fetchProfileData();
-    fetchLeaveApplications();
-  }, [fetchProfileData, fetchLeaveApplications]);
+    if (!isEditing) {
+        fetchLeaveApplications();
+    }
+  }, [fetchProfileData, fetchLeaveApplications, isEditing]);
 
   const handleSaveSuccess = () => {
     setIsEditing(false);
     fetchProfileData(); 
-    fetchLeaveApplications(); 
   };
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -254,8 +272,25 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
       </Card>
     );
   }
+  
+  if (isEditing) {
+    return (
+      <>
+        <MySelfForm 
+          studentIdForEdit={studentId} 
+          onSaveSuccess={handleSaveSuccess}
+          isTeacherEditing={true}
+        />
+        <div className="max-w-3xl mx-auto mt-4 flex justify-end">
+            <Button variant="outline" onClick={() => { setIsEditing(false); fetchProfileData(); }}>
+                <X className="mr-2 h-4 w-4" /> Cancel Edit
+            </Button>
+        </div>
+      </>
+    );
+  }
 
-  if (profileError && !isEditing) { 
+  if (profileError) { 
     return (
       <Card className="w-full max-w-3xl mx-auto shadow-xl border-destructive">
         <CardHeader>
@@ -268,33 +303,16 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
     );
   }
   
-  if (!profile && !isEditing) { 
+  if (!profile) { 
     return (
       <Card className="w-full max-w-3xl mx-auto shadow-xl">
         <CardHeader>
           <CardTitle className="text-center">Student Not Found</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-center text-muted-foreground">The requested student profile could not be found.</p>
+          <p className="text-center text-muted-foreground">The requested student record could not be found.</p>
         </CardContent>
       </Card>
-    );
-  }
-
-  if (isEditing) {
-    return (
-      <>
-        <MySelfForm 
-          studentIdForEdit={studentId} 
-          onSaveSuccess={handleSaveSuccess}
-          isTeacherEditing={true}
-        />
-        <div className="max-w-3xl mx-auto mt-4 flex justify-end">
-            <Button variant="outline" onClick={() => setIsEditing(false)}>
-                <X className="mr-2 h-4 w-4" /> Cancel Edit
-            </Button>
-        </div>
-      </>
     );
   }
 
@@ -465,9 +483,9 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
                       ))}
                     </TableBody>
                   </Table>
-                </div>
-              )}
-            </>
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
