@@ -448,29 +448,15 @@ export function MySelfForm({ studentIdForEdit, onSaveSuccess, isTeacherEditing =
             </div>
           </div>
           
-          <div>
-             <Label>Grade & Division *</Label>
-             <Controller
-                name="grade"
-                control={control}
-                render={({ field: gradeField }) => (
-                <Controller
-                    name="division"
-                    control={control}
-                    render={({ field: divisionField }) => ( 
-                    <GradeDivisionSelector
-                        grade={gradeField.value || ""}
-                        onGradeChange={gradeField.onChange}
-                        division={divisionField.value || ""} 
-                        onDivisionChange={divisionField.onChange}
-                        showDivision={true}
-                    />
-                    )}
-                />
-                )}
-            />
-            {errors.grade && <p className="text-sm text-destructive mt-1">{errors.grade.message}</p>}
-            {errors.division && <p className="text-sm text-destructive mt-1">{errors.division.message}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="grade">Grade *</Label>
+              <Input id="grade" {...register("grade")} disabled={!isTeacherEditing} className="bg-muted/50" />
+            </div>
+            <div>
+              <Label htmlFor="division">Division *</Label>
+              <Input id="division" {...register("division")} disabled={!isTeacherEditing} className="bg-muted/50" />
+            </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
