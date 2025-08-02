@@ -37,6 +37,7 @@ export interface Homework {
   id: string;
   title: string;
   description?: string;
+  documentLink?: string;
   attachments?: HomeworkAttachment[];
   postedByUid: string;
   postedByName: string;

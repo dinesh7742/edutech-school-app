@@ -3,7 +3,7 @@
 import { useEffect, useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon, ExternalLink } from "lucide-react";
+import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon, ExternalLink, Link as LinkIcon } from "lucide-react";
 import NextImage from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
@@ -63,6 +63,7 @@ export default function StudentHomeworkPage() {
             id: doc.id,
             title: data.title,
             description: data.description,
+            documentLink: data.documentLink,
             attachments: data.attachments || [],
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
@@ -177,9 +178,18 @@ export default function StudentHomeworkPage() {
               <CardContent>
                 {hw.description && <LinkifiedText text={hw.description} />}
                 
+                {hw.documentLink && (
+                  <Button asChild variant="secondary" className="w-full my-2">
+                    <a href={hw.documentLink} target="_blank" rel="noopener noreferrer">
+                      <LinkIcon className="mr-2 h-4 w-4" />
+                      Open Document Link
+                    </a>
+                  </Button>
+                )}
+
                 {hw.attachments && hw.attachments.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Attachments:</h4>
+                  <div className="space-y-2 pt-2">
+                    <h4 className="font-semibold text-sm border-t pt-2">Attachments:</h4>
                      {hw.attachments.map((att, index) => renderAttachment(att, index))}
                   </div>
                 )}

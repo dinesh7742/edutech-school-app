@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus, ClipboardCheck } from "lucide-react";
+import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus, ClipboardCheck, Link } from "lucide-react";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
@@ -53,6 +53,7 @@ const homeworkSchema = z.object({
   }, "Due date is required and must be a valid date"),
   title: z.string().optional(),
   description: z.string().optional(),
+  documentLink: z.string().url("Please enter a valid URL or leave it empty.").or(z.literal("")).optional(),
 });
 type HomeworkFormValues = z.infer<typeof homeworkSchema>;
 
@@ -123,7 +124,7 @@ function PostContentFormLogic() {
 
   const formNotice = useForm<NoticeFormValues>({ resolver: zodResolver(noticeSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
   
-  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: { description: "" } });
+  const formHomework = useForm<HomeworkFormValues>({ resolver: zodResolver(homeworkSchema), defaultValues: { description: "", documentLink: "" } });
   const [homeworkFiles, setHomeworkFiles] = useState<File[]>([]);
   const [homeworkFilePreviews, setHomeworkFilePreviews] = useState<{name: string, type: string, url: string}[]>([]);
 
@@ -436,7 +437,7 @@ function PostContentFormLogic() {
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
-        formHomework.reset({ subject: "", dueDate: "", description: "" });
+        formHomework.reset({ subject: "", dueDate: "", description: "", documentLink: "" });
         setHomeworkFiles([]);
         setHomeworkFilePreviews([]);
         setRecentHomework(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
@@ -619,6 +620,11 @@ function PostContentFormLogic() {
                 <div>
                   <Label htmlFor="homeworkDescription">Description / Instructions (Optional)</Label>
                   <Textarea id="homeworkDescription" {...formHomework.register("description")} placeholder="e.g., Complete questions 1-5 from page 62."/>
+                </div>
+                 <div>
+                  <Label htmlFor="homeworkDocumentLink">Document Link (Optional)</Label>
+                  <Input id="homeworkDocumentLink" {...formHomework.register("documentLink")} placeholder="https://example.com/your-document.pdf" />
+                   {formHomework.formState.errors.documentLink && <p className="text-sm text-destructive mt-1">{formHomework.formState.errors.documentLink.message}</p>}
                 </div>
               <div className="space-y-2">
                 <Label htmlFor="homeworkFiles">Attachments (PDFs, Images, Videos)</Label>
