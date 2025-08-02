@@ -72,28 +72,30 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
-  const handleDownload = (url: string, fileName: string) => {
+  const handleDownload = async (url: string, fileName: string) => {
     try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the blob URL after the download has been initiated
+        window.URL.revokeObjectURL(blobUrl);
+
+        toast({ title: "Download Started", description: `Downloading ${fileName}...` });
     } catch (error) {
-      console.error("Download failed:", error);
-      toast({
-        title: "Download Failed",
-        description: "Could not start the file download. Please try opening the file in a new tab if possible.",
-        variant: "destructive"
-      });
-       // Fallback for browsers/WebViews where programmatic click might be blocked
-       try {
-         window.open(url, '_blank');
-       } catch (e) {
-          console.error("Fallback window.open failed:", e);
-       }
+        console.error("Download failed:", error);
+        toast({
+            title: "Download Failed",
+            description: "Could not start the file download. Please try again or check browser permissions.",
+            variant: "destructive"
+        });
     }
   };
 
