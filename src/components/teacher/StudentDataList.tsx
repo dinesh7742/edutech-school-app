@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Eye, UserCircle, Trash2, Loader2 } from "lucide-react";
+import { Eye, UserCircle, Trash2, Loader2, MoreVertical } from "lucide-react";
 import type { StudentProfile } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, orderBy, doc, deleteDoc, where } from "firebase/firestore";
+import { collection, query, getDocs, orderBy, doc, deleteDoc, where, writeBatch, serverTimestamp, getDoc } from "firebase/firestore";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,9 +23,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+
+type DeletionReason = "Duplicate Entry" | "Left with LC" | "Continuous Absent";
 
 export function StudentDataList() {
   const { user: teacherUser } = useAuth();
@@ -35,7 +44,11 @@ export function StudentDataList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Store UID of student being deleted
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<StudentProfile | null>(null);
+  const [deletionReason, setDeletionReason] = useState<DeletionReason | null>(null);
 
   useEffect(() => {
     const fetchStudentProfiles = async () => {
@@ -102,39 +115,71 @@ export function StudentDataList() {
     const lastInitial = lastName ? lastName[0] : "";
     return `${firstInitial}${lastInitial}`.toUpperCase() || "??";
   };
+  
+  const handleSoftDeleteStudent = async () => {
+    if (!studentToDelete || !deletionReason) return;
 
-  const handleDeleteStudent = async (studentId: string, studentName: string) => {
-    if (!studentId) return;
-    setIsDeleting(studentId);
+    setIsDeleting(studentToDelete.uid);
+    
     try {
-      // This function only deletes Firestore data, not the authentication account.
-      // This is a client-side limitation. Full user deletion requires a backend function.
-      const studentProfileDocRef = doc(db, "studentProfiles", studentId);
-      await deleteDoc(studentProfileDocRef);
+      const batch = writeBatch(db);
 
-      const userDocRef = doc(db, "users", studentId);
-      await deleteDoc(userDocRef);
+      // Get original documents
+      const studentProfileRef = doc(db, "studentProfiles", studentToDelete.uid);
+      const studentProfileSnap = await getDoc(studentProfileRef);
+      
+      const userRef = doc(db, "users", studentToDelete.uid);
+      const userSnap = await getDoc(userRef);
 
-      setStudents(prevStudents => prevStudents.filter(student => student.uid !== studentId));
-      setFilteredStudents(prevFiltered => prevFiltered.filter(student => student.uid !== studentId));
+      if (studentProfileSnap.exists()) {
+        const droppedProfileRef = doc(db, "droppedStudentProfiles", studentToDelete.uid);
+        const dataToMove = {
+          ...studentProfileSnap.data(),
+          deletionReason: deletionReason,
+          deletedAt: serverTimestamp(),
+          deletedBy: teacherUser?.uid,
+        };
+        batch.set(droppedProfileRef, dataToMove);
+        batch.delete(studentProfileRef);
+      }
+
+      if (userSnap.exists()) {
+        const droppedUserRef = doc(db, "droppedUsers", studentToDelete.uid);
+        batch.set(droppedUserRef, userSnap.data());
+        batch.delete(userRef);
+      }
+      
+      await batch.commit();
+
+      setStudents(prev => prev.filter(s => s.uid !== studentToDelete.uid));
+      setFilteredStudents(prev => prev.filter(s => s.uid !== studentToDelete.uid));
       
       toast({
-        title: "Student Data Deleted",
-        description: `All database records for ${studentName} have been removed. Their login account still exists.`,
-        duration: 7000,
+        title: "Student Moved to Dropout Box",
+        description: `${studentToDelete.firstName} has been removed from the active list.`,
       });
+
     } catch (error: any) {
-      console.error("Error deleting student data:", error);
+      console.error("Error moving student to dropout:", error);
       toast({
-        title: "Error Deleting Student Data",
-        description: `Could not remove ${studentName}'s data. ${error.message}`,
+        title: "Error",
+        description: `Could not move student. ${error.message}`,
         variant: "destructive",
       });
     } finally {
       setIsDeleting(null);
+      setStudentToDelete(null);
+      setDeletionReason(null);
+      setShowConfirmDialog(false);
     }
   };
-  
+
+  const startDeletionProcess = (student: StudentProfile, reason: DeletionReason) => {
+    setStudentToDelete(student);
+    setDeletionReason(reason);
+    setShowConfirmDialog(true);
+  };
+
 
   if (loading) {
     return (
@@ -171,96 +216,106 @@ export function StudentDataList() {
   }
 
   return (
-    <Card className="shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-3xl font-bold text-primary">Student Data for Grade {teacherUser?.grade}-{teacherUser?.division}</CardTitle>
-        <CardDescription>View and manage student profiles for your assigned class.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-6 flex items-center gap-4">
-          <Input
-            placeholder="Search students in your class..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-
-        {filteredStudents.length === 0 ? (
-          <div className="text-center py-10">
-            <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-2 text-lg font-medium">No Students Found</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {searchTerm ? "No students match your search." : "No student profiles have been created for your class yet."}
-            </p>
+    <>
+      <Card className="shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-primary">Student Data for Grade {teacherUser?.grade}-{teacherUser?.division} (Academic Year: 2025-26)</CardTitle>
+          <CardDescription>View and manage student profiles for your assigned class.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-6 flex items-center gap-4">
+            <Input
+              placeholder="Search students in your class..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-sm"
+            />
           </div>
-        ) : (
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">Avatar</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.uid} className="hover:bg-muted/50">
-                  <TableCell>
-                    <Avatar>
-                      <AvatarImage src={student.photoUrl || `https://placehold.co/40x40.png?text=${getInitials(student.firstName, student.lastName)}`} alt={`${student.firstName} ${student.lastName || ''}`} data-ai-hint="profile avatar" />
-                      <AvatarFallback>{getInitials(student.firstName, student.lastName)}</AvatarFallback>
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="font-medium">{student.firstName} {student.lastName || ''}</TableCell>
-                  <TableCell>{student.email || 'N/A'}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/teacher/student-data/${student.uid}`}>
-                        <Eye className="mr-2 h-4 w-4" /> View
-                      </Link>
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" disabled={isDeleting === student.uid}>
-                          {isDeleting === student.uid ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="mr-2 h-4 w-4" />
-                          )}
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete all of the student's data records (profile, etc.) from the database.
-                            <br/><br/>
-                            <strong className="text-destructive">IMPORTANT:</strong> This action <strong className="underline">cannot</strong> delete the user's login account. They will NOT be able to sign up again with the same credentials. Full user deletion requires administrative action on the backend.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteStudent(student.uid, `${student.firstName} ${student.lastName || ''}`)}
-                            className={isDeleting === student.uid ? "bg-destructive/80" : "bg-destructive hover:bg-destructive/90"}
-                          >
-                            {isDeleting === student.uid ? "Deleting..." : "Yes, delete student data"}
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </TableCell>
+
+          {filteredStudents.length === 0 ? (
+            <div className="text-center py-10">
+              <UserCircle className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-2 text-lg font-medium">No Students Found</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {searchTerm ? "No students match your search." : "No student profiles have been created for this class yet."}
+              </p>
+            </div>
+          ) : (
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">Avatar</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.map((student) => (
+                  <TableRow key={student.uid} className="hover:bg-muted/50">
+                    <TableCell>
+                      <Avatar>
+                        <AvatarImage src={student.photoUrl || `https://placehold.co/40x40.png?text=${getInitials(student.firstName, student.lastName)}`} alt={`${student.firstName} ${student.lastName || ''}`} data-ai-hint="profile avatar" />
+                        <AvatarFallback>{getInitials(student.firstName, student.lastName)}</AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="font-medium">{student.firstName} {student.lastName || ''}</TableCell>
+                    <TableCell>{student.email || 'N/A'}</TableCell>
+                    <TableCell className="text-right space-x-2">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/teacher/student-data/${student.uid}`}>
+                          <Eye className="mr-2 h-4 w-4" /> View
+                        </Link>
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" disabled={isDeleting === student.uid}>
+                            {isDeleting === student.uid ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreVertical className="h-4 w-4" />}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Move to Dropout</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => startDeletionProcess(student, "Duplicate Entry")}>
+                            Duplicate Entry
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => startDeletionProcess(student, "Left with LC")}>
+                            Left with LC
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => startDeletionProcess(student, "Continuous Absent")}>
+                            Continuous Absent
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will move <span className="font-bold">{studentToDelete?.firstName}</span> to the dropout list for the reason: <span className="font-bold">{deletionReason}</span>.
+              <br/><br/>
+              The student will be removed from the active class list but can be re-admitted later from the Dropout Box.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSoftDeleteStudent} className="bg-destructive hover:bg-destructive/90">
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

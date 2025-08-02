@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, ClipboardCheck as ExamIcon } from "lucide-react";
+import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, ClipboardCheck as ExamIcon, Archive } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -471,6 +471,13 @@ export function TeacherDashboardClient() {
       buttonText: "Manage Complaints",
       icon: MessageSquareWarning,
     },
+     {
+      title: "Dropout Box",
+      description: "View and manage students who have been removed from the active list.",
+      link: "/teacher/dropout-list",
+      buttonText: "Manage Dropouts",
+      icon: Archive,
+    },
     {
       title: "Manage Online Exams",
       description: "Create and post online exams for your class using Google Forms.",
@@ -550,5 +557,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    

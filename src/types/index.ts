@@ -122,6 +122,15 @@ export interface StudentProfile {
   email?: string; 
 }
 
+export type DeletionReason = "Duplicate Entry" | "Left with LC" | "Continuous Absent";
+
+export interface DroppedStudentProfile extends StudentProfile {
+  deletionReason: DeletionReason;
+  deletedAt: Timestamp | FieldValue;
+  deletedBy: string; // UID of the teacher who deleted
+}
+
+
 export interface LiveClass {
   id: string;
   subject: string;
