@@ -102,6 +102,23 @@ export function MarkAttendanceForm() {
   const fetchAttendanceForDate = useCallback(async (date: Date) => {
     setAbsentStudentsForSms([]); // Clear SMS list when date changes
     if (!teacherUser?.grade || !teacherUser?.division) return;
+
+    // Check if the selected date is a Sunday
+    if (date.getDay() === 0) { // 0 = Sunday
+        const newFormValues: FormValues = {};
+        students.forEach(student => {
+            newFormValues[student.uid] = "Absent";
+        });
+        reset(newFormValues);
+        toast({
+            title: "Sunday Detected",
+            description: "All students have been automatically marked as absent.",
+            duration: 5000,
+        });
+        setLoadingAttendance(false);
+        return;
+    }
+
     setLoadingAttendance(true);
     const formattedDate = format(date, "yyyy-MM-dd");
     const attendanceDocId = `${formattedDate}_${teacherUser.grade}_${teacherUser.division}`;
