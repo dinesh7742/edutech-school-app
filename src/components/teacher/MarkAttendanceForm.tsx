@@ -57,16 +57,21 @@ export function MarkAttendanceForm() {
       const q = query(
         profilesCollectionRef,
         where("grade", "==", teacherUser.grade),
-        where("division", "==", teacherUser.division),
-        // Consider ordering if needed, e.g., by firstName
+        where("division", "==", teacherUser.division)
       );
       const querySnapshot = await getDocs(q);
       const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
-      setStudents(fetchedStudents);
-      setFilteredStudents(fetchedStudents);
+      
+      // Sort students: girls first alphabetically, then boys alphabetically
+      const girls = fetchedStudents.filter(s => s.gender === 'Female').sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+      const boys = fetchedStudents.filter(s => s.gender !== 'Female').sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+      const sortedStudents = [...girls, ...boys];
+
+      setStudents(sortedStudents);
+      setFilteredStudents(sortedStudents);
 
       const initialFormValues: FormValues = {};
-      fetchedStudents.forEach(student => {
+      sortedStudents.forEach(student => {
         initialFormValues[student.uid] = "Present";
       });
       reset(initialFormValues);
@@ -78,6 +83,7 @@ export function MarkAttendanceForm() {
       setLoadingStudents(false);
     }
   }, [teacherUser, toast, reset]);
+
 
   useEffect(() => {
     fetchStudents();
