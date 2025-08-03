@@ -375,5 +375,3 @@ export function MarkAttendanceForm() {
     </Card>
   );
 }
-
-    
