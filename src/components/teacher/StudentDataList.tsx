@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Eye, UserCircle, Trash2, Loader2, MoreVertical, Search, ArrowUpCircle } from "lucide-react";
-import type { StudentProfile, AppUser } from "@/types";
+import type { StudentProfile, AppUser, DeletionReason } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { db } from "@/lib/firebase";
@@ -36,7 +36,6 @@ import { useToast } from "@/hooks/use-toast";
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { Label } from "@/components/ui/label";
 
-type DeletionReason = "Duplicate Entry" | "Left with LC" | "Continuous Absent";
 type CombinedStudentData = StudentProfile & AppUser;
 
 export function StudentDataList() {
@@ -298,11 +297,10 @@ export function StudentDataList() {
                 <GradeDivisionSelector
                     grade={gradeFilter}
                     onGradeChange={(val) => {
-                        setGradeFilter(val);
-                        if (val === "All") setDivisionFilter("All");
+                        setGradeFilter(val === "All" ? "All" : val);
                     }}
                     division={divisionFilter}
-                    onDivisionChange={setDivisionFilter}
+                    onDivisionChange={(val) => setDivisionFilter(val)}
                 />
             </div>
           </div>

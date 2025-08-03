@@ -1,20 +1,77 @@
 
-import { ManageSubmissionsClient } from "@/components/teacher/ManageSubmissionsClient";
-import { ClipboardCheck } from "lucide-react";
+"use client";
+
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { MailOpen, ArrowRight, AlertTriangle, FileSignature } from "lucide-react"; 
+
+interface SubmissionType {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  link: string;
+  buttonText: string;
+  dataAiHint: string;
+}
+
+const submissionTypes: SubmissionType[] = [
+  {
+    id: "leave-applications",
+    title: "Leave Applications",
+    description: "Review and process student requests for planned absences.",
+    icon: MailOpen,
+    link: "/teacher/leave-applications",
+    buttonText: "Review Leave Requests",
+    dataAiHint: "mail letter envelope",
+  },
+  {
+    id: "late-arrival-requests",
+    title: "Late Arrival / Early Departure",
+    description: "Manage requests for students arriving late or needing to leave early.",
+    icon: AlertTriangle,
+    link: "/teacher/late-arrival-requests",
+    buttonText: "Review Late Arrival",
+    dataAiHint: "alert triangle time",
+  },
+  {
+    id: "other-school-applications",
+    title: "Other School Applications",
+    description: "Review miscellaneous requests like Bonafide Certificates or TC applications.",
+    icon: FileSignature,
+    link: "/teacher/other-applications-review",
+    buttonText: "Review Other Requests",
+    dataAiHint: "signature document form",
+  },
+];
 
 export default function ManageSubmissionsPage() {
   return (
-    <div className="py-4">
-      <div className="flex items-center gap-3 mb-6">
-        <ClipboardCheck className="h-10 w-10 text-primary" />
-        <h1 className="text-3xl font-bold text-primary">Manage Student Submissions</h1>
-      </div>
-      <p className="mb-6 text-muted-foreground">
-        Select an application type below to review submitted requests.
-      </p>
-      <ManageSubmissionsClient />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {submissionTypes.map((submission) => (
+        <Card key={submission.id} className="shadow-lg flex flex-col text-center">
+          <CardHeader className="pb-3">
+            <div className="flex justify-center mb-3">
+              <submission.icon className="h-12 w-12 text-primary" data-ai-hint={submission.dataAiHint} />
+            </div>
+            <CardTitle className="text-xl">{submission.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col flex-grow items-center justify-between">
+            <CardDescription className="mb-4 text-sm h-16 line-clamp-3">{submission.description}</CardDescription>
+            <Button asChild className="w-full mt-auto">
+              <Link href={submission.link}>
+                {submission.buttonText} <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+       {submissionTypes.length === 0 && (
+         <p className="text-muted-foreground col-span-full text-center py-8">
+           No submission management areas configured.
+         </p>
+       )}
     </div>
   );
 }
-
-    
