@@ -12,7 +12,7 @@ import * as z from "zod";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { updateProfile as updateAuthProfile } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Loader2 } from "lucide-react";
 
@@ -166,3 +166,5 @@ export function TeacherProfileForm() {
     </Card>
   );
 }
+
+    
