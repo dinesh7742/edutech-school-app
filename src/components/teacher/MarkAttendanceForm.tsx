@@ -173,7 +173,7 @@ export function MarkAttendanceForm() {
       await setDoc(attendanceDocRef, attendanceData, { merge: true });
       toast({ title: "Success", description: `Attendance for ${formattedDate} saved successfully.` });
 
-      // --- Prepare list for SMS buttons ---
+      // --- Prepare list for WhatsApp buttons ---
       const studentMap = new Map(students.map(s => [s.uid, s]));
       const absentees: AbsentStudentInfo[] = [];
 
@@ -193,11 +193,11 @@ export function MarkAttendanceForm() {
       if (absentees.length > 0) {
         toast({
           title: "Action Required",
-          description: "Please send SMS notifications to the parents of absent students below.",
+          description: "Please send WhatsApp notifications to the parents of absent students below.",
           duration: 7000,
         });
       }
-      // --- End SMS preparation ---
+      // --- End WhatsApp preparation ---
 
     } catch (error: any) {
       console.error("Error saving attendance:", error);
@@ -207,17 +207,24 @@ export function MarkAttendanceForm() {
     }
   };
   
-  const generateSmsLink = (contactNumber: string, studentName: string) => {
+  const generateWhatsAppLink = (contactNumber: string, studentName: string) => {
     if (!selectedDate || !teacherUser) return "#";
+
+    // Clean the number: remove '+' and spaces
+    let cleanNumber = contactNumber.replace(/\+/g, '').replace(/\s/g, '');
+    // Ensure it starts with 91 if it's a 10-digit Indian number
+    if (cleanNumber.length === 10) {
+      cleanNumber = '91' + cleanNumber;
+    }
+
     const formattedDate = format(selectedDate, "PPP");
     const teacherName = teacherUser.displayName || "The Class Teacher";
     const grade = teacherUser.grade || "N/A";
     const division = teacherUser.division || "N/A";
     
-    const message = `Dear Parent, this is to inform you that your child, ${studentName} of Grade ${grade}-${division}, was absent from school today, ${formattedDate}. Regards, ${teacherName}, PM SHRI MPS Varsha Nagar.`;
+    const message = `Dear Parent, this is to inform you that your child, ${studentName} of Grade ${grade}-${division}, was absent from school today, ${formattedDate}.\n\nRegards,\n${teacherName}\nPM SHRI MPS Varsha Nagar.`;
     
-    // For iOS, use '&'. For Android, use '?'. '?' is more broadly supported.
-    return `sms:${contactNumber}?body=${encodeURIComponent(message)}`;
+    return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
   };
 
   return (
@@ -343,16 +350,16 @@ export function MarkAttendanceForm() {
                     <MessageSquare className="h-6 w-6"/>
                     Absentee Notifications
                 </h3>
-                <p className="text-muted-foreground mt-1">Click to send a pre-filled SMS to the parent of each absent student.</p>
+                <p className="text-muted-foreground mt-1">Click to send a pre-filled WhatsApp message to the parent of each absent student.</p>
                 <div className="mt-4 space-y-3">
                     {absentStudentsForSms.map(student => (
                         <div key={student.uid} className="p-3 border rounded-md flex justify-between items-center">
                             <span className="font-medium">{student.name}</span>
                             {student.contactNumber ? (
                                 <Button asChild size="sm">
-                                    <a href={generateSmsLink(student.contactNumber, student.name)} target="_blank" rel="noopener noreferrer">
+                                    <a href={generateWhatsAppLink(student.contactNumber, student.name)} target="_blank" rel="noopener noreferrer">
                                         <Send className="mr-2 h-4 w-4" />
-                                        Send SMS
+                                        Send WhatsApp
                                     </a>
                                 </Button>
                             ) : (
