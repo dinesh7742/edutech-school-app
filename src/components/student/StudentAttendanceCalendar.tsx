@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
 
 interface AttendanceRecord {
   date: Date;
@@ -50,12 +50,11 @@ export function StudentAttendanceCalendar() {
         const firstDayOfMonth = startOfMonth(month);
         const lastDayOfMonth = endOfMonth(month);
 
+        // Simplified query to avoid composite index
         const attendanceQuery = query(
           collection(db, "dailyAttendance"),
           where("grade", "==", user.grade),
-          where("division", "==", user.division),
-          where("date", ">=", format(firstDayOfMonth, "yyyy-MM-dd")),
-          where("date", "<=", format(lastDayOfMonth, "yyyy-MM-dd"))
+          where("division", "==", user.division)
         );
 
         const querySnapshot = await getDocs(attendanceQuery);
@@ -63,12 +62,17 @@ export function StudentAttendanceCalendar() {
 
         querySnapshot.forEach((doc) => {
           const log = doc.data() as DailyAttendanceLog;
-          const studentStatus = log.studentRecords[user.uid!];
-          if (studentStatus) {
-            records.push({
-              date: parseISO(log.date),
-              status: studentStatus,
-            });
+          const logDate = parseISO(log.date);
+
+          // Filter by date on the client side
+          if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
+            const studentStatus = log.studentRecords[user.uid!];
+            if (studentStatus) {
+              records.push({
+                date: logDate,
+                status: studentStatus,
+              });
+            }
           }
         });
         
@@ -96,6 +100,7 @@ export function StudentAttendanceCalendar() {
     present: presentDays,
     absent: absentDays,
     holiday: holidays,
+    sunday: { dayOfWeek: [0] }
   };
 
   const modifierStyles = {
@@ -110,7 +115,11 @@ export function StudentAttendanceCalendar() {
     holiday: {
       color: "white",
       backgroundColor: "hsl(var(--destructive))",
-    }
+    },
+    sunday: {
+      color: "hsl(var(--destructive-foreground))",
+      backgroundColor: "hsl(var(--destructive) / 0.5)",
+    },
   };
 
   return (

@@ -10,7 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth, subYears } from "date-fns";
+import { format, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth, subYears, parseISO, isWithinInterval } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
@@ -59,18 +59,11 @@ export function StudentAttendanceDetails() {
         const firstDayOfMonth = startOfMonth(setYear(setMonth(new Date(), selectedMonth), selectedYear));
         const lastDayOfMonth = endOfMonth(firstDayOfMonth);
 
-        const startDateString = format(firstDayOfMonth, "yyyy-MM-dd");
-        const endDateString = format(lastDayOfMonth, "yyyy-MM-dd");
-
-        console.log(`Fetching attendance for ${user.grade}-${user.division} from ${startDateString} to ${endDateString}`);
-
+        // Simplified query to avoid needing a composite index
         const attendanceQuery = query(
           collection(db, "dailyAttendance"),
           where("grade", "==", user.grade),
-          where("division", "==", user.division),
-          where("date", ">=", startDateString),
-          where("date", "<=", endDateString),
-          orderBy("date", "desc")
+          where("division", "==", user.division)
         );
 
         const querySnapshot = await getDocs(attendanceQuery);
@@ -80,21 +73,28 @@ export function StudentAttendanceDetails() {
 
         querySnapshot.forEach((doc) => {
           const log = doc.data() as DailyAttendanceLog;
-          const studentStatus = log.studentRecords[user.uid!];
-          if (studentStatus) {
-            totalMarkedDays++;
-            if (studentStatus === "Present") {
-              presentDays++;
+          const logDate = parseISO(log.date);
+          
+          // Client-side filtering
+          if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
+            const studentStatus = log.studentRecords[user.uid!];
+            if (studentStatus) {
+              totalMarkedDays++;
+              if (studentStatus === "Present") {
+                presentDays++;
+              }
+              records.push({
+                date: log.date,
+                formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
+                status: studentStatus,
+              });
             }
-            records.push({
-              date: log.date,
-              formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
-              status: studentStatus,
-            });
           }
         });
         
-        console.log(`Fetched ${records.length} records. Present: ${presentDays}, Total Marked: ${totalMarkedDays}`);
+        // Sort records by date descending after filtering
+        records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
         setAttendanceRecords(records);
 
         if (totalMarkedDays > 0) {
