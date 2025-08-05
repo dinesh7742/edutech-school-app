@@ -10,6 +10,7 @@ import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firesto
 import type { Homework, HomeworkAttachment } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 
 // A simple component to find and render links in text
 const LinkifiedText = memo(({ text }: { text: string }) => {
@@ -47,6 +48,7 @@ export default function StudentHomeworkPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
 
   useEffect(() => {
     const fetchHomework = async () => {
@@ -103,45 +105,43 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
-  const handleOpenInNewTab = (url: string, fileName: string) => {
-    try {
-        window.open(url, '_blank');
-        toast({ title: "Opening File", description: `Attempting to open ${fileName} in a new tab...` });
-    } catch (error) {
-        console.error("Failed to open in new tab:", error);
-        toast({
-            title: "Failed to Open",
-            description: "Could not open the file. Please check your browser's popup blocker settings.",
-            variant: "destructive"
-        });
-    }
+  const handleOpenFile = (file: FileInfo) => {
+    setViewingFile(file);
   };
 
 
   const renderAttachment = (attachment: HomeworkAttachment, index: number) => {
+    const fileInfo: FileInfo = {
+      url: attachment.url,
+      type: attachment.type,
+      name: attachment.name,
+    };
+    
     switch(attachment.type) {
       case 'image':
         return (
           <div key={index} className="my-2 space-y-2">
-            <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="block relative w-full aspect-video border rounded-md overflow-hidden bg-muted hover:opacity-90 transition-opacity">
+            <button onClick={() => handleOpenFile(fileInfo)} className="block relative w-full aspect-video border rounded-md overflow-hidden bg-muted hover:opacity-90 transition-opacity">
                 <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="contain" />
-            </a>
+            </button>
             <p className="text-xs text-muted-foreground text-center">Click image to view full size</p>
           </div>
         )
       case 'video':
-        return (
+         return (
           <div key={index} className="my-2 space-y-2">
-            <video controls src={attachment.url} className="w-full rounded-md border bg-black"></video>
-            <p className="text-xs text-muted-foreground mt-1">{attachment.name}</p>
+            <button onClick={() => handleOpenFile(fileInfo)} className="block relative w-full aspect-video border rounded-md overflow-hidden bg-black text-white flex items-center justify-center hover:opacity-90 transition-opacity">
+                <Video className="h-12 w-12" />
+            </button>
+            <p className="text-xs text-muted-foreground text-center">Click to play: {attachment.name}</p>
           </div>
         )
       case 'pdf':
       default:
         return (
-          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => handleOpenInNewTab(attachment.url, attachment.name)} data-ai-hint="document sheet">
+          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => handleOpenFile(fileInfo)} data-ai-hint="document sheet">
             {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <ExternalLink className="mr-2 h-4 w-4" />}
-            {`Open ${attachment.name}`}
+            {`View ${attachment.name}`}
           </Button>
         )
     }
@@ -157,47 +157,50 @@ export default function StudentHomeworkPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-        <ClipboardList className="h-8 w-8" />
-        Homework for Grade {user?.grade}{user?.division}
-      </h1>
-      {filteredHomework.length === 0 ? (
-         <p className="text-muted-foreground text-center py-8">No homework assigned to your class at the moment.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredHomework.map(hw => (
-            <Card key={hw.id} className="shadow-lg">
-              <CardHeader>
-                <CardTitle>{hw.title}</CardTitle>
-                <CardDescription>
-                  Subject: {hw.subject} | Due Date: {hw.dueDate} <br />
-                  Posted: {hw.displayDate} by {hw.postedByName}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {hw.description && <LinkifiedText text={hw.description} />}
-                
-                {hw.documentLink && (
-                  <Button asChild variant="secondary" className="w-full my-2">
-                    <a href={hw.documentLink} target="_blank" rel="noopener noreferrer">
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      Open Document Link
-                    </a>
-                  </Button>
-                )}
+    <>
+      <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+          <ClipboardList className="h-8 w-8" />
+          Homework for Grade {user?.grade}{user?.division}
+        </h1>
+        {filteredHomework.length === 0 ? (
+           <p className="text-muted-foreground text-center py-8">No homework assigned to your class at the moment.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredHomework.map(hw => (
+              <Card key={hw.id} className="shadow-lg">
+                <CardHeader>
+                  <CardTitle>{hw.title}</CardTitle>
+                  <CardDescription>
+                    Subject: {hw.subject} | Due Date: {hw.dueDate} <br />
+                    Posted: {hw.displayDate} by {hw.postedByName}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {hw.description && <LinkifiedText text={hw.description} />}
+                  
+                  {hw.documentLink && (
+                    <Button asChild variant="secondary" className="w-full my-2">
+                      <a href={hw.documentLink} target="_blank" rel="noopener noreferrer">
+                        <LinkIcon className="mr-2 h-4 w-4" />
+                        Open Document Link
+                      </a>
+                    </Button>
+                  )}
 
-                {hw.attachments && hw.attachments.length > 0 && (
-                  <div className="space-y-2 pt-2">
-                    <h4 className="font-semibold text-sm border-t pt-2">Attachments:</h4>
-                     {hw.attachments.map((att, index) => renderAttachment(att, index))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+                  {hw.attachments && hw.attachments.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <h4 className="font-semibold text-sm border-t pt-2">Attachments:</h4>
+                       {hw.attachments.map((att, index) => renderAttachment(att, index))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </>
   );
 }

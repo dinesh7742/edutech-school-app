@@ -9,6 +9,7 @@ import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firesto
 import type { Circular } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 
 export default function StudentCircularsPage() {
   const [allCirculars, setAllCirculars] = useState<Circular[]>([]);
@@ -16,6 +17,7 @@ export default function StudentCircularsPage() {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
 
   useEffect(() => {
     const fetchCirculars = async () => {
@@ -99,19 +101,6 @@ export default function StudentCircularsPage() {
 
   }, [user, allCirculars]);
 
-  const handleOpenFile = (url: string, fileName: string) => {
-    try {
-      window.open(url, '_blank');
-      toast({ title: "Opening File", description: `Attempting to open ${fileName} in a new tab...` });
-    } catch (error) {
-      console.error("Failed to open file:", error);
-      toast({
-        title: "Open Failed",
-        description: "Could not open the file. Please check your browser's popup blocker settings.",
-        variant: "destructive"
-      });
-    }
-  };
 
   if (loading) {
     return (
@@ -123,6 +112,8 @@ export default function StudentCircularsPage() {
   }
 
   return (
+    <>
+    <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
         <FileText className="h-8 w-8" />
@@ -147,11 +138,11 @@ export default function StudentCircularsPage() {
                 {circ.fileUrl && (
                   <Button
                     variant="outline"
-                    onClick={() => handleOpenFile(circ.fileUrl!, circ.fileName || 'circular.pdf')}
+                    onClick={() => setViewingFile({url: circ.fileUrl!, type: 'pdf', name: circ.fileName || 'Circular'})}
                     data-ai-hint="document letter"
                   >
                     <ExternalLink className="mr-2 h-4 w-4" /> 
-                    {circ.fileName ? `Open ${circ.fileName}` : 'Open Circular'}
+                    {circ.fileName ? `View ${circ.fileName}` : 'View Circular'}
                   </Button>
                 )}
               </CardContent>
@@ -160,5 +151,6 @@ export default function StudentCircularsPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

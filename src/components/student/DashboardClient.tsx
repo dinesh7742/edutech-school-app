@@ -17,6 +17,7 @@ import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, Homewor
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
+import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 
 interface LatestContent<T> {
   item: T | null;
@@ -43,6 +44,8 @@ export function StudentDashboardClient() {
 
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
   const [completingHomework, setCompletingHomework] = useState(false);
+
+  const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
 
 
   useEffect(() => {
@@ -287,11 +290,14 @@ export function StudentDashboardClient() {
                 {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap text-card-foreground">{data.description}</p>}
                 
                 {data.attachments && data.attachments.length > 0 && (
-                  <Button asChild variant="outline" size="sm" className="mt-2">
-                    <a href={data.attachments[0].url} target="_blank" rel="noopener noreferrer" download={data.attachments[0].name} data-ai-hint="document sheet">
-                       {data.attachments[0].name} {data.attachments.length > 1 ? `(+${data.attachments.length - 1} more)` : ''}
-                    </a>
-                  </Button>
+                   <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => data.attachments && setViewingFile({ url: data.attachments[0].url, type: data.attachments[0].type, name: data.attachments[0].name })}
+                    >
+                      View Attachment
+                    </Button>
                 )}
 
                 {!isLatestHomeworkCompleted && (
@@ -348,10 +354,13 @@ export function StudentDashboardClient() {
                     </div>
                     {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
                     {data.fileUrl && (
-                        <Button asChild variant="outline" size="sm" className="mt-2">
-                        <a href={data.fileUrl} target="_blank" rel="noopener noreferrer" data-ai-hint="document letter">
-                            {data.fileName || 'Download Circular'}
-                        </a>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                          onClick={() => setViewingFile({ url: data.fileUrl!, type: 'pdf', name: data.fileName || 'Circular' })}
+                        >
+                          View Circular
                         </Button>
                     )}
                 </div>
@@ -468,6 +477,8 @@ export function StudentDashboardClient() {
   ];
   
   return (
+    <>
+    <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
     <div className="space-y-8">
       <WelcomeMessage />
       <StudentAttendanceCalendar />
@@ -525,6 +536,6 @@ export function StudentDashboardClient() {
         })}
       </div>
     </div>
+    </>
   );
 }
-
