@@ -15,7 +15,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
-import { StudentAttendanceSummary } from "@/components/student/StudentAttendanceSummary";
+import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
 
 interface LatestContent<T> {
@@ -470,7 +470,7 @@ export function StudentDashboardClient() {
   return (
     <div className="space-y-8">
       <WelcomeMessage />
-      <StudentAttendanceSummary />
+      <StudentAttendanceCalendar />
       <TodaySpecial />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
