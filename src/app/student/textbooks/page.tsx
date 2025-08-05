@@ -8,11 +8,37 @@ import Image from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, query, getDocs, Timestamp } from "firebase/firestore"; 
 import type { Textbook } from "@/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentTextbooksPage() {
   const [textbooksList, setTextbooksList] = useState<Textbook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null); 
+  const { toast } = useToast();
+
+  const handleDownload = (url: string, fileName: string) => {
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not start the file download. Please try opening the file in a new tab if possible.",
+        variant: "destructive"
+      });
+      try {
+        window.open(url, '_blank');
+      } catch (e) {
+        console.error("Fallback window.open failed:", e);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchTextbooks = async () => {
@@ -137,11 +163,13 @@ export default function StudentTextbooksPage() {
                 <CardDescription className="text-sm mb-3">Grade: {book.grade}</CardDescription>
                 <div className="mt-auto">
                   {book.fileUrl ? (
-                    <Button asChild variant="outline" className="w-full">
-                      <a href={book.fileUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="mr-2 h-4 w-4" /> 
-                        {book.fileName || 'Download PDF'}
-                      </a>
+                    <Button 
+                      onClick={() => handleDownload(book.fileUrl, book.fileName || `${book.title.replace(/ /g, '_')}.pdf`)} 
+                      variant="outline" 
+                      className="w-full"
+                    >
+                      <Download className="mr-2 h-4 w-4" /> 
+                      {book.fileName || 'Download PDF'}
                     </Button>
                   ) : (
                     <Button variant="outline" className="w-full" disabled>
