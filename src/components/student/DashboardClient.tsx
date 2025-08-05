@@ -252,10 +252,10 @@ export function StudentDashboardClient() {
           {data ? (
             <div className="text-foreground space-y-2">
               <h3 className="font-bold text-lg underline">{data.title}</h3>
-              <p className="text-xs text-muted-foreground">
-                Posted: {data.displayDate} by {data.postedByName}
+              <div className="text-xs text-muted-foreground">
+                <span>Posted: {data.displayDate} by {data.postedByName}</span>
                 {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
-              </p>
+              </div>
               <p className="text-sm text-left line-clamp-4 whitespace-pre-wrap">{data.content}</p>
             </div>
           ) : (
@@ -280,8 +280,8 @@ export function StudentDashboardClient() {
               <div className="text-left w-full space-y-1 p-1 sm:p-2 rounded-md bg-card">
                 <h3 className="font-semibold text-md text-card-foreground">{data.title}</h3>
                 <div className="text-xs text-muted-foreground">
-                  Subject: {data.subject} | Due: {data.dueDate} <br/>
-                  Posted: {data.displayDate} by {data.postedByName}
+                  <span>Subject: {data.subject} | Due: {data.dueDate}</span> <br />
+                  <span>Posted: {data.displayDate} by {data.postedByName}</span>
                   {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                 </div>
                 {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap text-card-foreground">{data.description}</p>}
@@ -341,8 +341,8 @@ export function StudentDashboardClient() {
                 <div className="text-left w-full space-y-1 p-1 sm:p-2 border rounded-md bg-card shadow-sm">
                     <h3 className="font-semibold text-md">{data.title}</h3>
                     <div className="text-xs text-muted-foreground">
-                    Posted: {data.displayDate} by {data.postedByName}
-                    {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
+                    <span>Posted: {data.displayDate} by {data.postedByName}</span>
+                    {data.grade && <span> | For: Grade {data.grade}{data.division ? ` Div ${data.division}` : ' (All Div)'}</span>}
                     {!data.grade && ' | School Wide'}
                     {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                     </div>
@@ -375,8 +375,8 @@ export function StudentDashboardClient() {
                 <div className="text-left w-full space-y-2 p-1 sm:p-2 rounded-md bg-card">
                 <h3 className="font-semibold text-md">{data.subject}</h3>
                 <div className="text-xs text-muted-foreground">
-                    Posted: {data.displayDate} by {data.postedByName}
-                    {data.grade && ` | For: Grade ${data.grade}${data.division ? ` Div ${data.division}` : ' (All Div)'}`}
+                    <span>Posted: {data.displayDate} by {data.postedByName}</span>
+                    {data.grade && <span> | For: Grade {data.grade}{data.division ? ` Div ${data.division}` : ' (All Div)'}</span>}
                     {!data.grade && ' | School Wide'}
                     {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                 </div>
@@ -527,3 +527,4 @@ export function StudentDashboardClient() {
     </div>
   );
 }
+
