@@ -9,42 +9,43 @@ body {
 
 @layer base {
   :root {
-    /* Light Mode - Pink & Rose Theme */
-    --background: 345 60% 97%; /* Very light pink */
-    --foreground: 345 50% 20%; /* Dark rose text */
+    /* Original Theme with Pink Borders */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%; /* White card */
-    --card-foreground: 345 50% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 345 50% 20%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 340 82% 61%; /* Vibrant pink */
-    --primary-foreground: 0 0% 100%; /* White */
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 345 70% 92%; /* Lighter pink */
-    --secondary-foreground: 345 50% 25%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 345 70% 96%; /* Very light pink */
-    --muted-foreground: 345 30% 45%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 340 75% 75%; /* Lighter, softer pink */
-    --accent-foreground: 345 50% 20%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 0 70% 50%; /* Standard Red */
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
     --border: 340 82% 80%; /* Soft pink border */
-    --input: 0 0% 100%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 340 82% 61%; /* Vibrant pink for rings */
+
     --radius: 0.75rem;
 
-    --chart-1: 340 82% 61%; /* Primary Pink */
-    --chart-2: 231 48% 48%; /* Complementary Blue */
-    --chart-3: 45 90% 60%;  /* Vibrant Yellow/Orange */
-    --chart-4: 180 50% 50%; /* Teal */
-    --chart-5: 260 50% 60%; /* Purple */
-
+    --chart-1: 340 82% 61%;
+    --chart-2: 231 48% 48%;
+    --chart-3: 45 90% 60%;
+    --chart-4: 180 50% 50%;
+    --chart-5: 260 50% 60%;
+    
     /* Custom colors for Welcome Board Calendar */
     --wb-present-bg: 144 60% 90%; /* Soft Mint Green */
     --wb-present-text: 144 80% 15%;
@@ -53,41 +54,41 @@ body {
   }
 
   .dark {
-    /* Dark Mode - Pink & Rose Theme */
-    --background: 345 15% 10%; /* Very dark desaturated pink */
-    --foreground: 345 20% 90%; /* Light grayish pink */
+    /* Original Dark Theme with Pink Borders */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
 
-    --card: 345 15% 15%; /* Darker card color */
-    --card-foreground: 345 20% 90%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 345 15% 12%;
-    --popover-foreground: 345 20% 90%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 340 75% 65%; /* Bright pink for primary */
-    --primary-foreground: 0 0% 100%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 345 15% 25%;
-    --secondary-foreground: 345 15% 85%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 345 15% 20%;
-    --muted-foreground: 345 15% 65%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215.4 16.3% 56.9%;
 
-    --accent: 340 65% 55%; /* Deeper pink for accent */
-    --accent-foreground: 0 0% 100%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 60% 55%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
 
     --border: 340 50% 35%; /* Pinkish border */
-    --input: 345 15% 18%;
-    --ring: 340 75% 65%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 340 75% 65%; /* Bright pink for rings */
 
     --chart-1: 340 75% 65%;
     --chart-2: 231 48% 58%;
     --chart-3: 45 80% 65%;
     --chart-4: 180 45% 60%;
     --chart-5: 260 45% 70%;
-
+    
     /* Custom colors for Welcome Board Calendar */
     --wb-present-bg: 144 40% 20%; /* Dark Mint Green */
     --wb-present-text: 144 80% 90%;
