@@ -50,9 +50,11 @@ export function FileViewer({ fileInfo, onOpenChange }: FileViewerProps) {
           </video>
         );
       case 'pdf':
+        // Use Google Docs viewer for robust embedding in webviews
+        const googleDocsUrl = `https://docs.google.com/gview?url=${encodeURIComponent(fileInfo.url)}&embedded=true`;
         return (
           <iframe
-            src={fileInfo.url}
+            src={googleDocsUrl}
             className="w-full h-[80vh] border-0"
             title={fileInfo.name}
           />
