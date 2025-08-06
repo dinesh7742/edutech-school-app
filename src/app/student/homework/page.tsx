@@ -49,7 +49,6 @@ export default function StudentHomeworkPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
-  const [viewingPdfInfo, setViewingPdfInfo] = useState<FileInfo | null>(null);
 
   useEffect(() => {
     const fetchHomework = async () => {
@@ -106,17 +105,6 @@ export default function StudentHomeworkPage() {
 
   }, [user, allHomework]);
 
-  const handleOpenFile = (file: FileInfo) => {
-    if (file.type === 'pdf') {
-      setViewingPdfInfo(file);
-      setViewingFile(null);
-    } else {
-      setViewingFile(file);
-      setViewingPdfInfo(null);
-    }
-  };
-
-
   const renderAttachment = (attachment: HomeworkAttachment, index: number) => {
     const fileInfo: FileInfo = {
       url: attachment.url,
@@ -128,7 +116,7 @@ export default function StudentHomeworkPage() {
       case 'image':
         return (
           <div key={index} className="my-2 space-y-2">
-            <button onClick={() => handleOpenFile(fileInfo)} className="block relative w-full aspect-video border rounded-md overflow-hidden bg-muted hover:opacity-90 transition-opacity">
+            <button onClick={() => setViewingFile(fileInfo)} className="block relative w-full aspect-video border rounded-md overflow-hidden bg-muted hover:opacity-90 transition-opacity">
                 <NextImage src={attachment.url} alt={attachment.name} layout="fill" objectFit="contain" />
             </button>
             <p className="text-xs text-muted-foreground text-center">Click image to view full size</p>
@@ -137,7 +125,7 @@ export default function StudentHomeworkPage() {
       case 'video':
          return (
           <div key={index} className="my-2 space-y-2">
-            <button onClick={() => handleOpenFile(fileInfo)} className="block relative w-full aspect-video border rounded-md overflow-hidden bg-black text-white flex items-center justify-center hover:opacity-90 transition-opacity">
+            <button onClick={() => setViewingFile(fileInfo)} className="block relative w-full aspect-video border rounded-md overflow-hidden bg-black text-white flex items-center justify-center hover:opacity-90 transition-opacity">
                 <Video className="h-12 w-12" />
             </button>
             <p className="text-xs text-muted-foreground text-center">Click to play: {attachment.name}</p>
@@ -146,33 +134,13 @@ export default function StudentHomeworkPage() {
       case 'pdf':
       default:
         return (
-          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => handleOpenFile(fileInfo)} data-ai-hint="document sheet">
+          <Button key={index} variant="outline" className="mt-2 w-full" onClick={() => setViewingFile(fileInfo)} data-ai-hint="document sheet">
             {attachment.type === 'pdf' ? <FileIcon className="mr-2 h-4 w-4" /> : <ExternalLink className="mr-2 h-4 w-4" />}
             {`View ${attachment.name}`}
           </Button>
         )
     }
   }
-
-  const handleDownload = (url: string, fileName: string) => {
-    try {
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
-    } catch (error) {
-      console.error("Download failed:", error);
-      toast({
-        title: "Download Failed",
-        description: "Could not start the file download. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
 
   if (loading) {
     return (
@@ -187,32 +155,6 @@ export default function StudentHomeworkPage() {
     <>
       <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
       
-      {viewingPdfInfo && (
-        <Card className="my-6 shadow-2xl border-primary">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>PDF Viewer: {viewingPdfInfo.name}</CardTitle>
-              <CardDescription>Viewing PDF document inline.</CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-                <Button onClick={() => handleDownload(viewingPdfInfo.url, viewingPdfInfo.name)}>
-                    <Download className="mr-2 h-4 w-4"/> Download PDF
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => setViewingPdfInfo(null)}>
-                    <X className="h-5 w-5" />
-                </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <iframe
-              src={viewingPdfInfo.url}
-              className="w-full h-[80vh] border rounded-md"
-              title={viewingPdfInfo.name}
-            />
-          </CardContent>
-        </Card>
-      )}
-
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
           <ClipboardList className="h-8 w-8" />
@@ -258,4 +200,3 @@ export default function StudentHomeworkPage() {
     </>
   );
 }
-
