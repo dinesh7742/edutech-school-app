@@ -111,29 +111,28 @@ export function WelcomeBoardAttendanceCalendar() {
             onMonthChange={setMonth}
             modifiers={modifiers}
             modifiersStyles={modifierStyles}
-            className="p-0"
+            className="p-0 w-full"
             components={{ DayContent }}
             styles={{
                 root: { width: '100%' },
                 months: { width: '100%' },
-                month: { width: '100%' },
-                table: { width: '100%', maxWidth: '100%' },
+                month: { width: '100%', spaceY: '1rem' },
+                table: { width: '100%', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: '0.5rem' },
                 head_row: {
                     display: 'flex',
-                    justifyContent: 'space-around',
                     width: '100%',
                 },
                 head_cell: { 
                     flex: 1,
                     textAlign: 'center',
-                    fontSize: '1.1rem',
+                    fontSize: '1rem',
                     fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    color: 'hsl(var(--muted-foreground))'
                 },
                 row: {
                     display: 'flex',
-                    justifyContent: 'space-around',
                     width: '100%',
-                    marginTop: '0.5rem',
                 },
                 cell: {
                     flex: 1,
@@ -144,14 +143,24 @@ export function WelcomeBoardAttendanceCalendar() {
                 },
                 day: {
                     position: 'absolute',
-                    top: '0.25rem',
-                    left: '0.25rem',
-                    right: '0.25rem',
-                    bottom: '0.25rem',
+                    top: '0',
+                    left: '0',
+                    right: '0',
+                    bottom: '0',
                     height: 'auto',
                     width: 'auto',
                     borderRadius: '0.75rem',
-                    fontSize: '1.25rem',
+                    fontSize: '1.5rem',
+                    fontWeight: '500'
+                },
+                 day_selected: {
+                  backgroundColor: 'hsl(var(--primary))',
+                  color: 'hsl(var(--primary-foreground))',
+                },
+                day_today: {
+                  fontWeight: 'bold',
+                  color: 'hsl(var(--primary))',
+                  border: '2px solid hsl(var(--primary))'
                 },
             }}
           />
