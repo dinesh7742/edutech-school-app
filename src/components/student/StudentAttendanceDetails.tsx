@@ -8,9 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, ListChecks } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth, subYears, parseISO, isWithinInterval } from "date-fns";
+import { format, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth, parseISO, isWithinInterval } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
@@ -49,71 +49,59 @@ export function StudentAttendanceDetails() {
       return;
     }
 
-    const fetchAttendanceData = async () => {
-      setIsLoading(true);
-      setError(null);
-      setAttendanceRecords([]);
-      setAttendancePercentage(null);
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const firstDayOfMonth = startOfMonth(setYear(setMonth(new Date(), selectedMonth), selectedYear));
-        const lastDayOfMonth = endOfMonth(firstDayOfMonth);
+    const attendanceQuery = query(
+      collection(db, "dailyAttendance"),
+      where("grade", "==", user.grade),
+      where("division", "==", user.division)
+    );
 
-        // Simplified query to avoid needing a composite index
-        const attendanceQuery = query(
-          collection(db, "dailyAttendance"),
-          where("grade", "==", user.grade),
-          where("division", "==", user.division)
-        );
+    const unsubscribe = onSnapshot(attendanceQuery, (querySnapshot) => {
+      let presentDays = 0;
+      let totalMarkedDays = 0;
+      const records: AttendanceRecord[] = [];
+      const firstDayOfMonth = startOfMonth(setYear(setMonth(new Date(), selectedMonth), selectedYear));
+      const lastDayOfMonth = endOfMonth(firstDayOfMonth);
 
-        const querySnapshot = await getDocs(attendanceQuery);
-        let presentDays = 0;
-        let totalMarkedDays = 0;
-        const records: AttendanceRecord[] = [];
-
-        querySnapshot.forEach((doc) => {
-          const log = doc.data() as DailyAttendanceLog;
-          const logDate = parseISO(log.date);
-          
-          // Client-side filtering
-          if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
-            const studentStatus = log.studentRecords[user.uid!];
-            if (studentStatus) {
-              totalMarkedDays++;
-              if (studentStatus === "Present") {
-                presentDays++;
-              }
-              records.push({
-                date: log.date,
-                formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
-                status: studentStatus,
-              });
+      querySnapshot.forEach((doc) => {
+        const log = doc.data() as DailyAttendanceLog;
+        const logDate = parseISO(log.date);
+        
+        if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
+          const studentStatus = log.studentRecords[user.uid!];
+          if (studentStatus) {
+            totalMarkedDays++;
+            if (studentStatus === "Present") {
+              presentDays++;
             }
+            records.push({
+              date: log.date,
+              formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
+              status: studentStatus,
+            });
           }
-        });
-        
-        // Sort records by date descending after filtering
-        records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        
-        setAttendanceRecords(records);
+        }
+      });
+      
+      records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      setAttendanceRecords(records);
 
-        if (totalMarkedDays > 0) {
-          setAttendancePercentage(Math.round((presentDays / totalMarkedDays) * 100));
-        } else {
-          setAttendancePercentage(null);
-        }
-      } catch (err: any) {
-        console.error("Error fetching attendance data:", err);
-        setError("Could not load attendance data. " + (err.message || ""));
-         if (err.code === 'failed-precondition' && err.message.includes('index')) {
-          setError("A Firestore index might be required for querying attendance by date range within grade and division. Please check the console for a link to create it.");
-        }
-      } finally {
-        setIsLoading(false);
+      if (totalMarkedDays > 0) {
+        setAttendancePercentage(Math.round((presentDays / totalMarkedDays) * 100));
+      } else {
+        setAttendancePercentage(null);
       }
-    };
+      setIsLoading(false);
+    }, (err: any) => {
+      console.error("Error fetching attendance data:", err);
+      setError("Could not load attendance data. " + (err.message || ""));
+      setIsLoading(false);
+    });
 
-    fetchAttendanceData();
+    return () => unsubscribe();
   }, [user, selectedMonth, selectedYear]);
 
   return (

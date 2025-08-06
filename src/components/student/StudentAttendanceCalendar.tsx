@@ -7,7 +7,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Loader2, CalendarDays } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
 
@@ -41,51 +41,46 @@ export function StudentAttendanceCalendar() {
       return;
     }
 
-    const fetchAttendanceData = async () => {
-      setIsLoading(true);
-      setError(null);
-      setAttendanceRecords([]);
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const firstDayOfMonth = startOfMonth(month);
-        const lastDayOfMonth = endOfMonth(month);
+    const attendanceQuery = query(
+      collection(db, "dailyAttendance"),
+      where("grade", "==", user.grade),
+      where("division", "==", user.division)
+    );
 
-        // Simplified query to avoid composite index
-        const attendanceQuery = query(
-          collection(db, "dailyAttendance"),
-          where("grade", "==", user.grade),
-          where("division", "==", user.division)
-        );
+    const unsubscribe = onSnapshot(attendanceQuery, (querySnapshot) => {
+      const records: AttendanceRecord[] = [];
+      const firstDayOfMonth = startOfMonth(month);
+      const lastDayOfMonth = endOfMonth(month);
 
-        const querySnapshot = await getDocs(attendanceQuery);
-        const records: AttendanceRecord[] = [];
+      querySnapshot.forEach((doc) => {
+        const log = doc.data() as DailyAttendanceLog;
+        const logDate = parseISO(log.date);
 
-        querySnapshot.forEach((doc) => {
-          const log = doc.data() as DailyAttendanceLog;
-          const logDate = parseISO(log.date);
-
-          // Filter by date on the client side
-          if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
-            const studentStatus = log.studentRecords[user.uid!];
-            if (studentStatus) {
-              records.push({
-                date: logDate,
-                status: studentStatus,
-              });
-            }
+        // Filter by date on the client side
+        if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
+          const studentStatus = log.studentRecords[user.uid!];
+          if (studentStatus) {
+            records.push({
+              date: logDate,
+              status: studentStatus,
+            });
           }
-        });
-        
-        setAttendanceRecords(records);
-      } catch (err: any) {
-        console.error("Error fetching attendance data:", err);
-        setError("Could not load attendance data. " + (err.message || ""));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+        }
+      });
+      
+      setAttendanceRecords(records);
+      setIsLoading(false);
+    }, (err: any) => {
+      console.error("Error fetching attendance data:", err);
+      setError("Could not load attendance data. " + (err.message || ""));
+      setIsLoading(false);
+    });
 
-    fetchAttendanceData();
+    // Cleanup the listener on component unmount or when dependencies change
+    return () => unsubscribe();
   }, [user, month]);
 
   const presentDays = attendanceRecords
