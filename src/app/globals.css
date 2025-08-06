@@ -44,6 +44,12 @@ body {
     --chart-3: 45 90% 60%;  /* Vibrant Yellow/Orange */
     --chart-4: 180 50% 50%; /* Teal */
     --chart-5: 260 50% 60%; /* Purple */
+
+    /* Custom colors for Welcome Board Calendar */
+    --wb-present-bg: 144 60% 90%; /* Soft Mint Green */
+    --wb-present-text: 144 80% 15%;
+    --wb-holiday-bg: 200 100% 90%; /* Soft Sky Blue */
+    --wb-holiday-text: 200 80% 20%;
   }
 
   .dark {
@@ -81,6 +87,12 @@ body {
     --chart-3: 45 80% 65%;
     --chart-4: 180 45% 60%;
     --chart-5: 260 45% 70%;
+
+    /* Custom colors for Welcome Board Calendar */
+    --wb-present-bg: 144 40% 20%; /* Dark Mint Green */
+    --wb-present-text: 144 80% 90%;
+    --wb-holiday-bg: 200 40% 25%; /* Dark Sky Blue */
+    --wb-holiday-text: 200 80% 90%;
   }
 }
 

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarDays, Sparkles } from 'lucide-react';
 
-interface SpecialDay {
+export interface SpecialDay {
   date: string; // YYYY-MM-DD
   name: string;
   description?: string;
@@ -13,7 +13,7 @@ interface SpecialDay {
 
 // Expanded list of special days and festivals for 2025.
 // In a real application, this would come from a database or API.
-const specialDays2025: SpecialDay[] = [
+export const specialDays2025: SpecialDay[] = [
   { date: '2025-01-01', name: "New Year's Day" },
   { date: '2025-01-13', name: 'Lohri' },
   { date: '2025-01-14', name: 'Makar Sankranti / Pongal' },
