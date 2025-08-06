@@ -9,7 +9,7 @@ body {
 
 @layer base {
   :root {
-    /* Professional Blue Theme */
+    /* Professional Blue Theme with Pink Borders */
     --background: 234 60% 96%; /* Light Blue Background */
     --foreground: 224 71.4% 4.1%; /* near-black */
 
@@ -34,9 +34,9 @@ body {
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 89%; /* blue-gray border */
-    --input: 220 13% 89%;
-    --ring: 235 48% 47%; /* Deep blue for rings */
+    --border: 340 80% 85%; /* Light Pink border */
+    --input: 340 80% 85%; /* Light Pink input border */
+    --ring: 340 90% 65%; /* Bright Pink for rings */
 
     --radius: 0.75rem;
 
@@ -54,7 +54,7 @@ body {
   }
 
   .dark {
-    /* Professional Blue Dark Theme */
+    /* Professional Blue Dark Theme with Pink Borders */
     --background: 224 71.4% 4.1%; /* near-black */
     --foreground: 210 20% 98%; /* near-white */
 
@@ -79,9 +79,9 @@ body {
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 27.9% 16.9%; /* dark blue-gray border */
-    --input: 215 27.9% 16.9%;
-    --ring: 217.2 91.2% 59.8%; /* bright blue for rings */
+    --border: 340 30% 25%; /* Dark Pink border */
+    --input: 340 30% 25%; /* Dark Pink input border */
+    --ring: 340 90% 65%; /* Bright Pink for rings */
 
     --chart-1: 217 91% 60%;
     --chart-2: 180 45% 60%;
