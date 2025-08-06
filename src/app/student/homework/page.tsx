@@ -3,7 +3,7 @@
 import { useEffect, useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon, ExternalLink, Link as LinkIcon } from "lucide-react";
+import { ClipboardList, Download, Loader2, Image as ImageIcon, Video, File as FileIcon, ExternalLink, Link as LinkIcon, X } from "lucide-react";
 import NextImage from "next/image";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
@@ -49,6 +49,7 @@ export default function StudentHomeworkPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
+  const [viewingPdfInfo, setViewingPdfInfo] = useState<FileInfo | null>(null);
 
   useEffect(() => {
     const fetchHomework = async () => {
@@ -106,7 +107,13 @@ export default function StudentHomeworkPage() {
   }, [user, allHomework]);
 
   const handleOpenFile = (file: FileInfo) => {
-    setViewingFile(file);
+    if (file.type === 'pdf') {
+      setViewingPdfInfo(file);
+      setViewingFile(null);
+    } else {
+      setViewingFile(file);
+      setViewingPdfInfo(null);
+    }
   };
 
 
@@ -147,6 +154,26 @@ export default function StudentHomeworkPage() {
     }
   }
 
+  const handleDownload = (url: string, fileName: string) => {
+    try {
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast({ title: "Download Started", description: `Downloading ${fileName}...` });
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not start the file download. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[300px]">
@@ -159,6 +186,33 @@ export default function StudentHomeworkPage() {
   return (
     <>
       <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
+      
+      {viewingPdfInfo && (
+        <Card className="my-6 shadow-2xl border-primary">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>PDF Viewer: {viewingPdfInfo.name}</CardTitle>
+              <CardDescription>Viewing PDF document inline.</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button onClick={() => handleDownload(viewingPdfInfo.url, viewingPdfInfo.name)}>
+                    <Download className="mr-2 h-4 w-4"/> Download PDF
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setViewingPdfInfo(null)}>
+                    <X className="h-5 w-5" />
+                </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <iframe
+              src={viewingPdfInfo.url}
+              className="w-full h-[80vh] border rounded-md"
+              title={viewingPdfInfo.name}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <div className="space-y-6">
         <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
           <ClipboardList className="h-8 w-8" />
@@ -204,3 +258,4 @@ export default function StudentHomeworkPage() {
     </>
   );
 }
+
