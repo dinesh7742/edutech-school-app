@@ -486,9 +486,9 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
                       ))}
                     </TableBody>
                   </Table>
-                </Body>
-              </Table>
-            </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
