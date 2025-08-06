@@ -9,38 +9,38 @@ body {
 
 @layer base {
   :root {
-    /* Light Mode - Deep Blue & Indigo Theme */
-    --background: 232 67% 94%; /* Light Blue (#E8EAF6) */
-    --foreground: 231 48% 25%; /* Dark Blue-Gray Text */
+    /* Light Mode - Pink & Rose Theme */
+    --background: 345 60% 97%; /* Very light pink */
+    --foreground: 345 50% 20%; /* Dark rose text */
 
-    --card: 232 60% 99%; /* Almost White with blue tint */
-    --card-foreground: 231 48% 25%;
+    --card: 0 0% 100%; /* White card */
+    --card-foreground: 345 50% 20%;
 
-    --popover: 232 60% 99%;
-    --popover-foreground: 231 48% 25%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 345 50% 20%;
 
-    --primary: 231 48% 48%; /* Deep Blue (#3F51B5) */
+    --primary: 340 82% 61%; /* Vibrant pink */
     --primary-foreground: 0 0% 100%; /* White */
 
-    --secondary: 231 44% 88%; /* Lighter Indigo */
-    --secondary-foreground: 231 48% 25%;
+    --secondary: 345 70% 92%; /* Lighter pink */
+    --secondary-foreground: 345 50% 25%;
 
-    --muted: 231 44% 94%; /* Very Light Indigo */
-    --muted-foreground: 231 30% 45%;
+    --muted: 345 70% 96%; /* Very light pink */
+    --muted-foreground: 345 30% 45%;
 
-    --accent: 231 44% 56%; /* Indigo (#5C6BC0) */
-    --accent-foreground: 0 0% 100%; /* White */
+    --accent: 340 75% 75%; /* Lighter, softer pink */
+    --accent-foreground: 345 50% 20%;
 
     --destructive: 0 70% 50%; /* Standard Red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 231 44% 85%; /* Light Indigo Border */
-    --input: 232 60% 99%;
-    --ring: 231 44% 56%; /* Accent color for rings */
+    --border: 340 82% 80%; /* Soft pink border */
+    --input: 0 0% 100%;
+    --ring: 340 82% 61%; /* Vibrant pink for rings */
     --radius: 0.75rem;
 
-    --chart-1: 231 48% 48%; /* Primary Blue */
-    --chart-2: 231 44% 56%; /* Accent Indigo */
+    --chart-1: 340 82% 61%; /* Primary Pink */
+    --chart-2: 231 48% 48%; /* Complementary Blue */
     --chart-3: 45 90% 60%;  /* Vibrant Yellow/Orange */
     --chart-4: 180 50% 50%; /* Teal */
     --chart-5: 260 50% 60%; /* Purple */
@@ -53,37 +53,37 @@ body {
   }
 
   .dark {
-    /* Dark Mode - Deep Blue & Indigo Theme */
-    --background: 231 30% 10%; /* Very Dark Blue */
-    --foreground: 231 15% 90%; /* Light Bluish Gray */
+    /* Dark Mode - Pink & Rose Theme */
+    --background: 345 15% 10%; /* Very dark desaturated pink */
+    --foreground: 345 20% 90%; /* Light grayish pink */
 
-    --card: 231 30% 15%; /* Dark Blue-Gray Card */
-    --card-foreground: 231 15% 90%;
+    --card: 345 15% 15%; /* Darker card color */
+    --card-foreground: 345 20% 90%;
 
-    --popover: 231 30% 12%;
-    --popover-foreground: 231 15% 90%;
+    --popover: 345 15% 12%;
+    --popover-foreground: 345 20% 90%;
 
-    --primary: 231 48% 58%; /* Brighter Blue for primary */
+    --primary: 340 75% 65%; /* Bright pink for primary */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 231 30% 25%;
-    --secondary-foreground: 231 15% 85%;
+    --secondary: 345 15% 25%;
+    --secondary-foreground: 345 15% 85%;
 
-    --muted: 231 30% 20%;
-    --muted-foreground: 231 15% 65%;
+    --muted: 345 15% 20%;
+    --muted-foreground: 345 15% 65%;
 
-    --accent: 231 44% 66%; /* Brighter Indigo for accent */
+    --accent: 340 65% 55%; /* Deeper pink for accent */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 60% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 231 30% 30%;
-    --input: 231 30% 18%;
-    --ring: 231 44% 66%;
+    --border: 340 50% 35%; /* Pinkish border */
+    --input: 345 15% 18%;
+    --ring: 340 75% 65%;
 
-    --chart-1: 231 48% 58%;
-    --chart-2: 231 44% 66%;
+    --chart-1: 340 75% 65%;
+    --chart-2: 231 48% 58%;
     --chart-3: 45 80% 65%;
     --chart-4: 180 45% 60%;
     --chart-5: 260 45% 70%;
