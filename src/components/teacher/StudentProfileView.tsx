@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore"; 
 import { MySelfForm } from "@/components/student/MySelfForm"; 
-import { format, parseISO, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth } from "date-fns";
+import { format, parseISO, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth, isWithinInterval } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -118,6 +118,10 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
   }, [studentId]);
 
   useEffect(() => {
+    fetchProfileData();
+  }, [fetchProfileData]);
+
+  useEffect(() => {
     if (profile && !isEditing) { // Only fetch attendance if not in edit mode
       const fetchMonthlyAttendance = async () => {
         setLoadingMonthlyAttendance(true);
@@ -129,16 +133,10 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
           const firstDayOfMonth = startOfMonth(setYear(setMonth(new Date(), selectedMonth), selectedYear));
           const lastDayOfMonth = endOfMonth(firstDayOfMonth);
 
-          const startDateString = format(firstDayOfMonth, "yyyy-MM-dd");
-          const endDateString = format(lastDayOfMonth, "yyyy-MM-dd");
-
           const attendanceQuery = query(
             collection(db, "dailyAttendance"),
             where("grade", "==", profile.grade),
-            where("division", "==", profile.division),
-            where("date", ">=", startDateString),
-            where("date", "<=", endDateString),
-            orderBy("date", "desc")
+            where("division", "==", profile.division)
           );
 
           const querySnapshot = await getDocs(attendanceQuery);
@@ -148,18 +146,24 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
           querySnapshot.forEach((doc) => {
             const log = doc.data() as DailyAttendanceLog;
-            const studentStatus = log.studentRecords[studentId];
-            if (studentStatus) {
-              totalMarkedDays++;
-              if (studentStatus === "Present") presentDays++;
-              records.push({
-                date: log.date,
-                formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
-                status: studentStatus,
-              });
+            const logDate = parseISO(log.date);
+
+            if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
+              const studentStatus = log.studentRecords[studentId];
+              if (studentStatus) {
+                totalMarkedDays++;
+                if (studentStatus === "Present") presentDays++;
+                records.push({
+                  date: log.date,
+                  formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
+                  status: studentStatus,
+                });
+              }
             }
           });
           
+          records.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
           setMonthlyAttendance(records);
 
           if (totalMarkedDays > 0) {
@@ -213,11 +217,10 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
 
 
   useEffect(() => {
-    fetchProfileData();
     if (!isEditing) {
         fetchLeaveApplications();
     }
-  }, [fetchProfileData, fetchLeaveApplications, isEditing]);
+  }, [fetchLeaveApplications, isEditing]);
 
   const handleSaveSuccess = () => {
     setIsEditing(false);
@@ -483,7 +486,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
                       ))}
                     </TableBody>
                   </Table>
-                </TableBody>
+                </Body>
               </Table>
             </div>
           )}
