@@ -95,7 +95,7 @@ export function StudentAttendanceCalendar() {
     present: presentDays,
     absent: absentDays,
     holiday: holidays,
-    sunday: { dayOfWeek: [0] }
+    sunday: { dayOfWeek: [0] as number[] }
   };
 
   const modifierStyles = {
@@ -146,8 +146,8 @@ export function StudentAttendanceCalendar() {
             styles={{
               day: {
                 borderRadius: '9999px',
-                width: '2.5rem',
-                height: '2.5rem'
+                width: '2.2rem',
+                height: '2.2rem'
               },
             }}
           />
