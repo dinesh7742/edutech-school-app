@@ -10,7 +10,9 @@ import {
   sendPasswordResetEmail, 
   type AuthError
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import type { UserRole } from "@/types";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -68,22 +70,52 @@ export function LoginForm() {
   const onEmailSubmit: SubmitHandler<LoginFormValues> = async (data) => {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      const firebaseUser = userCredential.user;
+
+      // Fetch user role from Firestore immediately
+      const userDocRef = doc(db, "users", firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        throw new Error("User data not found. Please contact support.");
+      }
+
+      const userData = userDoc.data();
+      const role = userData.role as UserRole;
+      
       toast({
         title: "Login Successful",
         description: "Welcome back! Redirecting to your dashboard...",
       });
-      router.push("/"); 
+
+      // Redirect directly to the correct dashboard
+      switch (role) {
+        case "student":
+          router.replace("/student/dashboard");
+          break;
+        case "teacher":
+          router.replace("/teacher/dashboard");
+          break;
+        case "admin":
+          router.replace("/admin/dashboard");
+          break;
+        default:
+          // Fallback to home page if role is unknown, which will then handle it
+          router.replace("/");
+          break;
+      }
+      
     } catch (error: any) {
       console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: getLoginErrorMessage(error as AuthError),
+        description: error.message || getLoginErrorMessage(error as AuthError),
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
+    // No need to setIsLoading(false) on success because the page will be unmounted by the redirect.
   };
 
   const handlePasswordReset = async () => {

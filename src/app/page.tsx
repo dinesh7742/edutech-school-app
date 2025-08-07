@@ -13,61 +13,52 @@ export default function HomePage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Wait until loading is finished
     if (loading) {
-      // Still loading, do nothing.
       return;
     }
 
-    // After loading is complete...
+    // If user is not logged in, redirect to login page.
     if (!user) {
-      // No user found, redirect to login.
       router.replace("/login");
       return;
     }
 
-    // If user exists, but role is not yet determined.
-    if (!role) {
-      // Set a timeout to handle cases where role fetching might be stuck
-      const roleCheckTimeout = setTimeout(() => {
-        // If after 10 seconds the role is still not available,
-        // something is wrong. Log out the user and redirect to login.
-        if (!role) { // Re-check role inside timeout
-           toast({
-            title: "Session Issue",
-            description: "Could not load your user profile. Your session might have expired. Please log in again.",
-            variant: "destructive",
-            duration: 7000,
-          });
-          // To ensure a clean state, you might want to sign the user out here
-          // before redirecting, but for now, redirecting is the main goal.
+    // If user is logged in, redirect based on their role.
+    if (role) {
+      switch (role) {
+        case "student":
+          router.replace("/student/dashboard");
+          break;
+        case "teacher":
+          router.replace("/teacher/dashboard");
+          break;
+        case "admin":
+          router.replace("/admin/dashboard");
+          break;
+        default:
+          // Fallback for an unknown role.
           router.replace("/login");
-        }
-      }, 10000); // 10-second timeout
-
-      // Cleanup the timeout if the component unmounts or dependencies change
-      return () => clearTimeout(roleCheckTimeout);
-    }
-
-    // If user and role are available, redirect to the appropriate dashboard.
-    switch (role) {
-      case "student":
-        router.replace("/student/dashboard");
-        break;
-      case "teacher":
-        router.replace("/teacher/dashboard");
-        break;
-      case "admin":
-        router.replace("/admin/dashboard");
-        break;
-      default:
-        // Fallback for an unknown role.
+          break;
+      }
+    } else {
+      // This case might happen if user document is missing in Firestore.
+      // Redirect to login after a short delay, with a message.
+      const timer = setTimeout(() => {
+        toast({
+          title: "Profile Incomplete",
+          description: "Your user profile could not be loaded. Please contact support or try logging in again.",
+          variant: "destructive",
+          duration: 7000,
+        });
         router.replace("/login");
-        break;
+      }, 2000);
+      return () => clearTimeout(timer);
     }
 
   }, [user, loading, role, router, toast]);
 
-  // Render a loading skeleton while waiting.
+  // Render a loading skeleton while waiting for authentication and redirection.
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="w-full max-w-md space-y-6 text-center">
