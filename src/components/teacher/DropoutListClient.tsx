@@ -45,19 +45,27 @@ export function DropoutListClient() {
       setError(null);
       try {
         const profilesCollectionRef = collection(db, "droppedStudentProfiles");
-        const q = query(profilesCollectionRef, orderBy("deletedAt", "desc"));
+        // Removed orderBy("deletedAt", "desc") to prevent missing index error. Sorting is done client-side.
+        const q = query(profilesCollectionRef);
         const querySnapshot = await getDocs(q);
         
         const fetchedProfiles = querySnapshot.docs.map(doc => ({
           uid: doc.id,
           ...doc.data()
         } as DroppedStudentProfile));
+
+        // Sort client-side by first name
+        fetchedProfiles.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
         
         setDroppedStudents(fetchedProfiles);
         setFilteredStudents(fetchedProfiles);
       } catch (err: any) {
         console.error("Error fetching dropped students:", err);
-        setError("Failed to load dropout list. " + (err.message || ""));
+        if (err.code === 'failed-precondition' && err.message.includes('index')) {
+          setError("A Firestore index might be required to sort this list. Please check the console for a link to create it. The list is currently unsorted.");
+        } else {
+          setError("Failed to load dropout list. " + (err.message || ""));
+        }
       } finally {
         setLoading(false);
       }
