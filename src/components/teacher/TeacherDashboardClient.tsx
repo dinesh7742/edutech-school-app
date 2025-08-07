@@ -329,22 +329,23 @@ export function TeacherDashboardClient() {
       ) : studentCountError ? (
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
-        <>
-          <div className="text-5xl font-bold text-primary">{totalStudentsInClass ?? 0}</div>
-          <p className="text-sm text-muted-foreground mt-1">Total students.</p>
-          <div className="mt-4 flex justify-center items-center gap-6">
-              <div className="flex items-center gap-2 text-foreground">
-                  <UserCheck className="h-5 w-5 text-blue-500"/>
-                  <span className="font-bold text-lg">{maleStudents}</span>
-                  <span className="text-sm">Boys</span>
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground font-semibold">Total Students</p>
+          <div className="text-6xl font-extrabold text-primary my-1">{totalStudentsInClass ?? 0}</div>
+          <div className="mt-4 flex w-full justify-around items-center">
+              <div className="flex flex-col items-center gap-1 text-foreground">
+                  <UserCheck className="h-8 w-8 text-blue-500"/>
+                  <span className="font-bold text-xl">{maleStudents}</span>
+                  <span className="text-xs font-medium text-muted-foreground">Boys</span>
               </div>
-              <div className="flex items-center gap-2 text-foreground">
-                  <UserX className="h-5 w-5 text-pink-500"/>
-                  <span className="font-bold text-lg">{femaleStudents}</span>
-                   <span className="text-sm">Girls</span>
+               <div className="h-16 w-px bg-border/50"></div>
+              <div className="flex flex-col items-center gap-1 text-foreground">
+                  <UserX className="h-8 w-8 text-pink-500"/>
+                  <span className="font-bold text-xl">{femaleStudents}</span>
+                  <span className="text-xs font-medium text-muted-foreground">Girls</span>
               </div>
           </div>
-        </>
+        </div>
       )
     },
     {
