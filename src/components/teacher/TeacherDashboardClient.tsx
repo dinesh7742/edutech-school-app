@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -487,11 +486,11 @@ export function TeacherDashboardClient() {
       icon: Archive,
     },
     {
-      title: "Manage Online Exams",
-      description: "Create and post online exams for your class using Google Forms.",
-      link: "/teacher/post-content?tab=exam",
-      buttonText: "Manage Exams",
-      icon: ClipboardCheck,
+      title: "Upload Progress Cards",
+      description: "Upload an Excel file of student marks to generate their report cards.",
+      link: "/teacher/upload-progress-cards",
+      buttonText: "Upload Marks",
+      icon: BarChart3,
     },
      {
       title: "Download Class Data",

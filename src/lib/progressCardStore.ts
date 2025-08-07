@@ -1,4 +1,3 @@
-
 // This is a mock in-memory store for the progress card data.
 // In a real application, this would be replaced with a proper database like Firestore.
 
@@ -20,6 +19,7 @@ let progressCardData: { [rollNo: string]: any } = {
         { area: "Physical Ed Health", grade: "A2" },
       ],
       teacherRemarks: "Aarav is a bright and attentive student. He consistently performs well in all subjects. Keep up the great work!",
+      attendance: "105/110",
     },
     term2: {
         scholastic: [
@@ -36,6 +36,7 @@ let progressCardData: { [rollNo: string]: any } = {
           { area: "Physical Ed Health", grade: "A1" },
         ],
         teacherRemarks: "Excellent progress in Term 2. Aarav continues to be a role model for his peers.",
+        attendance: "112/120",
       },
   },
   "25": {
@@ -55,6 +56,7 @@ let progressCardData: { [rollNo: string]: any } = {
         { area: "Physical Ed Health", grade: "B1" },
       ],
       teacherRemarks: "Diya is a sincere and hardworking student. She has shown consistent improvement throughout the term.",
+      attendance: "108/110",
     },
      term2: {
       scholastic: [
@@ -71,6 +73,7 @@ let progressCardData: { [rollNo: string]: any } = {
           { area: "Physical Ed Health", grade: "A2" },
         ],
         teacherRemarks: "Wonderful improvement in all subjects. Diya's confidence has grown immensely. Keep it up!",
+        attendance: "115/120",
     },
   },
 };
