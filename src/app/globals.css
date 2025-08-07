@@ -9,42 +9,42 @@ body {
 
 @layer base {
   :root {
-    /* Professional Blue Theme with Pink Borders */
-    --background: 234 60% 96%; /* Light Blue Background */
+    /* Colorful & Vibrant Theme */
+    --background: 210 40% 98%; /* Very light cool gray */
     --foreground: 224 71.4% 4.1%; /* near-black */
 
-    --card: 0 0% 100%; /* White cards */
+    --card: 210 40% 96.1%; /* Slightly darker cool gray for cards */
     --card-foreground: 224 71.4% 4.1%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 224 71.4% 4.1%;
 
-    --primary: 235 48% 47%; /* Deep Blue #3F51B5 */
+    --primary: 262 84% 59%; /* Vibrant Purple */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 220 14.3% 95.9%; /* light blue-gray */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 350 87% 60%; /* Bright Pink */
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
 
-    --accent: 235 40% 67%; /* Indigo Accent #5C6BC0 */
+    --accent: 180 82% 45%; /* Teal Accent */
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 340 80% 85%; /* Light Pink border */
-    --input: 340 80% 85%; /* Light Pink input border */
-    --ring: 340 90% 65%; /* Bright Pink for rings */
+    --border: 210 40% 90%; 
+    --input: 210 40% 90%; 
+    --ring: 262 84% 59%; /* Purple for rings */
 
     --radius: 0.75rem;
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 180 50% 50%;
-    --chart-3: 45 90% 60%;
+    --chart-1: 262 84% 59%;
+    --chart-2: 350 87% 60%;
+    --chart-3: 180 82% 45%;
     --chart-4: 340 82% 61%;
-    --chart-5: 260 50% 60%;
+    --chart-5: 45 90% 60%;
     
     /* Custom colors for Welcome Board Calendar */
     --wb-present-bg: 144 60% 90%; /* Soft Mint Green */
@@ -54,40 +54,40 @@ body {
   }
 
   .dark {
-    /* Professional Blue Dark Theme with Pink Borders */
+    /* Colorful & Vibrant Dark Theme */
     --background: 224 71.4% 4.1%; /* near-black */
     --foreground: 210 20% 98%; /* near-white */
 
-    --card: 224 71.4% 4.1%;
+    --card: 222 47% 11%; /* Dark Blue-Gray */
     --card-foreground: 210 20% 98%;
 
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 217.2 91.2% 59.8%; /* bright blue */
+    --primary: 262 84% 69%; /* Lighter Vibrant Purple */
     --primary-foreground: 224 71.4% 4.1%;
 
-    --secondary: 215 27.9% 16.9%; /* dark blue-gray */
-    --secondary-foreground: 210 20% 98%;
+    --secondary: 350 87% 70%; /* Lighter Bright Pink */
+    --secondary-foreground: 224 71.4% 4.1%;
 
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 215 27.9% 16.9%;
+    --accent: 180 82% 55%; /* Lighter Teal */
     --accent-foreground: 210 20% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 340 30% 25%; /* Dark Pink border */
-    --input: 340 30% 25%; /* Dark Pink input border */
-    --ring: 340 90% 65%; /* Bright Pink for rings */
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 262 84% 69%; /* Purple for rings */
 
-    --chart-1: 217 91% 60%;
-    --chart-2: 180 45% 60%;
-    --chart-3: 45 80% 65%;
+    --chart-1: 262 84% 69%;
+    --chart-2: 350 87% 70%;
+    --chart-3: 180 82% 55%;
     --chart-4: 340 75% 65%;
-    --chart-5: 260 45% 70%;
+    --chart-5: 45 80% 65%;
     
     /* Custom colors for Welcome Board Calendar */
     --wb-present-bg: 144 40% 20%; /* Dark Mint Green */
