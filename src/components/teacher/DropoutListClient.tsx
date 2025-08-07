@@ -107,6 +107,10 @@ export function DropoutListClient() {
         const droppedProfileSnap = await getDoc(droppedProfileRef);
         const droppedUserSnap = await getDoc(droppedUserRef);
 
+        if (!droppedProfileSnap.exists() && !droppedUserSnap.exists()) {
+            throw new Error("Could not find any dropped record for this student to restore.");
+        }
+
         // Reference to where the documents will be moved back to
         const studentProfileRef = doc(db, "studentProfiles", studentToReAdmit.uid);
         const userRef = doc(db, "users", studentToReAdmit.uid);
@@ -118,13 +122,13 @@ export function DropoutListClient() {
             batch.delete(droppedProfileRef);
         }
 
-        // Restore user record if it exists
+        // Restore user record if it exists, or create one if it doesn't but the profile did
         if (droppedUserSnap.exists()) {
             const userData = { ...droppedUserSnap.data(), grade: newGrade, division: newDivision };
             batch.set(userRef, userData);
             batch.delete(droppedUserRef);
-        } else if (!droppedUserSnap.exists() && droppedProfileSnap.exists()) {
-            // If user record is missing but profile exists, create a basic user record
+        } else if (droppedProfileSnap.exists()) {
+             // If user record is missing but profile exists, create a basic user record from profile data
              const profileData = droppedProfileSnap.data() as DroppedStudentProfile;
              const basicUserData = {
                 uid: profileData.uid,
@@ -137,6 +141,7 @@ export function DropoutListClient() {
              };
              batch.set(userRef, basicUserData);
         }
+
 
         await batch.commit();
 
