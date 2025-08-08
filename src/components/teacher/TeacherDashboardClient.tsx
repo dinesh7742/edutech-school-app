@@ -349,24 +349,6 @@ export function TeacherDashboardClient() {
       )
     },
     {
-      id: "uploadMarks",
-      title: "Upload Exam Marks",
-      icon: Upload,
-      content: (
-        <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
-          <p className="text-sm text-muted-foreground mb-4">
-            Upload an Excel file of student marks to generate their report cards.
-          </p>
-          <Button asChild className="w-full mt-auto group" variant="outline">
-              <Link href="/teacher/upload-progress-cards">
-                Go to Upload Page
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Link>
-          </Button>
-        </div>
-      )
-    },
-    {
       id: "recentSubmissions",
       title: "Recent Homework Submissions",
       icon: ClipboardCheck,
@@ -521,7 +503,7 @@ export function TeacherDashboardClient() {
     <div className="space-y-8">
       <WelcomeMessage />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
@@ -536,6 +518,27 @@ export function TeacherDashboardClient() {
           </Card>
         ))}
       </div>
+
+       <Card className="shadow-lg rounded-lg text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
+        <CardHeader>
+            <div className="flex justify-center mb-4">
+                <BarChart3 className="h-16 w-16 text-primary" />
+            </div>
+            <CardTitle className="text-xl font-semibold">Upload Exam Marks</CardTitle>
+            <CardDescription className="text-sm px-2">
+                Upload an Excel file of student marks to generate their report cards.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Button asChild className="w-full mt-auto group" variant="outline">
+                <Link href="/teacher/upload-progress-cards">
+                    Go to Upload Page
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+            </Button>
+        </CardContent>
+      </Card>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
          {mainActionItems.map((item) => (
