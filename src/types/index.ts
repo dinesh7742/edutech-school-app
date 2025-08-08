@@ -318,3 +318,19 @@ export interface Exam {
   timestamp: Timestamp | FieldValue;
   displayDate?: string;
 }
+
+export interface ProgressCard {
+  id: string;
+  studentUid: string;
+  studentName: string;
+  grade: string;
+  division: string;
+  academicYear: string;
+  fileUrl: string;
+  fileName: string;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue;
+}
+
+    

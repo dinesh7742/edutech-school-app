@@ -14,11 +14,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus, ClipboardCheck, Link } from "lucide-react";
+import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus, ClipboardCheck, Link, Award } from "lucide-react";
 import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
-import type { Notice, Homework, HomeworkAttachment, Exam } from "@/types";
+import type { Notice, Homework, HomeworkAttachment, Exam, StudentProfile } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +31,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useSearchParams } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const MAX_DATA_URI_SIZE_BYTES = 1000000; // Approx 1MB for Firestore field limit
 const MAX_RAW_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB for file uploads
@@ -104,6 +106,13 @@ const liveClassSchema = z.object({
 });
 type LiveClassFormValues = z.infer<typeof liveClassSchema>;
 
+const progressCardSchema = z.object({
+  studentUid: z.string().min(1, "A student must be selected."),
+  academicYear: z.string().min(4, "Academic year is required."),
+  // file will be handled by state, not RHF
+});
+type ProgressCardFormValues = z.infer<typeof progressCardSchema>;
+
 function PostContentFormLogic() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -113,6 +122,12 @@ function PostContentFormLogic() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || "notice");
+  
+  // State for progress card form
+  const [studentsForProgressCard, setStudentsForProgressCard] = useState<StudentProfile[]>([]);
+  const [loadingStudentsForPC, setLoadingStudentsForPC] = useState(true);
+  const [progressCardFile, setProgressCardFile] = useState<File | null>(null);
+  const [progressCardPreview, setProgressCardPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (tabFromUrl) {
@@ -142,10 +157,36 @@ function PostContentFormLogic() {
 
   const formLiveClass = useForm<LiveClassFormValues>({ resolver: zodResolver(liveClassSchema), defaultValues: { grade: defaultGradeDivision.grade, division: defaultGradeDivision.division } });
 
+  const formProgressCard = useForm<ProgressCardFormValues>({ resolver: zodResolver(progressCardSchema), defaultValues: { academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}` }});
+
   const [recentNotices, setRecentNotices] = useState<Notice[]>([]);
   const [loadingRecentNotices, setLoadingRecentNotices] = useState(true);
   const [recentHomework, setRecentHomework] = useState<Homework[]>([]);
   const [loadingRecentHomework, setLoadingRecentHomework] = useState(true);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    if (activeTab === "progressCard" && studentsForProgressCard.length === 0) {
+        setLoadingStudentsForPC(true);
+        const fetchStudents = async () => {
+            try {
+                const profilesRef = collection(db, "studentProfiles");
+                const q = query(profilesRef, orderBy("grade"), orderBy("division"), orderBy("firstName"));
+                const querySnapshot = await getDocs(q);
+                const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+                setStudentsForProgressCard(fetchedStudents);
+            } catch (error) {
+                console.error("Error fetching students for progress cards:", error);
+                toast({ title: "Error", description: "Could not load student list.", variant: "destructive" });
+            } finally {
+                setLoadingStudentsForPC(false);
+            }
+        };
+        fetchStudents();
+    }
+  }, [activeTab, user?.uid, studentsForProgressCard.length, toast]);
+
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -274,6 +315,33 @@ function PostContentFormLogic() {
     setSelectedGalleryFiles(prev => prev.filter((_, i) => i !== index));
     setGalleryImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
+  
+  const handleProgressCardFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files[0]) {
+          const file = event.target.files[0];
+          if (file.size > MAX_DATA_URI_SIZE_BYTES) {
+              toast({
+                  title: "File is too large",
+                  description: "Progress card file must be less than 1MB.",
+                  variant: "destructive",
+              });
+              return;
+          }
+          setProgressCardFile(file);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+              setProgressCardPreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+      }
+  };
+
+  const removeProgressCardFile = () => {
+      setProgressCardFile(null);
+      setProgressCardPreview(null);
+      const input = document.getElementById('progressCardFile') as HTMLInputElement;
+      if (input) input.value = '';
+  };
 
 
   const handleFormSubmit = async (data: any, type: string) => {
@@ -292,7 +360,28 @@ function PostContentFormLogic() {
         timestamp: serverTimestamp(),
       };
 
-      if (type === "homework" || type === "exam") {
+      if (type === "progressCard") {
+          collectionName = "progressCards";
+          if (!progressCardFile || !progressCardPreview) {
+              toast({ title: "File Missing", description: "Please upload a progress card file.", variant: "destructive" });
+              setIsLoading(false);
+              return;
+          }
+          const selectedStudent = studentsForProgressCard.find(s => s.uid === data.studentUid);
+          if (!selectedStudent) {
+              toast({ title: "Student Not Found", description: "The selected student could not be found.", variant: "destructive" });
+              setIsLoading(false);
+              return;
+          }
+          documentData = {
+              ...documentData,
+              studentName: `${selectedStudent.firstName} ${selectedStudent.lastName || ''}`.trim(),
+              grade: selectedStudent.grade,
+              division: selectedStudent.division,
+              fileName: progressCardFile.name,
+              fileUrl: progressCardPreview,
+          };
+      } else if (type === "homework" || type === "exam") {
         if (!user.grade || !user.division) {
             toast({ title: "Error", description: "Your teacher profile is missing a grade/division.", variant: "destructive" });
             setIsLoading(false);
@@ -461,6 +550,10 @@ function PostContentFormLogic() {
         if (galleryFileInput) galleryFileInput.value = "";
       }
       if (type === 'liveClass') formLiveClass.reset({ subject: "", meetingLink: "", description: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
+      if (type === 'progressCard') {
+          formProgressCard.reset({ academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`, studentUid: '' });
+          removeProgressCardFile();
+      }
 
     } catch (e: any) {
       console.error(`Error posting ${type}:`, e);
@@ -579,14 +672,15 @@ function PostContentFormLogic() {
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardContent className="pt-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-6 h-auto">
-            <TabsTrigger value="notice" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Notices</TabsTrigger>
-            <TabsTrigger value="homework" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Homework</TabsTrigger>
-            <TabsTrigger value="exam" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Exams</TabsTrigger>
-            <TabsTrigger value="circular" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Circulars</TabsTrigger>
-            <TabsTrigger value="textbook" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Textbooks</TabsTrigger>
-            <TabsTrigger value="gallery" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Gallery</TabsTrigger>
-            <TabsTrigger value="liveClass" className="whitespace-normal text-center h-auto py-2 px-2 text-xs sm:text-sm">Live Class</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-8 gap-1 mb-6 h-auto">
+            <TabsTrigger value="notice" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Notices</TabsTrigger>
+            <TabsTrigger value="homework" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Homework</TabsTrigger>
+            <TabsTrigger value="exam" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Exams</TabsTrigger>
+            <TabsTrigger value="circular" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Circulars</TabsTrigger>
+            <TabsTrigger value="textbook" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Textbooks</TabsTrigger>
+            <TabsTrigger value="gallery" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Gallery</TabsTrigger>
+            <TabsTrigger value="liveClass" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Live Class</TabsTrigger>
+            <TabsTrigger value="progressCard" className="whitespace-normal text-center h-auto py-2 px-1 text-xs sm:text-sm">Progress Card</TabsTrigger>
           </TabsList>
 
           <TabsContent value="notice">
@@ -844,6 +938,54 @@ function PostContentFormLogic() {
             </form>
           </TabsContent>
 
+          <TabsContent value="progressCard">
+            <form onSubmit={formProgressCard.handleSubmit(data => handleFormSubmit(data, "progressCard"))} className="space-y-4">
+                <div>
+                    <Label htmlFor="studentUid">Select Student *</Label>
+                    <Controller
+                        name="studentUid"
+                        control={formProgressCard.control}
+                        render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value} disabled={loadingStudentsForPC}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder={loadingStudentsForPC ? "Loading students..." : "Select a student"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {studentsForProgressCard.map(student => (
+                                        <SelectItem key={student.uid} value={student.uid}>
+                                            {student.firstName} {student.lastName || ''} ({student.grade}-{student.division})
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                    {formProgressCard.formState.errors.studentUid && <p className="text-sm text-destructive mt-1">{formProgressCard.formState.errors.studentUid.message}</p>}
+                </div>
+                <div>
+                    <Label htmlFor="academicYear">Academic Year *</Label>
+                    <Input id="academicYear" {...formProgressCard.register("academicYear")} placeholder="e.g., 2024-2025" />
+                    {formProgressCard.formState.errors.academicYear && <p className="text-sm text-destructive mt-1">{formProgressCard.formState.errors.academicYear.message}</p>}
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="progressCardFile">Upload Progress Card File *</Label>
+                    <Input id="progressCardFile" type="file" accept="application/pdf,image/*" onChange={handleProgressCardFileChange} />
+                    {progressCardPreview && (
+                        <div className="relative group border rounded-md p-2 flex flex-col items-center gap-2 w-fit">
+                           <FileIcon className="w-16 h-16 text-muted-foreground" />
+                           <p className="text-xs text-center truncate w-full max-w-[150px]">{progressCardFile?.name}</p>
+                           <Button type="button" variant="destructive" size="icon" className="absolute top-0 right-0 h-6 w-6" onClick={removeProgressCardFile}>
+                               <X className="h-4 w-4" />
+                           </Button>
+                        </div>
+                    )}
+                 </div>
+              <Button type="submit" disabled={isLoading || loadingStudentsForPC}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Upload Progress Card
+              </Button>
+            </form>
+          </TabsContent>
+
         </Tabs>
       </CardContent>
     </Card>
@@ -961,5 +1103,7 @@ export function PostContentForm() {
         </Suspense>
     )
 }
+
+    
 
     
