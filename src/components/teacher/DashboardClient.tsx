@@ -6,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, ClipboardCheck as ExamIcon, Archive } from "lucide-react";
+import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, Archive, Upload, Award } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -329,22 +329,23 @@ export function TeacherDashboardClient() {
       ) : studentCountError ? (
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
-        <>
-          <div className="text-5xl font-bold text-primary">{totalStudentsInClass ?? 0}</div>
-          <p className="text-sm text-muted-foreground mt-1">Total students.</p>
-          <div className="mt-4 flex justify-center items-center gap-6">
-              <div className="flex items-center gap-2 text-foreground">
-                  <UserCheck className="h-5 w-5 text-blue-500"/>
-                  <span className="font-bold text-lg">{maleStudents}</span>
-                  <span className="text-sm">Boys</span>
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground font-semibold">Total Students</p>
+          <div className="text-6xl font-extrabold text-primary my-1">{totalStudentsInClass ?? 0}</div>
+          <div className="mt-4 flex w-full justify-around items-center">
+              <div className="flex flex-col items-center gap-1 text-foreground">
+                  <UserCheck className="h-8 w-8 text-blue-500"/>
+                  <span className="font-bold text-xl">{maleStudents}</span>
+                  <span className="text-xs font-medium text-muted-foreground">Boys</span>
               </div>
-              <div className="flex items-center gap-2 text-foreground">
-                  <UserX className="h-5 w-5 text-pink-500"/>
-                  <span className="font-bold text-lg">{femaleStudents}</span>
-                   <span className="text-sm">Girls</span>
+               <div className="h-16 w-px bg-border/50"></div>
+              <div className="flex flex-col items-center gap-1 text-foreground">
+                  <UserX className="h-8 w-8 text-pink-500"/>
+                  <span className="font-bold text-xl">{femaleStudents}</span>
+                  <span className="text-xs font-medium text-muted-foreground">Girls</span>
               </div>
           </div>
-        </>
+        </div>
       )
     },
     {
@@ -361,7 +362,7 @@ export function TeacherDashboardClient() {
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
-        <div className="w-full h-full max-h-[150px] overflow-y-auto pr-2">
+        <div className="w-full h-full max-h-[200px] overflow-y-auto p-2">
             <ul className="space-y-2 text-xs text-left">
               {recentSubmissions.map((sub) => (
                 <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
@@ -379,34 +380,7 @@ export function TeacherDashboardClient() {
   const mainActionItems = [
      {
       title: "Manage Content",
-      description: (
-        <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Notices</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <ClipboardList className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Homework</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Circulars</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Textbooks</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Gallery</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <Video className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Live Classes</span>
-          </div>
-        </div>
-      ),
+      description: "Post notices, homework, circulars, textbooks, and more for your students.",
       link: "/teacher/post-content",
       buttonText: "Post Content",
       icon: ClipboardList,
@@ -424,6 +398,13 @@ export function TeacherDashboardClient() {
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
       icon: ListChecks,
+    },
+    {
+      title: "Progress Reports",
+      description: "Download templates, upload marks, and generate student progress reports.",
+      link: "/teacher/progress-reports",
+      buttonText: "Manage Reports",
+      icon: Award,
     },
      { 
       title: "Manage Student Submissions",
@@ -459,7 +440,7 @@ export function TeacherDashboardClient() {
           </div>
         )
       ),
-      link: "/teacher/manage-submissions",
+      link: "/teacher/leave-applications",
       buttonText: "Review Submissions",
       icon: ClipboardCheck,
     },
@@ -484,13 +465,6 @@ export function TeacherDashboardClient() {
       link: "/teacher/dropout-list",
       buttonText: "Manage Dropouts",
       icon: Archive,
-    },
-    {
-      title: "Manage Online Exams",
-      description: "Create and post online exams for your class using Google Forms.",
-      link: "/teacher/post-content?tab=exam",
-      buttonText: "Manage Exams",
-      icon: ExamIcon,
     },
      {
       title: "Download Class Data",
@@ -519,7 +493,7 @@ export function TeacherDashboardClient() {
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[150px]"> {item.content} </div>
+             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[200px]"> {item.content} </div>
             </CardContent>
           </Card>
         ))}

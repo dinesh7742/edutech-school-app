@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon, Award
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -332,6 +332,14 @@ export function StudentDashboardClient() {
       buttonText: "View All Exams",
       icon: ExamIcon,
       description: "Take online exams and tests assigned to your class. / अपनी कक्षा को सौंपे गए ऑनलाइन परीक्षा और टेस्ट दें।",
+    },
+    {
+      id: "progressReports",
+      title: "Progress Reports / प्रगति रिपोर्ट",
+      link: "/student/progress-reports",
+      buttonText: "View My Reports",
+      icon: Award,
+      description: "View and download your official academic progress reports.",
     },
     {
       id: "circulars",

@@ -319,6 +319,22 @@ export interface Exam {
   displayDate?: string;
 }
 
+export interface ProgressReport {
+  id?: string;
+  studentUid: string;
+  studentName: string;
+  rollNumber: string;
+  grade: string;
+  division: string;
+  academicYear: string;
+  examType: string;
+  marks: number;
+  gradeValue: string;
+  postedByUid: string;
+  postedByName: string;
+  createdAt: Timestamp | FieldValue;
+}
+
 export interface ProgressCard {
   id: string;
   studentUid: string;
@@ -332,5 +348,3 @@ export interface ProgressCard {
   postedByName: string;
   timestamp: Timestamp | FieldValue;
 }
-
-    
