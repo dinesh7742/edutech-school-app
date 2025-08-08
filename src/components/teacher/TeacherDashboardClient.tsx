@@ -479,6 +479,13 @@ export function TeacherDashboardClient() {
       buttonText: "Manage Complaints",
       icon: MessageSquareWarning,
     },
+    {
+      title: "Upload Progress Card",
+      description: "Upload student progress reports or mark sheets for parents to view.",
+      link: "/teacher/upload-progress-card", // This page will need to be created
+      buttonText: "Upload Reports",
+      icon: Upload,
+    },
      {
       title: "Dropout Box",
       description: "View and manage students who have been removed from the active list.",
@@ -561,3 +568,5 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
+    
