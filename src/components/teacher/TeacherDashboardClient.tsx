@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, Archive } from "lucide-react";
+import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, Archive, Upload } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -348,6 +349,24 @@ export function TeacherDashboardClient() {
       )
     },
     {
+      id: "uploadMarks",
+      title: "Upload Exam Marks",
+      icon: Upload,
+      content: (
+        <div className="w-full h-full flex flex-col items-center justify-center text-center p-4">
+          <p className="text-sm text-muted-foreground mb-4">
+            Upload an Excel file of student marks to generate their report cards.
+          </p>
+          <Button asChild className="w-full mt-auto group" variant="outline">
+              <Link href="/teacher/upload-progress-cards">
+                Go to Upload Page
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </Link>
+          </Button>
+        </div>
+      )
+    },
+    {
       id: "recentSubmissions",
       title: "Recent Homework Submissions",
       icon: ClipboardCheck,
@@ -361,7 +380,7 @@ export function TeacherDashboardClient() {
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
-        <div className="w-full h-full max-h-[150px] overflow-y-auto pr-2">
+        <div className="w-full h-full max-h-[200px] overflow-y-auto p-2">
             <ul className="space-y-2 text-xs text-left">
               {recentSubmissions.map((sub) => (
                 <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
@@ -485,13 +504,6 @@ export function TeacherDashboardClient() {
       buttonText: "Manage Dropouts",
       icon: Archive,
     },
-    {
-      title: "Upload Progress Cards",
-      description: "Upload an Excel file of student marks to generate their report cards.",
-      link: "/teacher/upload-progress-cards",
-      buttonText: "Upload Marks",
-      icon: BarChart3,
-    },
      {
       title: "Download Class Data",
       description: "Download an Excel sheet of student data for your assigned class.",
@@ -509,7 +521,7 @@ export function TeacherDashboardClient() {
     <div className="space-y-8">
       <WelcomeMessage />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quickStatsItems.map((item) => (
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
@@ -519,7 +531,7 @@ export function TeacherDashboardClient() {
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[150px]"> {item.content} </div>
+             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[200px]"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
