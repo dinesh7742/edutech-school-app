@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, writeBatch, serverTimestamp, doc } from 'firebase/firestore';
 import type { StudentProfile, ProgressReport } from '@/types';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
