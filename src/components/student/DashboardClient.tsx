@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -464,14 +465,6 @@ export function StudentDashboardClient() {
       buttonText: "Go to Profile",
       icon: Users,
       description: "Manage your personal information and settings. / अपनी व्यक्तिगत जानकारी और सेटिंग्स प्रबंधित करें।",
-    },
-    {
-      id: "progressCard",
-      title: "Progress Card / प्रगति कार्ड",
-      link: "/student/progress-card",
-      buttonText: "View Progress Card",
-      icon: BarChart3,
-      description: "View and download your academic progress report. / अपनी शैक्षणिक प्रगति रिपोर्ट देखें और डाउनलोड करें।",
     },
   ];
   

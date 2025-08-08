@@ -503,26 +503,6 @@ export function TeacherDashboardClient() {
     <div className="space-y-8">
       <WelcomeMessage />
 
-      <Card className="w-full shadow-lg rounded-lg text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-1">
-        <CardHeader className="pb-4">
-          <div className="flex justify-center mb-4">
-            <Upload className="h-16 w-16 text-primary" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Upload Exam Marks</CardTitle>
-          <CardDescription className="max-w-xl mx-auto">
-            Easily generate student progress cards by downloading a template, filling it with marks for any term, and uploading the completed Excel file.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild size="lg">
-            <Link href="/teacher/upload-progress-cards">
-              Go to Upload Page
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
