@@ -406,6 +406,10 @@ export function TeacherDashboardClient() {
             <Video className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="font-semibold">Live Classes</span>
           </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <Upload className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Progress Cards</span>
+          </div>
         </div>
       ),
       link: "/teacher/post-content",
@@ -478,13 +482,6 @@ export function TeacherDashboardClient() {
       link: "/teacher/conduct-record",
       buttonText: "Manage Complaints",
       icon: MessageSquareWarning,
-    },
-    {
-      title: "Upload Progress Card",
-      description: "Upload student progress reports or mark sheets for parents to view.",
-      link: "/teacher/upload-progress-card", // This page will need to be created
-      buttonText: "Upload Reports",
-      icon: Upload,
     },
      {
       title: "Dropout Box",
@@ -568,5 +565,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    
