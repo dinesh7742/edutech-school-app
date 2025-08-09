@@ -18,7 +18,6 @@ import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
-import { DashboardHeader } from "@/components/shared/DashboardHeader";
 
 interface LatestContent<T> {
   item: T | null;
@@ -31,6 +30,15 @@ const isNew = (timestamp: Timestamp | undefined): boolean => {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   return itemDate > twentyFourHoursAgo;
 };
+
+const cardColors = [
+  "text-chart-1",
+  "text-chart-2",
+  "text-chart-3",
+  "text-chart-4",
+  "text-chart-5",
+];
+
 
 export function StudentDashboardClient() {
   const { user } = useAuth();
@@ -481,20 +489,20 @@ export function StudentDashboardClient() {
     <>
     <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
     <div className="space-y-8">
-      <DashboardHeader/>
       <WelcomeMessage />
       <StudentAttendanceCalendar />
       <TodaySpecial />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {dashboardCards.map((card) => {
+        {dashboardCards.map((card, index) => {
           const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
           const showChatBadge = card.id === "chat" && hasUnreadMessages;
+          const colorClass = cardColors[index % cardColors.length];
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
               <CardHeader className="pb-2 pt-4 items-center">
                 <div className="h-28 w-28 flex items-center justify-center">
-                  <card.icon className="h-16 w-16 text-primary" />
+                  <card.icon className={`h-16 w-16 ${colorClass}`} />
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                   {card.title}
@@ -541,3 +549,4 @@ export function StudentDashboardClient() {
     </>
   );
 }
+

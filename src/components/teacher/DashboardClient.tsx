@@ -23,7 +23,11 @@ import {
     AlertTriangle, 
     FileSignature, 
     Award,
-    Upload
+    Upload,
+    FileText,
+    BookOpen,
+    Video,
+    Image as ImageIconLucide
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -35,6 +39,21 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import Image from "next/image";
 
+const cardColors = [
+  "text-chart-1",
+  "text-chart-2",
+  "text-chart-3",
+  "text-chart-4",
+  "text-chart-5",
+];
+
+const gradientBgColors = [
+  "from-chart-1/10 to-chart-2/10",
+  "from-chart-2/10 to-chart-3/10",
+  "from-chart-3/10 to-chart-4/10",
+  "from-chart-4/10 to-chart-5/10",
+  "from-chart-5/10 to-chart-1/10",
+]
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -341,7 +360,6 @@ export function TeacherDashboardClient() {
       id: "studentCount",
       title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
       icon: Users,
-      iconUrl: "https://i.postimg.cc/MpZNxhkV/Students.png",
       content: loadingStudentCount ? (
         <div className="flex items-center justify-center space-x-2 h-full">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -350,7 +368,7 @@ export function TeacherDashboardClient() {
       ) : studentCountError ? (
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 p-4 rounded-lg">
+        <div className={`w-full h-full flex flex-col items-center justify-center bg-gradient-to-br ${gradientBgColors[0]} p-4 rounded-lg`}>
           <p className="text-sm text-muted-foreground font-semibold">Total Students</p>
           <div className="text-6xl font-extrabold text-primary my-1">{totalStudentsInClass ?? 0}</div>
           <div className="mt-4 flex w-full justify-around items-center">
@@ -383,10 +401,10 @@ export function TeacherDashboardClient() {
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
-        <div className="w-full h-full max-h-[200px] overflow-y-auto p-2">
+        <div className={`w-full h-full max-h-[250px] overflow-y-auto p-2 bg-gradient-to-br ${gradientBgColors[1]} rounded-lg`}>
             <ul className="space-y-2 text-xs text-left">
               {recentSubmissions.map((sub) => (
-                <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
+                <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background/70">
                   <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
                   <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
                   <p className="text-muted-foreground">Completed: {sub.completedAt ? format(sub.completedAt.toDate(), "PP pp") : "N/A"}</p>
@@ -399,9 +417,40 @@ export function TeacherDashboardClient() {
   ];
 
   const mainActionItems = [
-    {
+     {
       title: "Manage Content",
-      description: "Post notices, homework, circulars, textbooks, and more for your students.",
+      description: (
+        <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Notices</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <ClipboardList className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Homework</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Circulars</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Textbooks</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Gallery</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <Video className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Live Classes</span>
+          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
+            <Upload className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="font-semibold">Progress Cards</span>
+          </div>
+        </div>
+      ),
       link: "/teacher/post-content",
       buttonText: "Post Content",
       icon: ClipboardList,
@@ -415,17 +464,10 @@ export function TeacherDashboardClient() {
     },
     {
       title: "Mark Attendance",
-      description: getAttendanceCardDescription(),
+      description: getAttendanceCardDescription(), // Dynamically get description
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
       icon: ListChecks,
-    },
-    {
-      title: "Progress Reports",
-      description: "Download templates, upload marks, and generate student progress reports.",
-      link: "/teacher/progress-reports",
-      buttonText: "Manage Reports",
-      icon: Award,
     },
      { 
       title: "Manage Student Submissions",
@@ -505,38 +547,27 @@ export function TeacherDashboardClient() {
       <WelcomeMessage />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {quickStatsItems.map((item) => (
+        {quickStatsItems.map((item, index) => (
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="flex justify-center mb-4">
-                  {item.iconUrl ? (
-                      <Image 
-                        src={item.iconUrl} 
-                        alt={item.title} 
-                        width={64} 
-                        height={64} 
-                        className="h-16 w-16"
-                        data-ai-hint="student list icon"
-                      />
-                    ) : (
-                      <item.icon className="h-16 w-16 text-primary" />
-                    )}
+                    <item.icon className={`h-16 w-16 ${cardColors[index % cardColors.length]}`} />
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[200px]"> {item.content} </div>
+             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[250px]"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {mainActionItems.map((item) => (
+         {mainActionItems.map((item, index) => (
             <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
                 <CardHeader className="pb-2 pt-4 items-center">
                     <div className="flex justify-center mb-4">
-                        <item.icon className="h-16 w-16 text-primary" />
+                        <item.icon className={`h-16 w-16 ${cardColors[index % cardColors.length]}`} />
                     </div>
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
