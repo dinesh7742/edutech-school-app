@@ -127,7 +127,7 @@ export function ViewResultClient() {
 
     try {
       const profilesCollectionRef = collection(db, "studentProfiles");
-      // Simplified query to search only by PEN number
+      // Simplified query to search only by PEN number to avoid composite index error
       const profileQuery = query(profilesCollectionRef, where("penNumber", "==", penNumber));
       const profileSnapshot = await getDocs(profileQuery);
 
