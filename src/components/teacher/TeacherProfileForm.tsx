@@ -138,12 +138,9 @@ export function TeacherProfileForm() {
 
 
     try {
-      const updatesToAuthUser: { displayName?: string, photoURL?: string | null } = {};
+      const updatesToAuthUser: { displayName?: string } = {};
       if (data.displayName !== user.displayName) {
         updatesToAuthUser.displayName = data.displayName;
-      }
-      if (finalPhotoUrlToSave !== user.photoURL) {
-          updatesToAuthUser.photoURL = finalPhotoUrlToSave;
       }
 
       if (auth.currentUser && Object.keys(updatesToAuthUser).length > 0) {
