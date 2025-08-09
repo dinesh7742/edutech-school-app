@@ -53,7 +53,7 @@ export function ProgressReportManager() {
           profilesRef,
           where("grade", "==", teacherUser.grade),
           where("division", "==", teacherUser.division),
-          orderBy("grNumber")
+          orderBy("penNumber")
         );
         const querySnapshot = await getDocs(q);
         const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
@@ -75,7 +75,7 @@ export function ProgressReportManager() {
     
     const dataForExcel = students.map(student => {
       const row: { [key: string]: any } = {
-        "Roll Number": student.grNumber || 'N/A',
+        "PEN Number": student.penNumber || 'N/A',
         "Student Name": `${student.firstName} ${student.lastName || ''}`.trim(),
         "Student UID": student.uid,
       };
@@ -143,7 +143,7 @@ export function ProgressReportManager() {
 
             const reportData: Omit<ProgressReport, 'id'> = {
                 studentUid: studentUid,
-                rollNumber: row['Roll Number'],
+                penNumber: row['PEN Number'],
                 grade: teacherUser.grade!,
                 division: teacherUser.division!,
                 academicYear: selectedAcademicYear,
@@ -226,7 +226,7 @@ export function ProgressReportManager() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Roll No</TableHead>
+                            <TableHead>PEN No</TableHead>
                             <TableHead>Student Name</TableHead>
                             <TableHead>English Marks</TableHead>
                         </TableRow>
@@ -234,7 +234,7 @@ export function ProgressReportManager() {
                     <TableBody>
                         {uploadedData.slice(0, 5).map((row, index) => (
                             <TableRow key={index}>
-                                <TableCell>{row['Roll Number']}</TableCell>
+                                <TableCell>{row['PEN Number']}</TableCell>
                                 <TableCell>{row['Student Name']}</TableCell>
                                 <TableCell>{row['English (Marks)']}</TableCell>
                             </TableRow>

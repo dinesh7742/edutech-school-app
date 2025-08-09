@@ -327,7 +327,7 @@ export interface SubjectMarks {
 export interface ProgressReport {
   id?: string;
   studentUid: string;
-  rollNumber: string;
+  penNumber: string;
   grade: string;
   division: string;
   academicYear: string;

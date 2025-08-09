@@ -52,7 +52,7 @@ const ReportCardToDownload = ({ report, studentProfile }: { report: ProgressRepo
             <CardContent className="grid grid-cols-2 gap-x-8 gap-y-4 text-lg">
                 <p><span className="font-semibold">Student Name:</span> {studentProfile?.firstName} {studentProfile?.lastName || ''}</p>
                 <p><span className="font-semibold">Grade:</span> {report.grade}-{report.division}</p>
-                <p><span className="font-semibold">Roll No:</span> {report.rollNumber}</p>
+                <p><span className="font-semibold">PEN No:</span> {studentProfile?.penNumber || 'N/A'}</p>
                 <p><span className="font-semibold">G.R. No:</span> {studentProfile?.grNumber || 'N/A'}</p>
                 <p><span className="font-semibold">Date of Birth:</span> {studentProfile?.dateOfBirth || 'N/A'}</p>
                 <p><span className="font-semibold">Mother's Name:</span> {studentProfile?.motherName || 'N/A'}</p>
@@ -105,7 +105,7 @@ export function ViewResultClient() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [rollNumber, setRollNumber] = useState("");
+  const [penNumber, setPenNumber] = useState("");
   const [selectedExamType, setSelectedExamType] = useState(examTypes[0]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState(academicYears[0]);
   
@@ -117,8 +117,8 @@ export function ViewResultClient() {
   const reportRef = useRef<HTMLDivElement>(null);
   
   const handleViewResult = async () => {
-    if (!rollNumber) {
-      toast({ title: "Roll Number Required", description: "Please enter your roll number.", variant: "destructive" });
+    if (!penNumber) {
+      toast({ title: "PEN Number Required", description: "Please enter your PEN number.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -126,11 +126,11 @@ export function ViewResultClient() {
     setStudentProfile(null);
 
     try {
-      const profileQuery = query(collection(db, "studentProfiles"), where("grNumber", "==", rollNumber));
+      const profileQuery = query(collection(db, "studentProfiles"), where("penNumber", "==", penNumber));
       const profileSnapshot = await getDocs(profileQuery);
 
       if (profileSnapshot.empty) {
-        toast({ title: "Student Not Found", description: "No student found with that roll number.", variant: "destructive" });
+        toast({ title: "Student Not Found", description: "No student found with that PEN number.", variant: "destructive" });
         setIsLoading(false);
         return;
       }
@@ -182,7 +182,7 @@ export function ViewResultClient() {
       <Card>
         <CardHeader>
           <CardTitle>Find Your Report Card</CardTitle>
-          <CardDescription>Select academic year, exam type, and enter your roll number.</CardDescription>
+          <CardDescription>Select academic year, exam type, and enter your PEN number.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -205,12 +205,12 @@ export function ViewResultClient() {
               </Select>
             </div>
             <div className='flex-1'>
-              <Label htmlFor="rollNumber">Roll Number</Label>
+              <Label htmlFor="penNumber">PEN Number</Label>
               <Input 
-                id="rollNumber" 
-                value={rollNumber}
-                onChange={(e) => setRollNumber(e.target.value)}
-                placeholder="Enter your roll no."
+                id="penNumber" 
+                value={penNumber}
+                onChange={(e) => setPenNumber(e.target.value)}
+                placeholder="Enter your PEN no."
               />
             </div>
           </div>
