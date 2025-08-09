@@ -319,17 +319,23 @@ export interface Exam {
   displayDate?: string;
 }
 
+export interface SubjectMarks {
+  marks: number;
+  grade: string;
+}
+
 export interface ProgressReport {
   id?: string;
   studentUid: string;
-  studentName: string;
   rollNumber: string;
   grade: string;
   division: string;
   academicYear: string;
   examType: string;
-  marks: number;
-  gradeValue: string;
+  subjects: Record<string, SubjectMarks>;
+  totalMarks: number;
+  percentage: number;
+  finalGrade: string;
   postedByUid: string;
   postedByName: string;
   createdAt: Timestamp | FieldValue;

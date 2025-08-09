@@ -445,10 +445,6 @@ export function TeacherDashboardClient() {
             <Video className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="font-semibold">Live Classes</span>
           </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <Upload className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Progress Cards</span>
-          </div>
         </div>
       ),
       link: "/teacher/post-content",
@@ -521,6 +517,13 @@ export function TeacherDashboardClient() {
       link: "/teacher/conduct-record",
       buttonText: "Manage Complaints",
       icon: MessageSquareWarning,
+    },
+    {
+      title: "Progress Reports",
+      description: "Download templates and upload completed progress reports for your class.",
+      link: "/teacher/progress-reports",
+      buttonText: "Manage Reports",
+      icon: Award,
     },
      {
       title: "Dropout Box",

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, orderBy, writeBatch, serverTimestamp, doc } from 'firebase/firestore';
-import type { StudentProfile, ProgressReport } from '@/types';
+import type { StudentProfile, ProgressReport, SubjectMarks } from '@/types';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
 
@@ -24,8 +24,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-const examTypes = ["Unit Test 1", "Unit Test 2", "Mid-Term Exam", "Final Exam"];
+const examTypes = ["Unit Test 1", "Unit Test 2", "First Semester Exam", "Second Semester Exam"];
 const academicYears = Array.from({ length: 5 }, (_, i) => `${new Date().getFullYear() - i}-${new Date().getFullYear() - i + 1}`);
+const subjects = ["English", "Marathi", "EVS 1", "EVS 2", "Mathematics", "Physical Education", "Scout & Guide", "Art Education", "Work Experience"];
 
 export function ProgressReportManager() {
   const { user: teacherUser } = useAuth();
@@ -42,7 +43,6 @@ export function ProgressReportManager() {
   
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [uploadedData, setUploadedData] = useState<any[] | null>(null);
-
 
   useEffect(() => {
     if (teacherUser?.grade && teacherUser?.division) {
@@ -61,6 +61,8 @@ export function ProgressReportManager() {
         setLoadingStudents(false);
       };
       fetchStudents();
+    } else {
+        setLoadingStudents(false);
     }
   }, [teacherUser]);
 
@@ -70,13 +72,19 @@ export function ProgressReportManager() {
       return;
     }
     setIsDownloading(true);
-    const dataForExcel = students.map(student => ({
-      "Roll No": student.grNumber || 'N/A', // Assuming GR Number as Roll Number
-      "Student Name": `${student.firstName} ${student.lastName || ''}`.trim(),
-      "Student UID": student.uid,
-      "Marks": "",
-      "Grade": "",
-    }));
+    
+    const dataForExcel = students.map(student => {
+      const row: { [key: string]: any } = {
+        "Roll Number": student.grNumber || 'N/A',
+        "Student Name": `${student.firstName} ${student.lastName || ''}`.trim(),
+        "Student UID": student.uid,
+      };
+      subjects.forEach(subject => {
+        row[`${subject} (Marks)`] = "";
+        row[`${subject} (Grade)`] = "";
+      });
+      return row;
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
     const workbook = XLSX.utils.book_new();
@@ -122,16 +130,28 @@ export function ProgressReportManager() {
             const reportId = `${studentUid}_${selectedAcademicYear}_${selectedExamType.replace(/\s+/g, '-')}`;
             const reportDocRef = doc(reportsCollectionRef, reportId);
 
+            const subjectData: Record<string, SubjectMarks> = {};
+            let totalMarks = 0;
+            subjects.forEach(subject => {
+                const marks = Number(row[`${subject} (Marks)`] || 0);
+                const grade = row[`${subject} (Grade)`] || 'N/A';
+                subjectData[subject] = { marks, grade };
+                totalMarks += marks;
+            });
+
+            const percentage = (totalMarks / (subjects.length * 100)) * 100; // Assuming each subject is out of 100
+
             const reportData: Omit<ProgressReport, 'id'> = {
                 studentUid: studentUid,
-                studentName: row['Student Name'],
-                rollNumber: row['Roll No'],
+                rollNumber: row['Roll Number'],
                 grade: teacherUser.grade!,
                 division: teacherUser.division!,
                 academicYear: selectedAcademicYear,
                 examType: selectedExamType,
-                marks: row['Marks'],
-                gradeValue: row['Grade'],
+                subjects: subjectData,
+                totalMarks: totalMarks,
+                percentage: percentage,
+                finalGrade: 'N/A', // You can implement a grading logic here
                 postedByUid: teacherUser.uid,
                 postedByName: teacherUser.displayName || 'Teacher',
                 createdAt: serverTimestamp(),
@@ -208,17 +228,15 @@ export function ProgressReportManager() {
                         <TableRow>
                             <TableHead>Roll No</TableHead>
                             <TableHead>Student Name</TableHead>
-                            <TableHead>Marks</TableHead>
-                            <TableHead>Grade</TableHead>
+                            <TableHead>English Marks</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {uploadedData.slice(0, 5).map((row, index) => (
                             <TableRow key={index}>
-                                <TableCell>{row['Roll No']}</TableCell>
+                                <TableCell>{row['Roll Number']}</TableCell>
                                 <TableCell>{row['Student Name']}</TableCell>
-                                <TableCell>{row['Marks']}</TableCell>
-                                <TableCell>{row['Grade']}</TableCell>
+                                <TableCell>{row['English (Marks)']}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

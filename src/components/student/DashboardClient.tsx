@@ -343,10 +343,10 @@ export function StudentDashboardClient() {
       description: "Take online exams and tests assigned to your class. / अपनी कक्षा को सौंपे गए ऑनलाइन परीक्षा और टेस्ट दें।",
     },
     {
-      id: "progressReports",
-      title: "Progress Reports / प्रगति रिपोर्ट",
-      link: "/student/progress-reports",
-      buttonText: "View My Reports",
+      id: "results",
+      title: "View Results / परिणाम देखें",
+      link: "/student/results",
+      buttonText: "View My Results",
       icon: Award,
       description: "View and download your official academic progress reports.",
     },
@@ -549,4 +549,3 @@ export function StudentDashboardClient() {
     </>
   );
 }
-
