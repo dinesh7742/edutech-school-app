@@ -33,7 +33,6 @@ import type { StudentProfile, HomeworkSubmission, ChatMessage } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { DashboardHeader } from "@/components/shared/DashboardHeader";
 import Image from "next/image";
 
 
@@ -503,7 +502,6 @@ export function TeacherDashboardClient() {
 
   return (
     <div className="space-y-8">
-      <DashboardHeader/>
       <WelcomeMessage />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
