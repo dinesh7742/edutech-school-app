@@ -13,6 +13,9 @@ export interface AppUser extends FirebaseUser {
   email?: string | null;
   phoneNumber?: string | null;
   whatsAppNumber?: string | null;
+  educationQualification?: string;
+  subjectTaught?: string;
+  address?: string;
 }
 
 export interface Notice {
