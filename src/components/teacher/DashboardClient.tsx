@@ -6,15 +6,36 @@ import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, Archive, Upload, Award } from "lucide-react";
+import { 
+    Loader2, 
+    UserCheck, 
+    UserX, 
+    ClipboardList, 
+    Users, 
+    Download, 
+    ListChecks, 
+    ArrowRight, 
+    MessageSquareWarning, 
+    MessageSquare, 
+    Archive, 
+    ClipboardCheck, 
+    MailOpen, 
+    AlertTriangle, 
+    FileSignature, 
+    Award,
+    Upload
+} from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, limit, Timestamp, getCountFromServer, doc, getDoc, onSnapshot } from "firebase/firestore";
-import type { StudentProfile, HomeworkSubmission, ChatMessage, AppUser } from "@/types";
+import type { StudentProfile, HomeworkSubmission, ChatMessage } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { DashboardHeader } from "@/components/shared/DashboardHeader";
+import Image from "next/image";
+
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -321,6 +342,7 @@ export function TeacherDashboardClient() {
       id: "studentCount",
       title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
       icon: Users,
+      iconUrl: "https://i.postimg.cc/MpZNxhkV/Students.png",
       content: loadingStudentCount ? (
         <div className="flex items-center justify-center space-x-2 h-full">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -378,7 +400,7 @@ export function TeacherDashboardClient() {
   ];
 
   const mainActionItems = [
-     {
+    {
       title: "Manage Content",
       description: "Post notices, homework, circulars, textbooks, and more for your students.",
       link: "/teacher/post-content",
@@ -394,7 +416,7 @@ export function TeacherDashboardClient() {
     },
     {
       title: "Mark Attendance",
-      description: getAttendanceCardDescription(), // Dynamically get description
+      description: getAttendanceCardDescription(),
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
       icon: ListChecks,
@@ -481,6 +503,7 @@ export function TeacherDashboardClient() {
 
   return (
     <div className="space-y-8">
+      <DashboardHeader/>
       <WelcomeMessage />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -488,7 +511,18 @@ export function TeacherDashboardClient() {
           <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
             <CardHeader className="pb-2 pt-4 items-center">
                  <div className="flex justify-center mb-4">
-                    <item.icon className="h-16 w-16 text-primary" />
+                  {item.iconUrl ? (
+                      <Image 
+                        src={item.iconUrl} 
+                        alt={item.title} 
+                        width={64} 
+                        height={64} 
+                        className="h-16 w-16"
+                        data-ai-hint="student list icon"
+                      />
+                    ) : (
+                      <item.icon className="h-16 w-16 text-primary" />
+                    )}
                 </div>
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>

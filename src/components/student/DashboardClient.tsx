@@ -18,6 +18,7 @@ import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
+import { DashboardHeader } from "@/components/shared/DashboardHeader";
 
 interface LatestContent<T> {
   item: T | null;
@@ -480,6 +481,7 @@ export function StudentDashboardClient() {
     <>
     <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
     <div className="space-y-8">
+      <DashboardHeader/>
       <WelcomeMessage />
       <StudentAttendanceCalendar />
       <TodaySpecial />
