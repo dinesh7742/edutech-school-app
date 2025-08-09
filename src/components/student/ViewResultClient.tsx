@@ -118,7 +118,7 @@ export function ViewResultClient() {
   
   const handleViewResult = async () => {
     if (!penNumber) {
-      toast({ title: "PEN Number Required", description: "Please enter your PEN number.", variant: "destructive" });
+      toast({ title: "PEN Number Required", description: "Please enter a student's PEN number.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -127,6 +127,7 @@ export function ViewResultClient() {
 
     try {
       const profilesCollectionRef = collection(db, "studentProfiles");
+      // Simplified query to search only by PEN number
       const profileQuery = query(profilesCollectionRef, where("penNumber", "==", penNumber));
       const profileSnapshot = await getDocs(profileQuery);
 
@@ -211,7 +212,7 @@ export function ViewResultClient() {
                 id="penNumber" 
                 value={penNumber}
                 onChange={(e) => setPenNumber(e.target.value)}
-                placeholder="Enter your PEN no."
+                placeholder="Enter student's PEN no."
               />
             </div>
           </div>
