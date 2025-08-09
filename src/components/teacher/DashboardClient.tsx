@@ -318,7 +318,7 @@ export function TeacherDashboardClient() {
         snapshot.forEach((chatDoc) => {
             const messages = (chatDoc.data().messages || []) as ChatMessage[];
             for (const msg of messages) {
-                if (msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser?.uid || '')) {
+                if (msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid)) {
                     unreadFound = true;
                     break;
                 }
@@ -568,11 +568,11 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
+          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+            <div className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+            </div>
+            <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[300px]"> {item.content} </div>
             </CardContent>
           </Card>
@@ -580,12 +580,9 @@ export function TeacherDashboardClient() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {mainActionItems.map((item) => (
-            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-                <CardHeader className="pb-2 pt-4 items-center">
-                    <div className="flex justify-center mb-4">
-                        <item.icon className="h-16 w-16 text-primary" />
-                    </div>
+         {mainActionItems.map((item, index) => (
+            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                <div className="p-4 bg-primary text-primary-foreground">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
                         {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
@@ -595,8 +592,11 @@ export function TeacherDashboardClient() {
                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
                     </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+                </div>
+                <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                    <div className="flex justify-center my-4">
+                        <item.icon className={`h-16 w-16 text-primary`} />
+                    </div>
                     <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
