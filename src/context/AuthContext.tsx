@@ -34,9 +34,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const appUser: AppUser = {
             ...firebaseUser,
             displayName: userData.displayName || firebaseUser.displayName,
+            photoURL: userData.photoUrl || firebaseUser.photoURL, // Prioritize our Firestore photoUrl
             role: userData.role,
             grade: userData.grade,
             division: userData.division,
+            whatsAppNumber: userData.whatsAppNumber,
+            educationQualification: userData.educationQualification,
+            subjectTaught: userData.subjectTaught,
+            address: userData.address,
           };
           setUser(appUser);
           setRole(userData.role);
