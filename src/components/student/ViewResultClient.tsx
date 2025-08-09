@@ -126,7 +126,8 @@ export function ViewResultClient() {
     setStudentProfile(null);
 
     try {
-      const profileQuery = query(collection(db, "studentProfiles"), where("penNumber", "==", penNumber));
+      const profilesCollectionRef = collection(db, "studentProfiles");
+      const profileQuery = query(profilesCollectionRef, where("penNumber", "==", penNumber));
       const profileSnapshot = await getDocs(profileQuery);
 
       if (profileSnapshot.empty) {
