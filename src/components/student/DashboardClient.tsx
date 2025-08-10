@@ -499,11 +499,8 @@ export function StudentDashboardClient() {
           const showChatBadge = card.id === "chat" && hasUnreadMessages;
           const colorClass = cardColors[index % cardColors.length];
           return (
-            <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-              <CardHeader className="pb-2 pt-4 items-center">
-                <div className="h-28 w-28 flex items-center justify-center">
-                  <card.icon className={`h-16 w-16 ${colorClass}`} />
-                </div>
+            <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
+              <div className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                   {card.title}
                   {card.contentData?.item && isNew(
@@ -518,9 +515,15 @@ export function StudentDashboardClient() {
                     <Badge variant="destructive" className="animate-pulse">New!</Badge>
                   )}
                 </CardTitle>
-                <CardDescription className="text-sm min-h-[4.5rem] px-2">{card.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+              </div>
+              <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                 <div className="flex justify-center my-4">
+                    <card.icon className={`h-16 w-16 text-primary`} />
+                </div>
+                 <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
+                    <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
+                </div>
+
                 {card.contentData?.loading ? (
                   <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -534,7 +537,7 @@ export function StudentDashboardClient() {
                   <div className="flex-grow flex items-center justify-center min-h-[150px]">
                   </div>
                 )}
-                <Button asChild className="w-full mt-auto group" variant="outline">
+                <Button asChild className="w-full mt-auto group bg-transparent border-2 border-pink-500 text-pink-500 hover:bg-pink-500/10" variant="outline">
                   <Link href={card.link}>
                     {card.buttonText}
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
