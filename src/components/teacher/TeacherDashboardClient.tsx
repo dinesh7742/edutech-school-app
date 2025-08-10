@@ -4,9 +4,34 @@
 import { useState, useEffect } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, UserCheck, UserX, FileText, ClipboardList, BookOpen, Image as ImageIconLucide, Video, ClipboardCheck, MailOpen, AlertTriangle, FileSignature, Users, Settings, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, Archive, Upload } from "lucide-react";
+import { 
+    Loader2, 
+    UserCheck, 
+    UserX, 
+    FileText, 
+    ClipboardList, 
+    BookOpen, 
+    Image as ImageIconLucide, 
+    Video, 
+    ClipboardCheck, 
+    MailOpen, 
+    AlertTriangle, 
+    FileSignature, 
+    Users, 
+    Settings, 
+    Download, 
+    ListChecks, 
+    ArrowRight, 
+    BarChart3, 
+    MessageSquareWarning, 
+    MessageSquare, 
+    Archive, 
+    Upload,
+    GraduationCap
+} from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
@@ -39,6 +64,15 @@ export function TeacherDashboardClient() {
   const [loadingTodaysAttendanceStatus, setLoadingTodaysAttendanceStatus] = useState(true);
   
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  
+  const getInitials = (name?: string | null) => {
+    if (!name) return "?";
+    const parts = name.split(" ");
+    return parts.length > 1
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+      : name.substring(0, 2).toUpperCase();
+  };
+
 
   const handleDownloadStudentData = async () => {
     if (!teacherUser?.grade || !teacherUser?.division) {
@@ -318,8 +352,8 @@ export function TeacherDashboardClient() {
   
   const quickStatsItems = [
     {
-      id: "studentCount",
-      title: `Students in ${teacherUser?.grade || 'N/A'}${teacherUser?.division || ''}`,
+      id: "teacherInfoAndStudentCount",
+      title: `Teacher's Corner & Class ${teacherUser?.grade || 'N/A'}-${teacherUser?.division || ''}`,
       icon: Users,
       content: loadingStudentCount ? (
         <div className="flex items-center justify-center space-x-2 h-full">
@@ -329,22 +363,40 @@ export function TeacherDashboardClient() {
       ) : studentCountError ? (
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-accent/10 p-4 rounded-lg">
-          <p className="text-sm text-muted-foreground font-semibold">Total Students</p>
-          <div className="text-6xl font-extrabold text-primary my-1">{totalStudentsInClass ?? 0}</div>
-          <div className="mt-4 flex w-full justify-around items-center">
-              <div className="flex flex-col items-center gap-1 text-foreground">
-                  <UserCheck className="h-8 w-8 text-blue-500"/>
-                  <span className="font-bold text-xl">{maleStudents}</span>
-                  <span className="text-xs font-medium text-muted-foreground">Boys</span>
-              </div>
-               <div className="h-16 w-px bg-border/50"></div>
-              <div className="flex flex-col items-center gap-1 text-foreground">
-                  <UserX className="h-8 w-8 text-pink-500"/>
-                  <span className="font-bold text-xl">{femaleStudents}</span>
-                  <span className="text-xs font-medium text-muted-foreground">Girls</span>
-              </div>
-          </div>
+        <div className="w-full h-full flex flex-col items-center justify-between p-4 rounded-lg">
+            {/* Teacher Info Section */}
+            <div className="flex items-center w-full gap-4">
+                <Avatar className="h-20 w-20 border-2 border-primary">
+                    <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} />
+                    <AvatarFallback className="text-2xl bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
+                </Avatar>
+                <div className="text-left">
+                    <p className="text-lg font-bold text-foreground">{teacherUser?.displayName}</p>
+                    <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
+                        <GraduationCap className="h-4 w-4" />
+                        <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Student Count Section */}
+            <div className="w-full mt-4 pt-4 border-t">
+                 <p className="text-sm text-muted-foreground font-semibold">Total Students</p>
+                 <div className="text-5xl font-extrabold text-primary my-1">{totalStudentsInClass ?? 0}</div>
+                 <div className="mt-2 flex w-full justify-around items-center">
+                    <div className="flex flex-col items-center gap-1 text-foreground">
+                        <UserCheck className="h-7 w-7 text-blue-500"/>
+                        <span className="font-bold text-lg">{maleStudents}</span>
+                        <span className="text-xs font-medium text-muted-foreground">Boys</span>
+                    </div>
+                    <div className="h-12 w-px bg-border/50"></div>
+                    <div className="flex flex-col items-center gap-1 text-foreground">
+                        <UserX className="h-7 w-7 text-pink-500"/>
+                        <span className="font-bold text-lg">{femaleStudents}</span>
+                        <span className="text-xs font-medium text-muted-foreground">Girls</span>
+                    </div>
+                 </div>
+            </div>
         </div>
       )
     },
@@ -362,7 +414,7 @@ export function TeacherDashboardClient() {
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
-        <div className="w-full h-full max-h-[200px] overflow-y-auto p-2">
+        <div className="w-full h-full max-h-[300px] overflow-y-auto p-2">
             <ul className="space-y-2 text-xs text-left">
               {recentSubmissions.map((sub) => (
                 <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
@@ -483,6 +535,13 @@ export function TeacherDashboardClient() {
       buttonText: "Manage Complaints",
       icon: MessageSquareWarning,
     },
+    {
+      title: "Progress Reports",
+      description: "Download templates and upload completed progress reports for your class.",
+      link: "/teacher/progress-reports",
+      buttonText: "Manage Reports",
+      icon: BarChart3,
+    },
      {
       title: "Dropout Box",
       description: "View and manage students who have been removed from the active list.",
@@ -509,27 +568,21 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-            <CardHeader className="pb-2 pt-4 items-center">
-                 <div className="flex justify-center mb-4">
-                    <item.icon className="h-16 w-16 text-primary" />
-                </div>
+          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+            <div className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[200px]"> {item.content} </div>
+            </div>
+            <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[300px]"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {mainActionItems.map((item) => (
-            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2">
-                <CardHeader className="pb-2 pt-4 items-center">
-                    <div className="flex justify-center mb-4">
-                        <item.icon className="h-16 w-16 text-primary" />
-                    </div>
+         {mainActionItems.map((item, index) => (
+            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                <div className="p-4 bg-primary text-primary-foreground">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
                         {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
@@ -539,8 +592,11 @@ export function TeacherDashboardClient() {
                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
                     </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between pt-2 pb-6 space-y-3 px-4">
+                </div>
+                <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                    <div className="flex justify-center my-4">
+                        <item.icon className={`h-16 w-16 text-primary`} />
+                    </div>
                     <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
