@@ -598,17 +598,17 @@ export function TeacherDashboardClient() {
                         <item.icon className={`h-16 w-16 text-primary`} />
                     </div>
                     <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground">{item.description}</CardDescription> : item.description}
+                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className="w-full mt-auto group bg-transparent border-2 border-pink-500 text-pink-500 hover:bg-pink-500/10" variant="outline">
+                        <Button asChild className="w-auto px-6 mt-auto font-bold" variant="default">
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     ) : item.action ? (
-                        <Button onClick={item.action} className="w-full mt-auto group bg-transparent border-2 border-pink-500 text-pink-500 hover:bg-pink-500/10" variant="outline" disabled={item.loading || item.disabled}>
+                        <Button onClick={item.action} className="w-auto px-6 mt-auto font-bold" variant="default" disabled={item.loading || item.disabled}>
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             {item.buttonText}
                         </Button>
@@ -621,5 +621,3 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
-
-    
