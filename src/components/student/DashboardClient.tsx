@@ -18,6 +18,15 @@ import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface LatestContent<T> {
   item: T | null;
@@ -39,6 +48,12 @@ const cardColors = [
   "text-chart-5",
 ];
 
+interface NotificationMessage {
+  link: string;
+  english: string;
+  hindi: string;
+}
+
 
 export function StudentDashboardClient() {
   const { user } = useAuth();
@@ -55,6 +70,9 @@ export function StudentDashboardClient() {
   const [completingHomework, setCompletingHomework] = useState(false);
 
   const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
+  
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
+  const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
 
 
   useEffect(() => {
@@ -62,6 +80,7 @@ export function StudentDashboardClient() {
       setLoadingNotifications(false);
       return;
     }
+    let hasOpenedDialog = false;
 
     const fetchPendingNotifications = async () => {
       setLoadingNotifications(true);
@@ -108,85 +127,108 @@ export function StudentDashboardClient() {
 
           return isSchoolWide || (isGradeMatch && isDivisionMatch) || isGradeWideForUser;
         });
+        
         setter({ item: relevantItem || null, loading: false });
+        return relevantItem || null;
       } catch (error) {
         console.error(`Error fetching latest ${collectionName}:`, error);
         setter({ item: null, loading: false });
+        return null;
       }
     };
+    
+    const checkAllContent = async () => {
+        const newMessages: NotificationMessage[] = [];
+        
+        const notice = await fetchGenericLatestItem<Notice>("notices", setLatestNotice, (data) => ({
+          ...data,
+          timestamp: data.timestamp as Timestamp,
+          displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+        } as Notice));
+        if (notice && isNew(notice.timestamp)) {
+            newMessages.push({ link: "/student/notices", english: "A new Notice has been posted.", hindi: "एक नई सूचना पोस्ट की गई है।" });
+        }
 
-    fetchGenericLatestItem<Notice>("notices", setLatestNotice, (data) => ({
-      ...data,
-      timestamp: data.timestamp as Timestamp,
-      displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-    } as Notice));
+        const circular = await fetchGenericLatestItem<Circular>("circulars", setLatestCircular, (data) => ({
+          ...data,
+          timestamp: data.timestamp as Timestamp,
+          displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+        } as Circular));
+         if (circular && isNew(circular.timestamp)) {
+            newMessages.push({ link: "/student/circulars", english: "A new Circular has been published.", hindi: "एक नया परिपत्र प्रकाशित किया गया है।" });
+        }
 
-    fetchGenericLatestItem<Circular>("circulars", setLatestCircular, (data) => ({
-      ...data,
-      timestamp: data.timestamp as Timestamp,
-      displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-    } as Circular));
+        const liveClass = await fetchGenericLatestItem<LiveClass>("liveClasses", setLatestLiveClass, (data) => ({
+          ...data,
+          timestamp: data.timestamp as Timestamp,
+          displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+        } as LiveClass));
+         if (liveClass && isNew(liveClass.timestamp)) {
+            newMessages.push({ link: "/student/live-classes", english: "A new Live Class has been scheduled.", hindi: "एक नई लाइव क्लास निर्धारित की गई है।" });
+        }
+        
+        // Specific logic for Homework
+        if (user?.uid && user?.grade && user?.division) {
+            setLatestHomework(prev => ({ ...prev, loading: true }));
+            setIsLatestHomeworkCompleted(false); 
+            try {
+                const homeworkRef = collection(db, "homework");
+                const q = query(
+                  homeworkRef,
+                  where("grade", "==", user.grade),
+                  where("division", "==", user.division),
+                  orderBy("timestamp", "desc"),
+                  limit(1)
+                );
+                const homeworkSnapshot = await getDocs(q);
+                if (!homeworkSnapshot.empty) {
+                  const hwDoc = homeworkSnapshot.docs[0];
+                  const hwData = hwDoc.data();
+                  const currentHomeworkItem = {
+                    id: hwDoc.id,
+                    ...hwData,
+                    attachments: hwData.attachments || [],
+                    timestamp: hwData.timestamp as Timestamp,
+                    displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
+                    dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
+                  } as Homework;
+                  setLatestHomework({ item: currentHomeworkItem, loading: false });
 
-    fetchGenericLatestItem<LiveClass>("liveClasses", setLatestLiveClass, (data) => ({
-      ...data,
-      timestamp: data.timestamp as Timestamp,
-      displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-    } as LiveClass));
+                  if (currentHomeworkItem && isNew(currentHomeworkItem.timestamp)) {
+                    newMessages.push({ link: "/student/homework", english: "New Homework has been assigned.", hindi: "नया होमवर्क दिया गया है।" });
+                  }
 
+                  const submissionDocId = `${currentHomeworkItem.id}_${user.uid}`;
+                  const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
+                  const submissionSnap = await getDoc(submissionDocRef);
+                  setIsLatestHomeworkCompleted(submissionSnap.exists());
 
-    const fetchLatestHomework = async () => {
-      if (!user?.uid || !user?.grade || !user?.division) {
-        setLatestHomework({ item: null, loading: false });
-        setIsLatestHomeworkCompleted(false);
-        return;
-      }
-      setLatestHomework(prev => ({ ...prev, loading: true }));
-      setIsLatestHomeworkCompleted(false); 
-
-      try {
-        const homeworkRef = collection(db, "homework");
-        const q = query(
-          homeworkRef,
-          where("grade", "==", user.grade),
-          where("division", "==", user.division),
-          orderBy("timestamp", "desc"),
-          limit(1)
-        );
-        const homeworkSnapshot = await getDocs(q);
-        if (!homeworkSnapshot.empty) {
-          const hwDoc = homeworkSnapshot.docs[0];
-          const hwData = hwDoc.data();
-          const currentHomeworkItem = {
-            id: hwDoc.id,
-            ...hwData,
-            attachments: hwData.attachments || [],
-            timestamp: hwData.timestamp as Timestamp,
-            displayDate: hwData.timestamp ? new Date((hwData.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
-            dueDate: hwData.dueDate ? new Date(hwData.dueDate + 'T00:00:00').toLocaleDateString() : 'N/A',
-          } as Homework;
-          setLatestHomework({ item: currentHomeworkItem, loading: false });
-
-          const submissionDocId = `${currentHomeworkItem.id}_${user.uid}`;
-          const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
-          const submissionSnap = await getDoc(submissionDocRef);
-          setIsLatestHomeworkCompleted(submissionSnap.exists());
-
+                } else {
+                  setLatestHomework({ item: null, loading: false });
+                  setIsLatestHomeworkCompleted(false);
+                }
+              } catch (error) {
+                console.error("Error fetching latest homework:", error);
+                setLatestHomework({ item: null, loading: false });
+                setIsLatestHomeworkCompleted(false);
+                 if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
+                     console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
+                     toast({title: "Error", description: "A database configuration is needed for homework. Please inform your administrator.", variant: "destructive"});
+                }
+              }
         } else {
-          setLatestHomework({ item: null, loading: false });
-          setIsLatestHomeworkCompleted(false);
+             setLatestHomework({ item: null, loading: false });
+             setIsLatestHomeworkCompleted(false);
         }
-      } catch (error) {
-        console.error("Error fetching latest homework:", error);
-        setLatestHomework({ item: null, loading: false });
-        setIsLatestHomeworkCompleted(false);
-         if ((error as any).code === 'failed-precondition' && (error as any).message.includes('index')) {
-             console.error("Firestore index required for homework query on student dashboard. Please create an index on 'homework' collection for fields: grade (ASC), division (ASC), timestamp (DESC).");
-             toast({title: "Error", description: "A database configuration is needed for homework. Please inform your administrator.", variant: "destructive"});
-        }
-      }
-    };
-    fetchLatestHomework();
 
+        setNotificationMessages(newMessages);
+        if (!hasOpenedDialog) {
+            setIsNotificationDialogOpen(true);
+            hasOpenedDialog = true; // Prevent re-opening
+        }
+    };
+    checkAllContent();
+    
     // Check for unread messages
     const chatsRef = collection(db, "chats");
     const chatsQuery = query(chatsRef, where("participants", "array-contains", user.uid));
@@ -206,8 +248,6 @@ export function StudentDashboardClient() {
     });
     
     return () => unsubscribe();
-
-
   }, [user, toast]);
 
   const handleMarkHomeworkCompleted = async (homeworkItem: Homework) => {
@@ -487,6 +527,36 @@ export function StudentDashboardClient() {
   
   return (
     <>
+      <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Today's Announcements / आज की घोषणाएँ</AlertDialogTitle>
+            <AlertDialogDescription>
+                Here are the latest updates from your teacher. Click on any item to go directly to that page.
+                <br />
+                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के लिए किसी भी आइटम पर क्लिक करें।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
+            {notificationMessages.length > 0 ? (
+                notificationMessages.map((msg, index) => (
+                    <Link key={index} href={msg.link} onClick={() => setIsNotificationDialogOpen(false)} className="block p-3 border rounded-md hover:bg-muted transition-colors">
+                        <p className="font-semibold">{msg.english}</p>
+                        <p className="text-sm text-muted-foreground">{msg.hindi}</p>
+                    </Link>
+                ))
+            ) : (
+                <p className="text-center text-muted-foreground py-4">
+                    No new announcements today. / आज कोई नई घोषणा नहीं है।
+                </p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsNotificationDialogOpen(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
     <div className="space-y-8">
       <WelcomeMessage />
@@ -537,7 +607,7 @@ export function StudentDashboardClient() {
                   <div className="flex-grow flex items-center justify-center min-h-[150px]">
                   </div>
                 )}
-                <Button asChild className="w-auto px-6 mt-auto font-bold" variant="default">
+                <Button asChild className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default">
                   <Link href={card.link}>
                     {card.buttonText}
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
