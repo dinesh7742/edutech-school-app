@@ -148,7 +148,7 @@ export function Navbar() {
       <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between">
         <Link href="/" className="flex items-start space-x-3">
           <div className="flex items-center space-x-2 flex-shrink-0 mt-1">
-            <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10" data-ai-hint="logo seal" />
+            <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10 rounded-full" data-ai-hint="logo seal" />
             <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={40} height={40} className="h-10 w-10 bg-white p-0.5 rounded-full" data-ai-hint="school logo" />
           </div>
           <div className="flex flex-col max-w-md sm:max-w-lg text-primary-foreground">
@@ -204,7 +204,7 @@ export function Navbar() {
               <SheetHeader className="p-4 border-b text-left">
                 <SheetTitle className="flex items-start gap-2 text-lg">
                   <div className="flex items-center space-x-2 flex-shrink-0 mt-1">
-                    <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10" data-ai-hint="logo seal" />
+                    <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10 rounded-full" data-ai-hint="logo seal" />
                     <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={40} height={40} className="h-10 w-10 bg-white p-0.5 rounded-full" data-ai-hint="school logo" />
                   </div>
                   <div className="flex flex-col text-sm">
