@@ -581,7 +581,7 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
          {mainActionItems.map((item, index) => (
-            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+            <Card key={item.title} className="bg-transparent border-2 border-foreground text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
                 <div className="p-4 bg-primary text-primary-foreground">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
@@ -621,3 +621,4 @@ export function TeacherDashboardClient() {
     </div>
   );
 }
+
