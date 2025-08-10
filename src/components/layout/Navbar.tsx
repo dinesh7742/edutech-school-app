@@ -17,6 +17,7 @@ import { useAuth } from "@/context/AuthContext";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
 import { useState } from "react";
+import Image from "next/image";
 
 // School Information
 const schoolName = "PM SHRI MPS VARSHA NAGAR";
@@ -146,7 +147,10 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-primary text-primary-foreground">
       <div className="container flex h-auto min-h-[80px] py-3 items-center justify-between">
         <Link href="/" className="flex items-start space-x-3">
-          <School className="h-10 w-10 mt-1 flex-shrink-0 text-primary-foreground" data-ai-hint="school building" />
+          <div className="flex items-center space-x-2 flex-shrink-0 mt-1">
+            <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10" data-ai-hint="logo seal" />
+            <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={40} height={40} className="h-10 w-10" data-ai-hint="school logo" />
+          </div>
           <div className="flex flex-col max-w-md sm:max-w-lg text-primary-foreground">
             <span className="text-xl font-bold ">{schoolName}</span>
             <span className="text-xs flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3 text-primary-foreground"/> {contactNumber}</span>
@@ -199,7 +203,10 @@ export function Navbar() {
             <SheetContent side="right" className="w-[300px] sm:w-[340px] bg-card text-card-foreground flex flex-col p-0 overflow-y-auto">
               <SheetHeader className="p-4 border-b text-left">
                 <SheetTitle className="flex items-start gap-2 text-lg">
-                  <School className="h-8 w-8 text-primary mt-1 flex-shrink-0" /> 
+                  <div className="flex items-center space-x-2 flex-shrink-0 mt-1">
+                    <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10" data-ai-hint="logo seal" />
+                    <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={40} height={40} className="h-10 w-10" data-ai-hint="school logo" />
+                  </div>
                   <div className="flex flex-col text-sm">
                     <span className="font-semibold">{schoolName}</span>
                     <span className="text-xs text-muted-foreground flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3"/> {contactNumber}</span>

@@ -1,25 +1,22 @@
 import { LoginForm } from "@/components/auth/LoginForm";
 import { School } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-background to-secondary p-4">
        <div className="absolute top-0 left-0 w-full h-full bg-grid-pattern opacity-5 z-0"></div>
        <div className="relative z-10 flex flex-col items-center space-y-6 w-full">
-        <div className="flex items-center space-x-3 text-primary mb-6">
+        <div className="flex items-center space-x-3 text-primary mb-2">
           <School size={48} />
           <h1 className="text-4xl font-bold">Edutech</h1>
+        </div>
+        <div className="flex items-center justify-center space-x-4 mb-4">
+          <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={64} height={64} className="h-16 w-16" data-ai-hint="logo seal" />
+          <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={64} height={64} className="h-16 w-16" data-ai-hint="school logo" />
         </div>
         <LoginForm />
       </div>
     </div>
   );
 }
-
-// CSS for bg-grid-pattern (add to globals.css or keep here if specific)
-// This is an example, you might want a more subtle pattern
-// For simplicity, this style can be inlined or managed with Tailwind config extensions if needed.
-// Adding this to globals.css instead by extending tailwind utilities.
-// For now, adding small style to globals.css to avoid direct style tags if possible.
-// Let's assume a utility class .bg-grid-pattern exists or will be added.
-// Updated globals.css to include a simple pattern.
