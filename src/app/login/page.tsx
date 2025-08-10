@@ -1,3 +1,4 @@
+
 import { LoginForm } from "@/components/auth/LoginForm";
 import { School } from "lucide-react";
 import Image from "next/image";
@@ -13,7 +14,7 @@ export default function LoginPage() {
         </div>
         <div className="flex items-center justify-center space-x-4 mb-4">
           <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={64} height={64} className="h-16 w-16" data-ai-hint="logo seal" />
-          <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={64} height={64} className="h-16 w-16" data-ai-hint="school logo" />
+          <Image src="https://i.postimg.cc/G2KKPWkr/Logo1.png" alt="School Logo" width={64} height={64} className="h-16 w-16 bg-white p-1 rounded-full" data-ai-hint="school logo" />
         </div>
         <LoginForm />
       </div>
