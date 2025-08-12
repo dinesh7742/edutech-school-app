@@ -40,6 +40,21 @@ import type { StudentProfile, HomeworkSubmission, ChatMessage, AppUser } from "@
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface NotificationMessage {
+  link: string;
+  english: string;
+  hindi: string;
+}
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -64,6 +79,10 @@ export function TeacherDashboardClient() {
   const [loadingTodaysAttendanceStatus, setLoadingTodaysAttendanceStatus] = useState(true);
   
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+
+  // State for the notification dialog
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
+  const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
   
   const getInitials = (name?: string | null) => {
     if (!name) return "?";
@@ -151,6 +170,80 @@ export function TeacherDashboardClient() {
 
   useEffect(() => {
     if (!teacherUser) return;
+    let hasOpenedDialog = false;
+
+    // This function fetches counts for the dashboard display
+    const fetchPendingCounts = async () => {
+      setLoadingPendingCounts(true);
+      try {
+        const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
+        const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
+        const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
+
+        const [leaveSnapshot, lateArrivalSnapshot, otherAppsSnapshot] = await Promise.all([
+          getCountFromServer(leaveQuery),
+          getCountFromServer(lateArrivalQuery),
+          getCountFromServer(otherAppsQuery),
+        ]);
+
+        setPendingLeaveCount(leaveSnapshot.data().count);
+        setPendingLateArrivalCount(lateArrivalSnapshot.data().count);
+        setPendingOtherAppsCount(otherAppsSnapshot.data().count);
+
+      } catch (err: any) {
+        console.error("Error fetching pending submission counts:", err);
+        toast({ title: "Error", description: "Could not fetch pending submission counts.", variant: "destructive" });
+      } finally {
+        setLoadingPendingCounts(false);
+      }
+    };
+    
+    // This function checks for NEW items for the popup
+    const fetchNewNotifications = async () => {
+        const newMessages: NotificationMessage[] = [];
+        const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+
+        const checkNewCollection = async (collectionName: string, link: string, engMsg: string, hindiMsg: string, dateField: string = "applicationTimestamp") => {
+            try {
+                const q = query(
+                    collection(db, collectionName), 
+                    where("status", "==", "Pending"), 
+                    where(dateField, ">=", twentyFourHoursAgo)
+                );
+                const snapshot = await getCountFromServer(q);
+                if (snapshot.data().count > 0) {
+                    newMessages.push({ link, english: `${engMsg} (${snapshot.data().count} new)`, hindi: `${hindiMsg} (${snapshot.data().count} नई)` });
+                }
+            } catch (error) {
+                console.warn(`Could not check for new ${collectionName}:`, error);
+            }
+        };
+
+        await checkNewCollection("leaveApplications", "/teacher/leave-applications", "New Leave Applications received.", "नए अवकाश आवेदन प्राप्त हुए हैं।");
+        await checkNewCollection("lateArrivalRequests", "/teacher/leave-applications", "New Late Arrival requests received.", "देर से आने के नए अनुरोध प्राप्त हुए हैं।");
+        await checkNewCollection("otherStudentApplications", "/teacher/leave-applications", "New Other Applications received.", "अन्य नए आवेदन प्राप्त हुए हैं।");
+
+        // Check for new chat messages
+        const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid), where("lastMessageTimestamp", ">=", twentyFourHoursAgo));
+        const chatsSnapshot = await getDocs(chatsQuery);
+        let hasNewMessage = false;
+        chatsSnapshot.forEach(doc => {
+            const messages = doc.data().messages as ChatMessage[];
+            if (messages.some(msg => msg.senderId !== teacherUser.uid && (msg.timestamp as Timestamp) >= twentyFourHoursAgo)) {
+                hasNewMessage = true;
+            }
+        });
+        if (hasNewMessage) {
+            newMessages.push({ link: "/teacher/chat", english: "You have new unread messages.", hindi: "आपके पास नए अपठित संदेश हैं।" });
+        }
+
+
+        setNotificationMessages(newMessages);
+        if (!hasOpenedDialog) {
+            setIsNotificationDialogOpen(true);
+            hasOpenedDialog = true;
+        }
+    };
 
     const fetchStudentData = async () => {
       if (teacherUser.grade && teacherUser.division) {
@@ -258,32 +351,6 @@ export function TeacherDashboardClient() {
       }
     };
 
-    const fetchPendingCounts = async () => {
-      if (!teacherUser) return;
-      setLoadingPendingCounts(true);
-      try {
-        const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
-        const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
-        const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
-
-        const [leaveSnapshot, lateArrivalSnapshot, otherAppsSnapshot] = await Promise.all([
-          getCountFromServer(leaveQuery),
-          getCountFromServer(lateArrivalQuery),
-          getCountFromServer(otherAppsQuery),
-        ]);
-
-        setPendingLeaveCount(leaveSnapshot.data().count);
-        setPendingLateArrivalCount(lateArrivalSnapshot.data().count);
-        setPendingOtherAppsCount(otherAppsSnapshot.data().count);
-
-      } catch (err: any) {
-        console.error("Error fetching pending submission counts:", err);
-        toast({ title: "Error", description: "Could not fetch pending submission counts.", variant: "destructive" });
-      } finally {
-        setLoadingPendingCounts(false);
-      }
-    };
-
     const checkTodaysAttendance = async () => {
       if (teacherUser && teacherUser.grade && teacherUser.division) {
         setLoadingTodaysAttendanceStatus(true);
@@ -308,6 +375,7 @@ export function TeacherDashboardClient() {
     fetchStudentData();
     fetchRecentSubmissions();
     fetchPendingCounts();
+    fetchNewNotifications();
     checkTodaysAttendance();
 
     // Set up listener for unread messages
@@ -563,6 +631,37 @@ export function TeacherDashboardClient() {
 
 
   return (
+    <>
+      <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Today's Notifications / आज की सूचनाएं</AlertDialogTitle>
+            <AlertDialogDescription>
+                Here are your new items requiring attention. Click to review.
+                <br />
+                यहां आपके ध्यान देने योग्य नई वस्तुएं हैं। समीक्षा के लिए क्लिक करें।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
+            {notificationMessages.length > 0 ? (
+                notificationMessages.map((msg, index) => (
+                    <Link key={index} href={msg.link} onClick={() => setIsNotificationDialogOpen(false)} className="block p-3 border rounded-md hover:bg-muted transition-colors">
+                        <p className="font-semibold">{msg.english}</p>
+                        <p className="text-sm text-muted-foreground">{msg.hindi}</p>
+                    </Link>
+                ))
+            ) : (
+                <p className="text-center text-muted-foreground py-4">
+                    No new submissions or messages today. / आज कोई नया सबमिशन या संदेश नहीं है।
+                </p>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsNotificationDialogOpen(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     <div className="space-y-8">
       <WelcomeMessage />
 
@@ -601,14 +700,14 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className="w-auto px-6 mt-auto font-bold" variant="default">
+                        <Button asChild className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default">
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     ) : item.action ? (
-                        <Button onClick={item.action} className="w-auto px-6 mt-auto font-bold" variant="default" disabled={item.loading || item.disabled}>
+                        <Button onClick={item.action} className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default" disabled={item.loading || item.disabled}>
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             {item.buttonText}
                         </Button>
@@ -619,5 +718,6 @@ export function TeacherDashboardClient() {
          ))}
       </div>
     </div>
+    </>
   );
 }
