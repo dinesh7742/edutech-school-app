@@ -493,7 +493,7 @@ export function TeacherDashboardClient() {
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
-        <div className="w-full h-full max-h-[300px] overflow-y-auto p-2">
+        <div className="w-full h-full max-h-[400px] overflow-y-auto p-2">
             <ul className="space-y-2 text-xs text-left">
               {recentSubmissions.map((sub) => (
                 <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
@@ -683,7 +683,7 @@ export function TeacherDashboardClient() {
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[300px]"> {item.content} </div>
+             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
             </CardContent>
           </Card>
         ))}
@@ -732,5 +732,7 @@ export function TeacherDashboardClient() {
     </>
   );
 }
+
+    
 
     
