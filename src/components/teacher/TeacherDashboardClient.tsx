@@ -667,10 +667,10 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-            <div className="p-4 bg-primary text-primary-foreground">
+          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+            <CardHeader className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-            </div>
+            </CardHeader>
             <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[300px]"> {item.content} </div>
             </CardContent>
@@ -680,8 +680,8 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
          {mainActionItems.map((item, index) => (
-            <Card key={item.title} className="bg-gradient-to-br from-yellow-300 to-orange-400 text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
-                <div className="p-4 bg-primary text-primary-foreground">
+            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+                <CardHeader className="p-4 bg-primary text-primary-foreground">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
                         {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
@@ -691,23 +691,23 @@ export function TeacherDashboardClient() {
                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
                     </CardTitle>
-                </div>
+                </CardHeader>
                 <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
                     <div className="flex justify-center my-4">
                         <item.icon className={`h-16 w-16 text-primary`} />
                     </div>
                     <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : item.description}
+                         {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default">
+                        <Button asChild className="w-full mt-auto group">
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     ) : item.action ? (
-                        <Button onClick={item.action} className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default" disabled={item.loading || item.disabled}>
+                        <Button onClick={item.action} className="w-full mt-auto group" disabled={item.loading || item.disabled}>
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             {item.buttonText}
                         </Button>
