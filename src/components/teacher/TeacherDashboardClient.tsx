@@ -433,21 +433,15 @@ export function TeacherDashboardClient() {
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
         <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
-            {/* Header */}
             <div className="text-center border-b-2 border-primary pb-2">
                 <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
                 <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
             </div>
-
-            {/* Body */}
             <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
-                {/* Big Square Image */}
                 <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
                     <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
                     <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
                 </Avatar>
-
-                {/* Teacher Details */}
                 <div className="text-left space-y-2 flex-grow">
                     <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
                     <div className="flex items-center text-sm text-muted-foreground gap-2">
@@ -465,7 +459,6 @@ export function TeacherDashboardClient() {
                 </div>
             </div>
             
-            {/* Class Info Footer */}
             <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
                  <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
                  <div className="mt-2 flex w-full justify-around items-center">
@@ -739,3 +732,5 @@ export function TeacherDashboardClient() {
     </>
   );
 }
+
+    
