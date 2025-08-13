@@ -711,14 +711,14 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className="w-full mt-auto group">
+                        <Button asChild className="w-full mt-auto group font-bold" variant="link">
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     ) : item.action ? (
-                        <Button onClick={item.action} className="w-full mt-auto group" disabled={item.loading || item.disabled}>
+                        <Button onClick={item.action} className="w-full mt-auto group font-bold" variant="link" disabled={item.loading || item.disabled}>
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             {item.buttonText}
                         </Button>
