@@ -13,7 +13,7 @@ export default function SignupPage() {
           <h1 className="text-4xl font-bold">Edutech</h1>
         </div>
         <div className="flex items-center justify-center mb-4">
-          <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={64} height={64} className="h-16 w-16 rounded-full" data-ai-hint="logo seal" />
+          <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={128} height={128} className="h-32 w-32 rounded-full" data-ai-hint="logo seal" />
         </div>
         <SignupForm />
       </div>
