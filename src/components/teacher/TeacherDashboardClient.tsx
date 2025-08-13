@@ -30,7 +30,8 @@ import {
     MessageSquare, 
     Archive, 
     Upload,
-    GraduationCap
+    GraduationCap,
+    Phone,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -431,37 +432,54 @@ export function TeacherDashboardClient() {
       ) : studentCountError ? (
          <p className="text-xs text-destructive text-center">{studentCountError}</p>
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-between p-4 rounded-lg">
-            {/* Teacher Info Section */}
-            <div className="flex items-center w-full gap-4">
-                <Avatar className="h-20 w-20 border-2 border-primary">
-                    <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} />
-                    <AvatarFallback className="text-2xl bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
+        <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
+            {/* Header */}
+            <div className="text-center border-b-2 border-primary pb-2">
+                <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
+                <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
+            </div>
+
+            {/* Body */}
+            <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
+                {/* Big Square Image */}
+                <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
+                    <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
+                    <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
                 </Avatar>
-                <div className="text-left">
-                    <p className="text-lg font-bold text-foreground">{teacherUser?.displayName}</p>
-                    <div className="flex items-center text-sm text-muted-foreground gap-1.5 mt-1">
-                        <GraduationCap className="h-4 w-4" />
+
+                {/* Teacher Details */}
+                <div className="text-left space-y-2 flex-grow">
+                    <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
+                    <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <GraduationCap className="h-4 w-4 text-primary" />
                         <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
+                    </div>
+                     <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
+                    </div>
+                     <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <Phone className="h-4 w-4 text-primary" />
+                        <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
                     </div>
                 </div>
             </div>
-
-            {/* Student Count Section */}
-            <div className="w-full mt-4 pt-4 border-t">
-                 <p className="text-sm text-muted-foreground font-semibold">Total Students</p>
-                 <div className="text-5xl font-extrabold text-primary my-1">{totalStudentsInClass ?? 0}</div>
+            
+            {/* Class Info Footer */}
+            <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
+                 <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
                  <div className="mt-2 flex w-full justify-around items-center">
-                    <div className="flex flex-col items-center gap-1 text-foreground">
-                        <UserCheck className="h-7 w-7 text-blue-500"/>
-                        <span className="font-bold text-lg">{maleStudents}</span>
-                        <span className="text-xs font-medium text-muted-foreground">Boys</span>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{totalStudentsInClass ?? 0}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Total Students</p>
                     </div>
-                    <div className="h-12 w-px bg-border/50"></div>
-                    <div className="flex flex-col items-center gap-1 text-foreground">
-                        <UserX className="h-7 w-7 text-pink-500"/>
-                        <span className="font-bold text-lg">{femaleStudents}</span>
-                        <span className="text-xs font-medium text-muted-foreground">Girls</span>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Boys</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Girls</p>
                     </div>
                  </div>
             </div>
