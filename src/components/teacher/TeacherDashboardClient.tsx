@@ -50,6 +50,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface NotificationMessage {
   link: string;
@@ -240,7 +241,10 @@ export function TeacherDashboardClient() {
 
 
         setNotificationMessages(newMessages);
-        if (!hasOpenedDialog) {
+        if (!hasOpenedDialog && newMessages.length > 0) {
+            setIsNotificationDialogOpen(true);
+            hasOpenedDialog = true;
+        } else if (!hasOpenedDialog) {
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true;
         }
@@ -711,10 +715,19 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className="w-full mt-auto group font-bold" variant="link">
+                        <Button
+                          asChild
+                          className={cn("w-full mt-auto group font-bold", {
+                            "bg-secondary text-secondary-foreground hover:bg-secondary/90 w-auto px-6": item.buttonText === "Post Content",
+                            "w-full": item.buttonText !== "Post Content",
+                          })}
+                          variant={item.buttonText === "Post Content" ? "default" : "link"}
+                        >
                             <Link href={item.link}>
                               {item.buttonText}
-                              <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                              {item.buttonText !== "Post Content" && (
+                                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                              )}
                             </Link>
                         </Button>
                     ) : item.action ? (
@@ -732,7 +745,3 @@ export function TeacherDashboardClient() {
     </>
   );
 }
-
-    
-
-    
