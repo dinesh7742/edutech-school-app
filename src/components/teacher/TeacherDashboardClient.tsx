@@ -21,7 +21,6 @@ import {
     AlertTriangle, 
     FileSignature, 
     Users, 
-    Settings, 
     Download, 
     ListChecks, 
     ArrowRight, 
@@ -511,6 +510,7 @@ export function TeacherDashboardClient() {
 
   const mainActionItems = [
      {
+      id: "postContent",
       title: "Manage Content",
       description: (
         <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
@@ -549,6 +549,7 @@ export function TeacherDashboardClient() {
       icon: ClipboardList,
     },
     {
+      id: "studentData",
       title: "Student Data",
       description: "View and manage student profiles for your assigned classes and the entire school.",
       link: "/teacher/student-data",
@@ -556,13 +557,15 @@ export function TeacherDashboardClient() {
       icon: Users,
     },
     {
+      id: "markAttendance",
       title: "Mark Attendance",
       description: getAttendanceCardDescription(), // Dynamically get description
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
       icon: ListChecks,
     },
-     { 
+     {
+      id: "manageSubmissions",
       title: "Manage Student Submissions",
       description: (
         loadingPendingCounts ? (
@@ -601,6 +604,7 @@ export function TeacherDashboardClient() {
       icon: ClipboardCheck,
     },
      {
+      id: "studentChats",
       title: "Student Chats",
       description: "Communicate directly with students and parents in your class.",
       link: "/teacher/chat",
@@ -609,6 +613,7 @@ export function TeacherDashboardClient() {
       hasNotification: hasUnreadMessages,
     },
     {
+      id: "studentConduct",
       title: "Student Conduct",
       description: "File or view student conduct reports and complaints for parent notification.",
       link: "/teacher/conduct-record",
@@ -616,6 +621,7 @@ export function TeacherDashboardClient() {
       icon: MessageSquareWarning,
     },
     {
+      id: "progressReports",
       title: "Progress Reports",
       description: "Download templates and upload completed progress reports for your class.",
       link: "/teacher/progress-reports",
@@ -623,6 +629,7 @@ export function TeacherDashboardClient() {
       icon: BarChart3,
     },
      {
+      id: "dropoutBox",
       title: "Dropout Box",
       description: "View and manage students who have been removed from the active list.",
       link: "/teacher/dropout-list",
@@ -630,6 +637,7 @@ export function TeacherDashboardClient() {
       icon: Archive,
     },
      {
+      id: "downloadData",
       title: "Download Class Data",
       description: "Download an Excel sheet of student data for your assigned class.",
       action: handleDownloadStudentData,
@@ -691,15 +699,15 @@ export function TeacherDashboardClient() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {mainActionItems.map((item, index) => (
-            <Card key={item.title} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+         {mainActionItems.map((item) => (
+            <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
                 <CardHeader className="p-4 bg-primary text-primary-foreground">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
-                        {item.title === "Manage Student Submissions" && totalPendingSubmissions > 0 && (
+                        {item.id === "manageSubmissions" && totalPendingSubmissions > 0 && (
                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
-                        {item.title === "Student Chats" && item.hasNotification && (
+                        {item.id === "studentChats" && item.hasNotification && (
                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
                         )}
                     </CardTitle>
@@ -717,16 +725,16 @@ export function TeacherDashboardClient() {
                           variant={"default"}
                           className={cn(
                             "mt-auto group font-bold w-full",
-                            {
-                                "bg-pink-500 hover:bg-pink-600 text-white w-auto px-6": item.title === "Post Content",
-                                "bg-green-600 hover:bg-green-700 text-white": item.title === "Student Data",
-                                "bg-transparent text-primary hover:bg-primary/10": !["Post Content", "Student Data"].includes(item.title)
-                            }
+                             {
+                                "bg-pink-500 hover:bg-pink-600 text-white w-auto px-6 h-auto py-2 text-base": item.id === "postContent",
+                                "bg-green-600 hover:bg-green-700 text-white": item.id === "studentData",
+                                "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData"].includes(item.id)
+                             }
                           )}
                         >
                             <Link href={item.link}>
                               {item.buttonText}
-                              {item.title !== "Post Content" && (
+                              {item.id !== "postContent" && (
                                 <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                               )}
                             </Link>
