@@ -714,21 +714,25 @@ export function TeacherDashboardClient() {
                     {item.link ? (
                         <Button
                           asChild
-                          variant={item.buttonText === "Post Content" ? "secondary" : "link"}
-                          className={cn("mt-auto group font-bold", {
-                            "w-auto px-6": item.buttonText === "Post Content",
-                            "w-full": item.buttonText !== "Post Content",
-                          })}
+                          variant={"default"}
+                          className={cn(
+                            "mt-auto group font-bold w-full",
+                            {
+                                "bg-pink-500 hover:bg-pink-600 text-white w-auto px-6": item.title === "Post Content",
+                                "bg-green-600 hover:bg-green-700 text-white": item.title === "Student Data",
+                                "bg-transparent text-primary hover:bg-primary/10": !["Post Content", "Student Data"].includes(item.title)
+                            }
+                          )}
                         >
                             <Link href={item.link}>
                               {item.buttonText}
-                              {item.buttonText !== "Post Content" && (
+                              {item.title !== "Post Content" && (
                                 <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                               )}
                             </Link>
                         </Button>
                     ) : item.action ? (
-                        <Button onClick={item.action} className="w-full mt-auto group font-bold" variant="link" disabled={item.loading || item.disabled}>
+                        <Button onClick={item.action} className="w-full mt-auto group font-bold bg-transparent text-primary hover:bg-primary/10" variant="link" disabled={item.loading || item.disabled}>
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             {item.buttonText}
                         </Button>
