@@ -214,11 +214,13 @@ export function TeacherDashboardClient() {
                     submissionsRef,
                     where("grade", "==", teacherUser.grade),
                     where("division", "==", teacherUser.division),
-                    orderBy("completedAt", "desc"),
                     limit(5)
                 );
                 const querySnapshot = await getDocs(q);
-                setRecentSubmissions(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission)));
+                const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
+                // Sort client-side
+                fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
+                setRecentSubmissions(fetchedSubmissions);
             } catch (err) {
                 console.error("Error fetching recent homework submissions:", err);
             } finally {
@@ -564,7 +566,8 @@ export function TeacherDashboardClient() {
                         <Button asChild variant={"default"} className={cn("mt-auto group font-bold w-full", {
                             "bg-pink-500 hover:bg-pink-600 text-white h-auto py-2 text-base": item.id === "postContent",
                             "bg-green-600 hover:bg-green-700 text-white": item.id === "studentData",
-                            "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData"].includes(item.id),
+                            "bg-blue-600 hover:bg-blue-700 text-white": item.id === "markAttendance",
+                            "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData", "markAttendance"].includes(item.id),
                         })}>
                             <Link href={item.link}>
                               {item.buttonText}
@@ -586,5 +589,3 @@ export function TeacherDashboardClient() {
     </>
   );
 }
-
-    
