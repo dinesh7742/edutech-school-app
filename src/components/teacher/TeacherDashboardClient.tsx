@@ -241,10 +241,7 @@ export function TeacherDashboardClient() {
 
 
         setNotificationMessages(newMessages);
-        if (!hasOpenedDialog && newMessages.length > 0) {
-            setIsNotificationDialogOpen(true);
-            hasOpenedDialog = true;
-        } else if (!hasOpenedDialog) {
+        if (!hasOpenedDialog) {
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true;
         }
@@ -717,11 +714,11 @@ export function TeacherDashboardClient() {
                     {item.link ? (
                         <Button
                           asChild
-                          className={cn("w-full mt-auto group font-bold", {
-                            "bg-secondary text-secondary-foreground hover:bg-secondary/90 w-auto px-6": item.buttonText === "Post Content",
+                          variant={item.buttonText === "Post Content" ? "secondary" : "link"}
+                          className={cn("mt-auto group font-bold", {
+                            "w-auto px-6": item.buttonText === "Post Content",
                             "w-full": item.buttonText !== "Post Content",
                           })}
-                          variant={item.buttonText === "Post Content" ? "default" : "link"}
                         >
                             <Link href={item.link}>
                               {item.buttonText}
