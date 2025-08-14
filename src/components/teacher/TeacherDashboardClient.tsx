@@ -553,21 +553,27 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className={cn("w-full mt-auto group font-bold",
-                          {
-                            "bg-pink-500 hover:bg-pink-600 text-white h-auto py-2 text-base": item.id === "postContent",
-                            "bg-green-600 hover:bg-green-700 text-white": item.id === "studentData",
-                            "bg-blue-600 hover:bg-blue-700 text-white": item.id === "markAttendance",
-                            "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData", "markAttendance"].includes(item.id),
-                          }
-                        )}>
+                        <Button asChild className={cn("w-full mt-auto group font-bold text-white", {
+                            "bg-pink-500 hover:bg-pink-600": item.id === "postContent",
+                            "bg-green-600 hover:bg-green-700": item.id === "studentData",
+                            "bg-blue-600 hover:bg-blue-700": item.id === "markAttendance",
+                            "bg-purple-600 hover:bg-purple-700": item.id === "manageSubmissions",
+                            "bg-teal-600 hover:bg-teal-700": item.id === "studentChats",
+                            "bg-red-600 hover:bg-red-700": item.id === "studentConduct",
+                            "bg-orange-500 hover:bg-orange-600": item.id === "progressReports",
+                            "bg-slate-600 hover:bg-slate-700": item.id === "dropoutBox",
+                        })}>
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     ) : item.action ? (
-                        <Button onClick={item.action} className="w-full mt-auto group font-bold bg-transparent text-primary hover:bg-primary/10" variant="link" disabled={item.loading || item.disabled}>
+                        <Button 
+                            onClick={item.action} 
+                            className="w-full mt-auto group font-bold bg-indigo-600 hover:bg-indigo-700 text-white" 
+                            disabled={item.loading || item.disabled}
+                        >
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                             {item.buttonText}
                         </Button>
