@@ -377,6 +377,7 @@ export function TeacherDashboardClient() {
   const mainActionItems = [
      {
       id: "postContent",
+      className: "bg-pink-500 hover:bg-pink-600",
       title: "Manage Content",
       description: (
         <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
@@ -395,6 +396,7 @@ export function TeacherDashboardClient() {
     },
     {
       id: "studentData",
+      className: "bg-green-600 hover:bg-green-700",
       title: "Student Data",
       description: "View and manage student profiles for your assigned classes and the entire school.",
       link: "/teacher/student-data",
@@ -403,6 +405,7 @@ export function TeacherDashboardClient() {
     },
     {
       id: "markAttendance",
+      className: "bg-blue-600 hover:bg-blue-700",
       title: "Mark Attendance",
       description: getAttendanceCardDescription(),
       link: "/teacher/mark-attendance",
@@ -411,6 +414,7 @@ export function TeacherDashboardClient() {
     },
      {
       id: "manageSubmissions",
+      className: "bg-purple-600 hover:bg-purple-700",
       title: "Manage Student Submissions",
       description: (
         loadingPendingCounts ? (
@@ -438,6 +442,7 @@ export function TeacherDashboardClient() {
     },
      {
       id: "studentChats",
+      className: "bg-teal-600 hover:bg-teal-700",
       title: "Student Chats",
       description: "Communicate directly with students and parents in your class.",
       link: "/teacher/chat",
@@ -447,6 +452,7 @@ export function TeacherDashboardClient() {
     },
     {
       id: "studentConduct",
+      className: "bg-red-600 hover:bg-red-700",
       title: "Student Conduct",
       description: "File or view student conduct reports and complaints for parent notification.",
       link: "/teacher/conduct-record",
@@ -455,6 +461,7 @@ export function TeacherDashboardClient() {
     },
     {
       id: "progressReports",
+      className: "bg-orange-500 hover:bg-orange-600",
       title: "Progress Reports",
       description: "Download templates and upload completed progress reports for your class.",
       link: "/teacher/progress-reports",
@@ -463,6 +470,7 @@ export function TeacherDashboardClient() {
     },
      {
       id: "dropoutBox",
+      className: "bg-slate-600 hover:bg-slate-700",
       title: "Dropout Box",
       description: "View and manage students who have been removed from the active list.",
       link: "/teacher/dropout-list",
@@ -471,6 +479,7 @@ export function TeacherDashboardClient() {
     },
      {
       id: "downloadData",
+      className: "bg-indigo-600 hover:bg-indigo-700",
       title: "Download Class Data",
       description: "Download an Excel sheet of student data for your assigned class.",
       action: handleDownloadStudentData,
@@ -553,16 +562,7 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild className={cn("w-full mt-auto group font-bold text-white", {
-                            "bg-pink-500 hover:bg-pink-600": item.id === "postContent",
-                            "bg-green-600 hover:bg-green-700": item.id === "studentData",
-                            "bg-blue-600 hover:bg-blue-700": item.id === "markAttendance",
-                            "bg-purple-600 hover:bg-purple-700": item.id === "manageSubmissions",
-                            "bg-teal-600 hover:bg-teal-700": item.id === "studentChats",
-                            "bg-red-600 hover:bg-red-700": item.id === "studentConduct",
-                            "bg-orange-500 hover:bg-orange-600": item.id === "progressReports",
-                            "bg-slate-600 hover:bg-slate-700": item.id === "dropoutBox",
-                        })}>
+                        <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -571,7 +571,7 @@ export function TeacherDashboardClient() {
                     ) : item.action ? (
                         <Button 
                             onClick={item.action} 
-                            className="w-full mt-auto group font-bold bg-indigo-600 hover:bg-indigo-700 text-white" 
+                            className={cn("w-full mt-auto group font-bold text-white", item.className)} 
                             disabled={item.loading || item.disabled}
                         >
                             {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
