@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { WelcomeMessage } from "@/components/shared/WelcomeMessage";
 import { Card, CardContent, CardTitle, CardDescription, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,10 +11,8 @@ import {
     Loader2, 
     UserCheck, 
     UserX, 
-    FileText, 
     ClipboardList, 
     BookOpen, 
-    Image as ImageIconLucide, 
     Video, 
     ClipboardCheck, 
     MailOpen, 
@@ -31,12 +29,14 @@ import {
     Upload,
     GraduationCap,
     Phone,
+    FileText,
+    Image as ImageIconLucide
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, limit, Timestamp, getCountFromServer, doc, getDoc, onSnapshot } from "firebase/firestore";
-import type { StudentProfile, HomeworkSubmission, ChatMessage, AppUser } from "@/types";
+import type { StudentProfile, HomeworkSubmission, ChatMessage, NotificationMessage } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -51,25 +51,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-interface NotificationMessage {
-  link: string;
-  english: string;
-  hindi: string;
-}
-
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
   const { toast } = useToast();
-  const [totalStudentsInClass, setTotalStudentsInClass] = useState<number | null>(null);
-  const [maleStudents, setMaleStudents] = useState<number>(0);
-  const [femaleStudents, setFemaleStudents] = useState<number>(0);
-  const [loadingStudentCount, setLoadingStudentCount] = useState(true);
+  
+  const [studentsInClass, setStudentsInClass] = useState<StudentProfile[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(true);
   const [studentCountError, setStudentCountError] = useState<string | null>(null);
-  const [isDownloadingStudentData, setIsDownloadingStudentData] = useState(false);
 
+  const [isDownloadingStudentData, setIsDownloadingStudentData] = useState(false);
   const [recentSubmissions, setRecentSubmissions] = useState<HomeworkSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(true);
-  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
 
   const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
   const [pendingLateArrivalCount, setPendingLateArrivalCount] = useState(0);
@@ -84,6 +76,13 @@ export function TeacherDashboardClient() {
   // State for the notification dialog
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
+
+  const { totalStudents, maleStudents, femaleStudents } = useMemo(() => {
+    const total = studentsInClass.length;
+    const males = studentsInClass.filter(s => s.gender === 'Male').length;
+    const females = studentsInClass.filter(s => s.gender === 'Female').length;
+    return { totalStudents: total, maleStudents: males, femaleStudents: females };
+  }, [studentsInClass]);
   
   const getInitials = (name?: string | null) => {
     if (!name) return "?";
@@ -92,7 +91,6 @@ export function TeacherDashboardClient() {
       ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
       : name.substring(0, 2).toUpperCase();
   };
-
 
   const handleDownloadStudentData = async () => {
     if (!teacherUser?.grade || !teacherUser?.division) {
@@ -105,17 +103,7 @@ export function TeacherDashboardClient() {
     }
     setIsDownloadingStudentData(true);
     try {
-      const profilesCollectionRef = collection(db, "studentProfiles");
-      const q = query(
-        profilesCollectionRef,
-        where("grade", "==", teacherUser.grade),
-        where("division", "==", teacherUser.division),
-        orderBy("firstName")
-      );
-      const querySnapshot = await getDocs(q);
-      const studentsToDownload = querySnapshot.docs.map(doc => doc.data() as StudentProfile);
-
-      if (studentsToDownload.length === 0) {
+      if (studentsInClass.length === 0) {
         toast({
           title: "No Data",
           description: "No students found for your assigned class to download.",
@@ -124,7 +112,7 @@ export function TeacherDashboardClient() {
         return;
       }
 
-      const dataForExcel = studentsToDownload.map(student => ({
+      const dataForExcel = studentsInClass.map(student => ({
         "First Name": student.firstName || "",
         "Middle Name": student.middleName || "",
         "Last Name": student.lastName || "",
@@ -173,71 +161,106 @@ export function TeacherDashboardClient() {
     if (!teacherUser) return;
     let hasOpenedDialog = false;
 
-    // This function fetches counts for the dashboard display
-    const fetchPendingCounts = async () => {
-      setLoadingPendingCounts(true);
-      try {
-        const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
-        const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
-        const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
+    const runAllFetches = async () => {
+        // Fetch students first as other fetches might depend on it
+        if (teacherUser.grade && teacherUser.division) {
+            setLoadingStudents(true);
+            setStudentCountError(null);
+            try {
+                const profilesCollectionRef = collection(db, "studentProfiles");
+                const q = query(
+                    profilesCollectionRef,
+                    where("grade", "==", teacherUser.grade),
+                    where("division", "==", teacherUser.division),
+                    orderBy("firstName")
+                );
+                const querySnapshot = await getDocs(q);
+                setStudentsInClass(querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile)));
+            } catch (err: any) {
+                console.error("Error fetching students for teacher's class:", err);
+                setStudentCountError("Failed to fetch student data.");
+            } finally {
+                setLoadingStudents(false);
+            }
+        } else {
+             setLoadingStudents(false);
+             setStudentCountError("Your profile is missing grade/division.");
+        }
 
-        const [leaveSnapshot, lateArrivalSnapshot, otherAppsSnapshot] = await Promise.all([
-          getCountFromServer(leaveQuery),
-          getCountFromServer(lateArrivalQuery),
-          getCountFromServer(otherAppsQuery),
-        ]);
+        // Fetch pending counts
+        setLoadingPendingCounts(true);
+        try {
+            const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
+            const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
+            const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
+            const [leaveSnapshot, lateArrivalSnapshot, otherAppsSnapshot] = await Promise.all([
+                getCountFromServer(leaveQuery), getCountFromServer(lateArrivalQuery), getCountFromServer(otherAppsQuery),
+            ]);
+            setPendingLeaveCount(leaveSnapshot.data().count);
+            setPendingLateArrivalCount(lateArrivalSnapshot.data().count);
+            setPendingOtherAppsCount(otherAppsSnapshot.data().count);
+        } catch (err) {
+            console.error("Error fetching pending submission counts:", err);
+        } finally {
+            setLoadingPendingCounts(false);
+        }
 
-        setPendingLeaveCount(leaveSnapshot.data().count);
-        setPendingLateArrivalCount(lateArrivalSnapshot.data().count);
-        setPendingOtherAppsCount(otherAppsSnapshot.data().count);
+        // Fetch recent homework submissions
+        if (teacherUser.grade && teacherUser.division) {
+            setLoadingSubmissions(true);
+            try {
+                const submissionsRef = collection(db, "homeworkSubmissions");
+                const q = query(
+                    submissionsRef,
+                    where("grade", "==", teacherUser.grade),
+                    where("division", "==", teacherUser.division),
+                    orderBy("completedAt", "desc"),
+                    limit(5)
+                );
+                const querySnapshot = await getDocs(q);
+                setRecentSubmissions(querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission)));
+            } catch (err) {
+                console.error("Error fetching recent homework submissions:", err);
+            } finally {
+                setLoadingSubmissions(false);
+            }
+        }
 
-      } catch (err: any) {
-        console.error("Error fetching pending submission counts:", err);
-        toast({ title: "Error", description: "Could not fetch pending submission counts.", variant: "destructive" });
-      } finally {
-        setLoadingPendingCounts(false);
-      }
-    };
-    
-    // This function checks for NEW items for the popup
-    const fetchNewNotifications = async () => {
+        // Check today's attendance
+        if (teacherUser.grade && teacherUser.division) {
+            setLoadingTodaysAttendanceStatus(true);
+            try {
+                const todayStr = format(new Date(), "yyyy-MM-dd");
+                const attendanceDocId = `${todayStr}_${teacherUser.grade}_${teacherUser.division}`;
+                const docSnap = await getDoc(doc(db, "dailyAttendance", attendanceDocId));
+                setTodaysAttendanceMarked(docSnap.exists());
+            } catch (error) {
+                console.error("Error checking today's attendance:", error);
+                setTodaysAttendanceMarked(null);
+            } finally {
+                setLoadingTodaysAttendanceStatus(false);
+            }
+        }
+
+        // Check for new notifications FOR POP-UP
         const newMessages: NotificationMessage[] = [];
         const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
-
-        const checkNewCollection = async (collectionName: string, link: string, engMsg: string, hindiMsg: string, dateField: string = "applicationTimestamp") => {
-            try {
-                const q = query(
-                    collection(db, collectionName), 
-                    where("status", "==", "Pending"), 
-                    where(dateField, ">=", twentyFourHoursAgo)
-                );
-                const snapshot = await getCountFromServer(q);
-                if (snapshot.data().count > 0) {
-                    newMessages.push({ link, english: `${engMsg} (${snapshot.data().count} new)`, hindi: `${hindiMsg} (${snapshot.data().count} नई)` });
-                }
-            } catch (error) {
-                console.warn(`Could not check for new ${collectionName}:`, error);
+        
+        const checkNewCollection = async (collectionName: string, link: string, engMsg: string, hindiMsg: string, dateField = "applicationTimestamp") => {
+            const q = query(collection(db, collectionName), where("status", "==", "Pending"), where(dateField, ">=", twentyFourHoursAgo));
+            const snapshot = await getCountFromServer(q);
+            if (snapshot.data().count > 0) {
+                newMessages.push({ link, english: `${engMsg} (${snapshot.data().count} new)`, hindi: `${hindiMsg} (${snapshot.data().count} नई)` });
             }
         };
 
-        await checkNewCollection("leaveApplications", "/teacher/leave-applications", "New Leave Applications received.", "नए अवकाश आवेदन प्राप्त हुए हैं।");
-        await checkNewCollection("lateArrivalRequests", "/teacher/leave-applications", "New Late Arrival requests received.", "देर से आने के नए अनुरोध प्राप्त हुए हैं।");
-        await checkNewCollection("otherStudentApplications", "/teacher/leave-applications", "New Other Applications received.", "अन्य नए आवेदन प्राप्त हुए हैं।");
-
-        // Check for new chat messages
-        const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid), where("lastMessageTimestamp", ">=", twentyFourHoursAgo));
-        const chatsSnapshot = await getDocs(chatsQuery);
-        let hasNewMessage = false;
-        chatsSnapshot.forEach(doc => {
-            const messages = doc.data().messages as ChatMessage[];
-            if (messages.some(msg => msg.senderId !== teacherUser.uid && (msg.timestamp as Timestamp) >= twentyFourHoursAgo)) {
-                hasNewMessage = true;
-            }
-        });
-        if (hasNewMessage) {
-            newMessages.push({ link: "/teacher/chat", english: "You have new unread messages.", hindi: "आपके पास नए अपठित संदेश हैं।" });
+        try {
+            await checkNewCollection("leaveApplications", "/teacher/leave-applications", "New Leave Applications received.", "नए अवकाश आवेदन प्राप्त हुए हैं।");
+            await checkNewCollection("lateArrivalRequests", "/teacher/leave-applications", "New Late Arrival requests received.", "देर से आने के नए अनुरोध प्राप्त हुए हैं।");
+            await checkNewCollection("otherStudentApplications", "/teacher/leave-applications", "New Other Applications received.", "अन्य नए आवेदन प्राप्त हुए हैं।");
+        } catch (error) {
+            console.warn("Could not check for new application submissions:", error);
         }
-
 
         setNotificationMessages(newMessages);
         if (!hasOpenedDialog) {
@@ -246,153 +269,17 @@ export function TeacherDashboardClient() {
         }
     };
 
-    const fetchStudentData = async () => {
-      if (teacherUser.grade && teacherUser.division) {
-        setLoadingStudentCount(true);
-        setStudentCountError(null);
-        try {
-          // Query the 'users' collection which is the source of truth for registered students
-          const usersCollectionRef = collection(db, "users");
-          const q = query(
-            usersCollectionRef,
-            where("role", "==", "student"),
-            where("grade", "==", teacherUser.grade),
-            where("division", "==", teacherUser.division)
-          );
-          
-          const querySnapshot = await getDocs(q);
-          const studentUids = querySnapshot.docs.map(doc => doc.id);
-          setTotalStudentsInClass(studentUids.length);
+    runAllFetches();
 
-          // For gender count, we still need to check the profiles
-          let males = 0;
-          let females = 0;
-          if (studentUids.length > 0) {
-            const profilesCollectionRef = collection(db, "studentProfiles");
-            const profilesQuery = query(profilesCollectionRef, where("uid", "in", studentUids));
-            const profilesSnapshot = await getDocs(profilesQuery);
-            profilesSnapshot.forEach(doc => {
-                const studentProfile = doc.data() as StudentProfile;
-                if (studentProfile.gender === "Male") {
-                    males++;
-                } else if (studentProfile.gender === "Female") {
-                    females++;
-                }
-            });
-          }
-          setMaleStudents(males);
-          setFemaleStudents(females);
-
-        } catch (err: any) {
-          console.error("Error fetching student count for teacher's class:", err);
-          if (err.code === 'failed-precondition') {
-             setStudentCountError(
-              `Firestore index required for users collection. Please create this index.`
-            );
-          } else {
-            setStudentCountError("Failed to fetch student data.");
-          }
-          setTotalStudentsInClass(0); 
-          setMaleStudents(0);
-          setFemaleStudents(0);
-        } finally {
-          setLoadingStudentCount(false);
-        }
-      } else {
-        setLoadingStudentCount(false);
-        setTotalStudentsInClass(0);
-        setMaleStudents(0);
-        setFemaleStudents(0);
-        if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
-            setStudentCountError("Your profile is missing grade/division.");
-        }
-      }
-    };
-
-    const fetchRecentSubmissions = async () => {
-      if (teacherUser && teacherUser.grade && teacherUser.division) {
-        setLoadingSubmissions(true);
-        setSubmissionsError(null);
-        try {
-          const submissionsRef = collection(db, "homeworkSubmissions");
-          const q = query(
-            submissionsRef,
-            where("grade", "==", teacherUser.grade),
-            where("division", "==", teacherUser.division),
-            orderBy("completedAt", "desc"),
-            limit(5) 
-          );
-          const querySnapshot = await getDocs(q);
-          const fetchedSubmissions = querySnapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              completedAt: data.completedAt as Timestamp, 
-            } as HomeworkSubmission;
-          });
-          setRecentSubmissions(fetchedSubmissions);
-        } catch (err: any) {
-          console.error("Error fetching recent homework submissions:", err);
-          if (err.code === 'failed-precondition') {
-            setSubmissionsError(
-              `Firestore index required for homework submissions. Please check console for a link to create it.`
-            );
-          } else {
-            setSubmissionsError("Failed to fetch recent submissions.");
-          }
-        } finally {
-          setLoadingSubmissions(false);
-        }
-      } else {
-        setLoadingSubmissions(false);
-         if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
-            setSubmissionsError("Your profile is missing grade/division.");
-        }
-      }
-    };
-
-    const checkTodaysAttendance = async () => {
-      if (teacherUser && teacherUser.grade && teacherUser.division) {
-        setLoadingTodaysAttendanceStatus(true);
-        try {
-          const todayStr = format(new Date(), "yyyy-MM-dd");
-          const attendanceDocId = `${todayStr}_${teacherUser.grade}_${teacherUser.division}`;
-          const attendanceDocRef = doc(db, "dailyAttendance", attendanceDocId);
-          const docSnap = await getDoc(attendanceDocRef);
-          setTodaysAttendanceMarked(docSnap.exists());
-        } catch (error) {
-          console.error("Error checking today's attendance:", error);
-          setTodaysAttendanceMarked(null); // Indicate error or unknown state
-        } finally {
-          setLoadingTodaysAttendanceStatus(false);
-        }
-      } else {
-        setLoadingTodaysAttendanceStatus(false);
-        setTodaysAttendanceMarked(null);
-      }
-    };
-
-    fetchStudentData();
-    fetchRecentSubmissions();
-    fetchPendingCounts();
-    fetchNewNotifications();
-    checkTodaysAttendance();
-
-    // Set up listener for unread messages
-    const chatsRef = collection(db, "chats");
-    const chatsQuery = query(chatsRef, where("participants", "array-contains", teacherUser.uid));
+    // Set up real-time listener for chat messages
+    const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid));
     const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
         let unreadFound = false;
-        snapshot.forEach((chatDoc) => {
+        snapshot.forEach(chatDoc => {
             const messages = (chatDoc.data().messages || []) as ChatMessage[];
-            for (const msg of messages) {
-                if (msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid)) {
-                    unreadFound = true;
-                    break;
-                }
+            if (messages.some(msg => msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid!))) {
+                unreadFound = true;
             }
-            if (unreadFound) return;
         });
         setHasUnreadMessages(unreadFound);
     });
@@ -401,19 +288,10 @@ export function TeacherDashboardClient() {
   }, [teacherUser, toast]);
 
   const getAttendanceCardDescription = () => {
-    if (loadingTodaysAttendanceStatus) {
-      return "Checking today's attendance status...";
-    }
-    if (todaysAttendanceMarked === true) {
-      return "Attendance for today has already been marked. You can still modify it.";
-    }
-    if (todaysAttendanceMarked === false) {
-      return <span className="font-semibold text-destructive">Attendance for today needs to be marked!</span>;
-    }
-    // Fallback if teacher grade/division is missing or another issue
-    if (teacherUser && (!teacherUser.grade || !teacherUser.division)) {
-        return "Please update your profile with assigned grade and division to mark attendance.";
-    }
+    if (loadingTodaysAttendanceStatus) return "Checking today's attendance status...";
+    if (todaysAttendanceMarked) return "Attendance for today has already been marked. You can still modify it.";
+    if (todaysAttendanceMarked === false) return <span className="font-semibold text-destructive">Attendance for today needs to be marked!</span>;
+    if (teacherUser && (!teacherUser.grade || !teacherUser.division)) return "Please update your profile with assigned grade and division to mark attendance.";
     return "Mark daily attendance for students in your assigned class.";
   };
   
@@ -423,8 +301,7 @@ export function TeacherDashboardClient() {
     {
       id: "teacherInfoAndStudentCount",
       title: `Teacher's Corner & Class ${teacherUser?.grade || 'N/A'}-${teacherUser?.division || ''}`,
-      icon: Users,
-      content: loadingStudentCount ? (
+      content: loadingStudents ? (
         <div className="flex items-center justify-center space-x-2 h-full">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-muted-foreground">Loading...</span>
@@ -463,7 +340,7 @@ export function TeacherDashboardClient() {
                  <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
                  <div className="mt-2 flex w-full justify-around items-center">
                     <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{totalStudentsInClass ?? 0}</p>
+                        <p className="text-2xl font-bold text-primary">{totalStudents}</p>
                         <p className="text-xs font-medium text-muted-foreground">Total Students</p>
                     </div>
                     <div className="text-center">
@@ -482,14 +359,11 @@ export function TeacherDashboardClient() {
     {
       id: "recentSubmissions",
       title: "Recent Homework Submissions",
-      icon: ClipboardCheck,
       content: loadingSubmissions ? (
          <div className="flex items-center justify-center space-x-2 h-full">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-muted-foreground">Loading...</span>
         </div>
-      ) : submissionsError ? (
-        <p className="text-xs text-destructive text-center">{submissionsError}</p>
       ) : recentSubmissions.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
       ) : (
@@ -499,7 +373,7 @@ export function TeacherDashboardClient() {
                 <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
                   <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
                   <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
-                  <p className="text-muted-foreground">Completed: {sub.completedAt ? format(sub.completedAt.toDate(), "PP pp") : "N/A"}</p>
+                  <p className="text-muted-foreground">Completed: {sub.completedAt ? format((sub.completedAt as Timestamp).toDate(), "PP pp") : "N/A"}</p>
                 </li>
               ))}
             </ul>
@@ -514,34 +388,13 @@ export function TeacherDashboardClient() {
       title: "Manage Content",
       description: (
         <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Notices</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <ClipboardList className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Homework</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <FileText className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Circulars</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Textbooks</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Gallery</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <Video className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Live Classes</span>
-          </div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm">
-            <Upload className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="font-semibold">Progress Cards</span>
-          </div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><FileText className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Notices</span></div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><ClipboardList className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Homework</span></div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><FileText className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Circulars</span></div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><BookOpen className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Textbooks</span></div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Gallery</span></div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><Video className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Live Classes</span></div>
+          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><Upload className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Progress Cards</span></div>
         </div>
       ),
       link: "/teacher/post-content",
@@ -559,7 +412,7 @@ export function TeacherDashboardClient() {
     {
       id: "markAttendance",
       title: "Mark Attendance",
-      description: getAttendanceCardDescription(), // Dynamically get description
+      description: getAttendanceCardDescription(),
       link: "/teacher/mark-attendance",
       buttonText: "Mark Attendance",
       icon: ListChecks,
@@ -569,31 +422,19 @@ export function TeacherDashboardClient() {
       title: "Manage Student Submissions",
       description: (
         loadingPendingCounts ? (
-          <div className="flex items-center justify-center space-x-2 h-full">
-            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Loading...</span>
-          </div>
+          <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /><span className="text-sm text-muted-foreground">Loading...</span></div>
         ) : (
           <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
             <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-              <div className="flex items-center gap-2">
-                <MailOpen className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="font-semibold">Leave</span>
-              </div>
+              <div className="flex items-center gap-2"><MailOpen className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Leave</span></div>
               {pendingLeaveCount > 0 && <Badge variant="destructive">{pendingLeaveCount}</Badge>}
             </div>
             <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="font-semibold">Late</span>
-              </div>
+              <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Late</span></div>
               {pendingLateArrivalCount > 0 && <Badge variant="destructive">{pendingLateArrivalCount}</Badge>}
             </div>
              <div className="col-span-2 flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-                <div className="flex items-center gap-2">
-                    <FileSignature className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="font-semibold">Other</span>
-                </div>
+                <div className="flex items-center gap-2"><FileSignature className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Other</span></div>
                 {pendingOtherAppsCount > 0 && <Badge variant="destructive">{pendingOtherAppsCount}</Badge>}
             </div>
           </div>
@@ -720,23 +561,14 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button
-                          asChild
-                          variant={"default"}
-                          className={cn(
-                            "mt-auto group font-bold w-full",
-                             {
-                                "bg-pink-500 hover:bg-pink-600 text-white w-auto px-6 h-auto py-2 text-base": item.id === "postContent",
-                                "bg-green-600 hover:bg-green-700 text-white": item.id === "studentData",
-                                "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData"].includes(item.id)
-                             }
-                          )}
-                        >
+                        <Button asChild variant={"default"} className={cn("mt-auto group font-bold w-full", {
+                            "bg-pink-500 hover:bg-pink-600 text-white h-auto py-2 text-base": item.id === "postContent",
+                            "bg-green-600 hover:bg-green-700 text-white": item.id === "studentData",
+                            "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData"].includes(item.id),
+                        })}>
                             <Link href={item.link}>
                               {item.buttonText}
-                              {item.id !== "postContent" && (
-                                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                              )}
+                              <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                             </Link>
                         </Button>
                     ) : item.action ? (
@@ -754,3 +586,5 @@ export function TeacherDashboardClient() {
     </>
   );
 }
+
+    
