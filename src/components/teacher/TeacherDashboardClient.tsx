@@ -213,14 +213,13 @@ export function TeacherDashboardClient() {
                 const q = query(
                     submissionsRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division),
-                    limit(5)
+                    where("division", "==", teacherUser.division)
                 );
                 const querySnapshot = await getDocs(q);
                 const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
                 // Sort client-side
                 fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
-                setRecentSubmissions(fetchedSubmissions);
+                setRecentSubmissions(fetchedSubmissions.slice(0, 5));
             } catch (err) {
                 console.error("Error fetching recent homework submissions:", err);
             } finally {
