@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
     Loader2, 
-    UserCheck, 
-    UserX, 
     ClipboardList, 
     BookOpen, 
     Video, 
@@ -162,7 +160,6 @@ export function TeacherDashboardClient() {
     let hasOpenedDialog = false;
 
     const runAllFetches = async () => {
-        // Fetch students first as other fetches might depend on it
         if (teacherUser.grade && teacherUser.division) {
             setLoadingStudents(true);
             setStudentCountError(null);
@@ -187,7 +184,6 @@ export function TeacherDashboardClient() {
              setStudentCountError("Your profile is missing grade/division.");
         }
 
-        // Fetch pending counts
         setLoadingPendingCounts(true);
         try {
             const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
@@ -205,7 +201,6 @@ export function TeacherDashboardClient() {
             setLoadingPendingCounts(false);
         }
 
-        // Fetch recent homework submissions
         if (teacherUser.grade && teacherUser.division) {
             setLoadingSubmissions(true);
             try {
@@ -217,7 +212,6 @@ export function TeacherDashboardClient() {
                 );
                 const querySnapshot = await getDocs(q);
                 const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
-                // Sort client-side
                 fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
                 setRecentSubmissions(fetchedSubmissions.slice(0, 5));
             } catch (err) {
@@ -227,7 +221,6 @@ export function TeacherDashboardClient() {
             }
         }
 
-        // Check today's attendance
         if (teacherUser.grade && teacherUser.division) {
             setLoadingTodaysAttendanceStatus(true);
             try {
@@ -243,7 +236,6 @@ export function TeacherDashboardClient() {
             }
         }
 
-        // Check for new notifications FOR POP-UP
         const newMessages: NotificationMessage[] = [];
         const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
         
@@ -264,7 +256,7 @@ export function TeacherDashboardClient() {
         }
 
         setNotificationMessages(newMessages);
-        if (!hasOpenedDialog) {
+        if (!hasOpenedDialog && newMessages.length > 0) {
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true;
         }
@@ -272,7 +264,6 @@ export function TeacherDashboardClient() {
 
     runAllFetches();
 
-    // Set up real-time listener for chat messages
     const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid));
     const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
         let unreadFound = false;
@@ -562,12 +553,14 @@ export function TeacherDashboardClient() {
                          {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
-                        <Button asChild variant={"default"} className={cn("mt-auto group font-bold w-full", {
+                        <Button asChild className={cn("w-full mt-auto group font-bold",
+                          {
                             "bg-pink-500 hover:bg-pink-600 text-white h-auto py-2 text-base": item.id === "postContent",
                             "bg-green-600 hover:bg-green-700 text-white": item.id === "studentData",
                             "bg-blue-600 hover:bg-blue-700 text-white": item.id === "markAttendance",
                             "bg-transparent text-primary hover:bg-primary/10": !["postContent", "studentData", "markAttendance"].includes(item.id),
-                        })}>
+                          }
+                        )}>
                             <Link href={item.link}>
                               {item.buttonText}
                               <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -588,4 +581,3 @@ export function TeacherDashboardClient() {
     </>
   );
 }
-
