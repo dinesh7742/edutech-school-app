@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, XCircle, ListFilter, MessageSquare } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp } from "firebase/firestore";
 import type { LeaveApplication, LeaveApplicationStatus } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -52,12 +51,12 @@ export function LeaveManagementTable() {
       setError(null);
       try {
         const appsCollectionRef = collection(db, "leaveApplications");
-        let q;
-        if (filterStatus === "All") {
-          q = query(appsCollectionRef, orderBy("applicationDate", "desc"));
-        } else {
-          q = query(appsCollectionRef, where("status", "==", filterStatus), orderBy("applicationDate", "desc"));
+        const queryConstraints = [];
+        if (filterStatus !== "All") {
+          queryConstraints.push(where("status", "==", filterStatus));
         }
+        
+        const q = query(appsCollectionRef, ...queryConstraints);
         
         const querySnapshot = await getDocs(q);
         const fetchedApps = querySnapshot.docs.map(doc => ({
@@ -65,15 +64,20 @@ export function LeaveManagementTable() {
           ...doc.data(),
           leaveStartDate: doc.data().leaveStartDate as string,
           leaveEndDate: doc.data().leaveEndDate as string,
+          applicationDate: doc.data().applicationDate as Timestamp,
         })) as LeaveApplication[];
         
+        // Sort client-side
+        fetchedApps.sort((a, b) => {
+            const timeA = (a.applicationDate as Timestamp)?.toDate()?.getTime() || 0;
+            const timeB = (b.applicationDate as Timestamp)?.toDate()?.getTime() || 0;
+            return timeB - timeA;
+        });
+
         setApplications(fetchedApps);
       } catch (err: any) {
         console.error("Error fetching leave applications:", err);
         setError("Failed to load leave applications. " + (err.message || ""));
-        if (err.code === 'failed-precondition' && err.message.includes('index')) {
-            setError("A Firestore index might be required for filtering/ordering leave applications. Please check the console for a link to create it.");
-        }
       } finally {
         setIsLoading(false);
       }

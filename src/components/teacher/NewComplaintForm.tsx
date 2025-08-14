@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -80,11 +79,14 @@ export function NewComplaintForm() {
         const q = query(
           profilesRef,
           where("grade", "==", teacherUser.grade),
-          where("division", "==", teacherUser.division),
-          orderBy("firstName")
+          where("division", "==", teacherUser.division)
         );
         const querySnapshot = await getDocs(q);
         const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+        
+        // Sort client-side
+        fetchedStudents.sort((a,b) => (a.firstName || "").localeCompare(b.firstName || ""));
+
         setStudents(fetchedStudents);
       } catch (err) {
         console.error("Error fetching students for complaint form:", err);

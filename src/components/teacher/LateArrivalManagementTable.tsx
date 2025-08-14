@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -50,12 +49,12 @@ export function LateArrivalManagementTable() {
       setError(null);
       try {
         const appsCollectionRef = collection(db, "lateArrivalRequests");
-        let q;
-        if (filterStatus === "All") {
-          q = query(appsCollectionRef, orderBy("applicationTimestamp", "desc"));
-        } else {
-          q = query(appsCollectionRef, where("status", "==", filterStatus), orderBy("applicationTimestamp", "desc"));
+        const queryConstraints = [];
+        if (filterStatus !== "All") {
+          queryConstraints.push(where("status", "==", filterStatus));
         }
+
+        const q = query(appsCollectionRef, ...queryConstraints);
         
         const querySnapshot = await getDocs(q);
         const fetchedApps = querySnapshot.docs.map(doc => ({
@@ -65,13 +64,17 @@ export function LateArrivalManagementTable() {
           applicationTimestamp: doc.data().applicationTimestamp as Timestamp,
         })) as LateArrivalApplication[];
         
+        // Sort client-side
+        fetchedApps.sort((a, b) => {
+            const timeA = (a.applicationTimestamp as Timestamp)?.toDate()?.getTime() || 0;
+            const timeB = (b.applicationTimestamp as Timestamp)?.toDate()?.getTime() || 0;
+            return timeB - timeA;
+        });
+
         setApplications(fetchedApps);
       } catch (err: any) {
         console.error("Error fetching late arrival/early departure requests:", err);
         setError("Failed to load requests. " + (err.message || ""));
-        if (err.code === 'failed-precondition' && err.message.includes('index')) {
-            setError("A Firestore index might be required. Please check the console for a link to create it.");
-        }
       } finally {
         setIsLoading(false);
       }

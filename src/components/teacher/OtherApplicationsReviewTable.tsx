@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -60,7 +59,6 @@ export function OtherApplicationsReviewTable() {
         if (filterFormType !== "All") {
           queryConstraints.push(where("formType", "==", filterFormType));
         }
-        queryConstraints.push(orderBy("applicationTimestamp", "desc"));
         
         const q = query(appsCollectionRef, ...queryConstraints);
         
@@ -72,6 +70,13 @@ export function OtherApplicationsReviewTable() {
             ...data,
             applicationTimestamp: data.applicationTimestamp as Timestamp,
           } as OtherStudentApplication;
+        });
+
+        // Sort client-side
+        fetchedApps.sort((a, b) => {
+            const timeA = (a.applicationTimestamp as Timestamp)?.toDate()?.getTime() || 0;
+            const timeB = (b.applicationTimestamp as Timestamp)?.toDate()?.getTime() || 0;
+            return timeB - timeA;
         });
         
         setApplications(fetchedApps);

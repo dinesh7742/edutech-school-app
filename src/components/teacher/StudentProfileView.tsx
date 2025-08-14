@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -194,8 +193,7 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
         const leaveAppsCollectionRef = collection(db, "leaveApplications");
         const q = query(
             leaveAppsCollectionRef,
-            where("studentUid", "==", studentId),
-            orderBy("applicationDate", "desc")
+            where("studentUid", "==", studentId)
         );
         const querySnapshot = await getDocs(q);
         const fetchedApps = querySnapshot.docs.map(doc => ({
@@ -203,13 +201,13 @@ export function StudentProfileView({ studentId }: StudentProfileViewProps) {
             ...doc.data(),
             applicationDate: doc.data().applicationDate as Timestamp, 
         })) as LeaveApplication[];
+
+        // Sort client-side
+        fetchedApps.sort((a,b) => (b.applicationDate as Timestamp).toMillis() - (a.applicationDate as Timestamp).toMillis());
         setLeaveApplications(fetchedApps);
     } catch (err: any) {
         console.error("Error fetching leave applications for student " + studentId + ":", err);
         setLeaveAppsError("Failed to load leave application history. " + (err.message || ""));
-         if (err.code === 'failed-precondition' && err.message.includes('index')) {
-          setLeaveAppsError("A Firestore index might be required for fetching leave applications. Please check the console for a link to create it.");
-        }
     } finally {
         setLoadingLeaveApps(false);
     }
