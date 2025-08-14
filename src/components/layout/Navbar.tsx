@@ -151,7 +151,7 @@ export function Navbar() {
             <Image src="https://i.postimg.cc/8P0y0gxz/MCGM-Seal.jpg" alt="MCGM Seal" width={40} height={40} className="h-10 w-10 rounded-full" data-ai-hint="logo seal" />
           </div>
           <div className="flex flex-col max-w-md sm:max-w-lg text-primary-foreground">
-            <span className="text-xl font-bold ">{schoolName}</span>
+            <span className="text-xl font-bold whitespace-nowrap">{schoolName}</span>
             <span className="text-xs flex items-center mt-1"><Phone className="mr-1.5 h-3 w-3 text-primary-foreground"/> {contactNumber}</span>
             <span className="text-xs flex items-center"><Mail className="mr-1.5 h-3 w-3 text-primary-foreground"/> {emailAddress}</span>
             <span className="text-xs flex items-center"><Info className="mr-1.5 h-3 w-3 text-primary-foreground"/> UDISE: {udiseNumber}</span>
