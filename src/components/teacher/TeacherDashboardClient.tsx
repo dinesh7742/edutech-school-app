@@ -375,120 +375,15 @@ export function TeacherDashboardClient() {
   ];
 
   const mainActionItems = [
-     {
-      id: "postContent",
-      className: "bg-pink-500 hover:bg-pink-600",
-      title: "Manage Content",
-      description: (
-        <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><FileText className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Notices</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><ClipboardList className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Homework</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><FileText className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Circulars</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><BookOpen className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Textbooks</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Gallery</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><Video className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Live Classes</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><Upload className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Progress Cards</span></div>
-        </div>
-      ),
-      link: "/teacher/post-content",
-      buttonText: "Post Content",
-      icon: ClipboardList,
-    },
-    {
-      id: "studentData",
-      className: "bg-green-600 hover:bg-green-700",
-      title: "Student Data",
-      description: "View and manage student profiles for your assigned classes and the entire school.",
-      link: "/teacher/student-data",
-      buttonText: "View Student List",
-      icon: Users,
-    },
-    {
-      id: "markAttendance",
-      className: "bg-blue-600 hover:bg-blue-700",
-      title: "Mark Attendance",
-      description: getAttendanceCardDescription(),
-      link: "/teacher/mark-attendance",
-      buttonText: "Mark Attendance",
-      icon: ListChecks,
-    },
-     {
-      id: "manageSubmissions",
-      className: "bg-purple-600 hover:bg-purple-700",
-      title: "Manage Student Submissions",
-      description: (
-        loadingPendingCounts ? (
-          <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /><span className="text-sm text-muted-foreground">Loading...</span></div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
-            <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-              <div className="flex items-center gap-2"><MailOpen className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Leave</span></div>
-              {pendingLeaveCount > 0 && <Badge variant="destructive">{pendingLeaveCount}</Badge>}
-            </div>
-            <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-              <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Late</span></div>
-              {pendingLateArrivalCount > 0 && <Badge variant="destructive">{pendingLateArrivalCount}</Badge>}
-            </div>
-             <div className="col-span-2 flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-                <div className="flex items-center gap-2"><FileSignature className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Other</span></div>
-                {pendingOtherAppsCount > 0 && <Badge variant="destructive">{pendingOtherAppsCount}</Badge>}
-            </div>
-          </div>
-        )
-      ),
-      link: "/teacher/leave-applications",
-      buttonText: "Review Submissions",
-      icon: ClipboardCheck,
-    },
-     {
-      id: "studentChats",
-      className: "bg-teal-600 hover:bg-teal-700",
-      title: "Student Chats",
-      description: "Communicate directly with students and parents in your class.",
-      link: "/teacher/chat",
-      buttonText: "Open Chats",
-      icon: MessageSquare,
-      hasNotification: hasUnreadMessages,
-    },
-    {
-      id: "studentConduct",
-      className: "bg-red-600 hover:bg-red-700",
-      title: "Student Conduct",
-      description: "File or view student conduct reports and complaints for parent notification.",
-      link: "/teacher/conduct-record",
-      buttonText: "Manage Complaints",
-      icon: MessageSquareWarning,
-    },
-    {
-      id: "progressReports",
-      className: "bg-orange-500 hover:bg-orange-600",
-      title: "Progress Reports",
-      description: "Download templates and upload completed progress reports for your class.",
-      link: "/teacher/progress-reports",
-      buttonText: "Manage Reports",
-      icon: BarChart3,
-    },
-     {
-      id: "dropoutBox",
-      className: "bg-slate-600 hover:bg-slate-700",
-      title: "Dropout Box",
-      description: "View and manage students who have been removed from the active list.",
-      link: "/teacher/dropout-list",
-      buttonText: "Manage Dropouts",
-      icon: Archive,
-    },
-     {
-      id: "downloadData",
-      className: "bg-indigo-600 hover:bg-indigo-700",
-      title: "Download Class Data",
-      description: "Download an Excel sheet of student data for your assigned class.",
-      action: handleDownloadStudentData,
-      buttonText: "Download Excel",
-      loading: isDownloadingStudentData,
-      disabled: !teacherUser?.grade || !teacherUser?.division,
-      disabledText: "Update profile with grade/division to enable.",
-      icon: Download,
-    },
+    { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
+    { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
+    { id: "markAttendance", title: "Mark Attendance", description: getAttendanceCardDescription(), link: "/teacher/mark-attendance", buttonText: "Mark Attendance", icon: ListChecks, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "manageSubmissions", title: "Manage Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
+    { id: "studentChats", title: "Student Chats", description: "Communicate directly with students and parents.", link: "/teacher/chat", buttonText: "Open Chats", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-teal-600 hover:bg-teal-700" },
+    { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-red-600 hover:bg-red-700" },
+    { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-orange-500 hover:bg-orange-600" },
+    { id: "dropoutBox", title: "Dropout Box", description: "View and manage students removed from active lists.", link: "/teacher/dropout-list", buttonText: "Manage Dropouts", icon: Archive, className: "bg-slate-600 hover:bg-slate-700" },
+    { id: "downloadData", title: "Download Class Data", description: "Download an Excel sheet of student data for your class.", action: handleDownloadStudentData, buttonText: "Download Excel", loading: isDownloadingStudentData, disabled: !teacherUser?.grade || !teacherUser?.division, disabledText: "Update profile with grade/division to enable.", icon: Download, className: "bg-indigo-600 hover:bg-indigo-700" },
   ];
 
 
@@ -559,7 +454,7 @@ export function TeacherDashboardClient() {
                         <item.icon className={`h-16 w-16 text-primary`} />
                     </div>
                     <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : item.description}
+                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : <div className="text-card-foreground font-medium">{item.description}</div>}
                     </div>
                     {item.link ? (
                         <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
@@ -587,3 +482,5 @@ export function TeacherDashboardClient() {
     </>
   );
 }
+
+    
