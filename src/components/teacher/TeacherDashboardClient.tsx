@@ -373,7 +373,7 @@ export function TeacherDashboardClient() {
       )
     },
   ];
-
+  
   const mainActionItems = [
     { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
     { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
@@ -482,5 +482,3 @@ export function TeacherDashboardClient() {
     </>
   );
 }
-
-    
