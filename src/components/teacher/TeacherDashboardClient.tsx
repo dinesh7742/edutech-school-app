@@ -373,7 +373,7 @@ export function TeacherDashboardClient() {
       )
     },
   ];
-  
+
   const mainActionItems = [
     { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
     { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
@@ -385,7 +385,6 @@ export function TeacherDashboardClient() {
     { id: "dropoutBox", title: "Dropout Box", description: "View and manage students removed from active lists.", link: "/teacher/dropout-list", buttonText: "Manage Dropouts", icon: Archive, className: "bg-slate-600 hover:bg-slate-700" },
     { id: "downloadData", title: "Download Class Data", description: "Download an Excel sheet of student data for your class.", action: handleDownloadStudentData, buttonText: "Download Excel", loading: isDownloadingStudentData, disabled: !teacherUser?.grade || !teacherUser?.division, disabledText: "Update profile with grade/division to enable.", icon: Download, className: "bg-indigo-600 hover:bg-indigo-700" },
   ];
-
 
   return (
     <>
