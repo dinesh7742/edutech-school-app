@@ -529,7 +529,7 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
             <CardHeader className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
             </CardHeader>
@@ -542,7 +542,7 @@ export function TeacherDashboardClient() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
          {mainActionItems.map((item) => (
-            <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
+            <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
                 <CardHeader className="p-4 bg-primary text-primary-foreground">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                         {item.title}
@@ -559,7 +559,7 @@ export function TeacherDashboardClient() {
                         <item.icon className={`h-16 w-16 text-primary`} />
                     </div>
                     <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
+                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : item.description}
                     </div>
                     {item.link ? (
                         <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
