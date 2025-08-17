@@ -163,6 +163,7 @@ export interface DailyAttendanceLog {
   markedByTeacherId: string;
   markedByTeacherName: string;
   lastUpdatedAt: Timestamp | FieldValue;
+  note?: string;
 }
 
 export type LeaveApplicationStatus = "Pending" | "Approved" | "Rejected";
@@ -356,4 +357,10 @@ export interface ProgressCard {
   postedByUid: string;
   postedByName: string;
   timestamp: Timestamp | FieldValue;
+}
+
+export interface NotificationMessage {
+  link: string;
+  english: string;
+  hindi: string;
 }

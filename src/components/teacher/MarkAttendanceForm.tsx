@@ -19,6 +19,7 @@ import type { StudentProfile, DailyAttendanceLog, AttendanceStatus } from "@/typ
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Textarea } from "../ui/textarea";
 
 type FormValues = {
   [studentUid: string]: AttendanceStatus;
@@ -41,6 +42,7 @@ export function MarkAttendanceForm() {
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [absentStudentsForSms, setAbsentStudentsForSms] = useState<AbsentStudentInfo[]>([]);
+  const [attendanceNote, setAttendanceNote] = useState("");
 
   const { control, handleSubmit, reset, watch, setValue } = useForm<FormValues>({
     defaultValues: {},
@@ -108,6 +110,7 @@ export function MarkAttendanceForm() {
             newFormValues[student.uid] = "Absent";
         });
         reset(newFormValues);
+        setAttendanceNote("Sunday");
         toast({
             title: "Sunday Detected",
             description: "All students have been automatically marked as absent.",
@@ -129,9 +132,12 @@ export function MarkAttendanceForm() {
       students.forEach(student => {
          newFormValues[student.uid] = "Present";
       });
+      
+      setAttendanceNote(""); // Reset note by default
 
       if (attendanceDocSnap.exists()) {
         const data = attendanceDocSnap.data() as DailyAttendanceLog;
+        setAttendanceNote(data.note || "");
         for (const studentUid in data.studentRecords) {
           if (Object.prototype.hasOwnProperty.call(data.studentRecords, studentUid)) {
              if (newFormValues.hasOwnProperty(studentUid)) {
@@ -187,6 +193,7 @@ export function MarkAttendanceForm() {
       markedByTeacherId: teacherUser.uid,
       markedByTeacherName: teacherUser.displayName,
       lastUpdatedAt: serverTimestamp(),
+      note: attendanceNote || "",
     };
 
     try {
@@ -251,6 +258,7 @@ export function MarkAttendanceForm() {
       newFormValues[student.uid] = "Absent";
     });
     reset(newFormValues);
+    setAttendanceNote("Holiday"); // Default note for mass absence
     toast({
       title: "All Students Marked Absent",
       description: "You can make individual changes before saving.",
@@ -377,6 +385,17 @@ export function MarkAttendanceForm() {
               )}
             </div>
           )}
+
+          <div>
+              <Label htmlFor="attendanceNote">Note for today's attendance (e.g., Holiday, Event)</Label>
+              <Textarea 
+                id="attendanceNote"
+                value={attendanceNote}
+                onChange={(e) => setAttendanceNote(e.target.value)}
+                placeholder="Optional: Add a note here..."
+                rows={2}
+              />
+          </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting || loadingStudents || loadingAttendance || students.length === 0}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
