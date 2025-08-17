@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarIcon, CheckCircle, Loader2, Users, XCircle, Search, MessageSquare, Send } from "lucide-react";
+import { CalendarIcon, CheckCircle, Loader2, Users, XCircle, Search, MessageSquare, Send, UserX } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import type { StudentProfile, DailyAttendanceLog, AttendanceStatus } from "@/types";
@@ -62,7 +62,6 @@ export function MarkAttendanceForm() {
       const querySnapshot = await getDocs(q);
       const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
       
-      // Sort students: girls first alphabetically, then boys alphabetically
       const girls = fetchedStudents.filter(s => s.gender === 'Female').sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
       const boys = fetchedStudents.filter(s => s.gender !== 'Female').sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
       const sortedStudents = [...girls, ...boys];
@@ -100,11 +99,10 @@ export function MarkAttendanceForm() {
 
 
   const fetchAttendanceForDate = useCallback(async (date: Date) => {
-    setAbsentStudentsForSms([]); // Clear SMS list when date changes
+    setAbsentStudentsForSms([]); 
     if (!teacherUser?.grade || !teacherUser?.division) return;
 
-    // Check if the selected date is a Sunday
-    if (date.getDay() === 0) { // 0 = Sunday
+    if (date.getDay() === 0) { 
         const newFormValues: FormValues = {};
         students.forEach(student => {
             newFormValues[student.uid] = "Absent";
@@ -177,7 +175,7 @@ export function MarkAttendanceForm() {
       return;
     }
     setIsSubmitting(true);
-    setAbsentStudentsForSms([]); // Reset on new submission
+    setAbsentStudentsForSms([]); 
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     const attendanceDocId = `${formattedDate}_${teacherUser.grade}_${teacherUser.division}`;
     
@@ -196,7 +194,6 @@ export function MarkAttendanceForm() {
       await setDoc(attendanceDocRef, attendanceData, { merge: true });
       toast({ title: "Success", description: `Attendance for ${formattedDate} saved successfully.` });
 
-      // --- Prepare list for WhatsApp buttons ---
       const studentMap = new Map(students.map(s => [s.uid, s]));
       const absentees: AbsentStudentInfo[] = [];
 
@@ -220,7 +217,6 @@ export function MarkAttendanceForm() {
           duration: 7000,
         });
       }
-      // --- End WhatsApp preparation ---
 
     } catch (error: any) {
       console.error("Error saving attendance:", error);
@@ -233,9 +229,7 @@ export function MarkAttendanceForm() {
   const generateWhatsAppLink = (contactNumber: string, studentName: string) => {
     if (!selectedDate || !teacherUser) return "#";
 
-    // Clean the number: remove '+' and spaces
     let cleanNumber = contactNumber.replace(/\+/g, '').replace(/\s/g, '');
-    // Ensure it starts with 91 if it's a 10-digit Indian number
     if (cleanNumber.length === 10) {
       cleanNumber = '91' + cleanNumber;
     }
@@ -250,6 +244,20 @@ export function MarkAttendanceForm() {
     return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
   };
 
+  const markAllAbsent = () => {
+    if (students.length === 0) return;
+    const newFormValues: FormValues = {};
+    students.forEach(student => {
+      newFormValues[student.uid] = "Absent";
+    });
+    reset(newFormValues);
+    toast({
+      title: "All Students Marked Absent",
+      description: "You can make individual changes before saving.",
+    });
+    setAbsentStudentsForSms([]); // Reset SMS list
+  };
+
   return (
     <Card className="w-full max-w-3xl mx-auto shadow-xl">
       <CardHeader>
@@ -261,49 +269,58 @@ export function MarkAttendanceForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-grow">
-              <Label htmlFor="attendanceDate">Attendance Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="attendanceDate"
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    initialFocus
-                    disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-grow">
+                <Label htmlFor="attendanceDate">Attendance Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="attendanceDate"
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !selectedDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                      disabled={(date) => date > new Date() || date < new Date("2000-01-01")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="flex-grow">
+                <Label htmlFor="searchStudent">Search Student</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="searchStudent"
+                    placeholder="Type student name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="flex-grow">
-              <Label htmlFor="searchStudent">Search Student</Label>
-               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="searchStudent"
-                  placeholder="Type student name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+                </div>
               </div>
             </div>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={markAllAbsent}
+              disabled={loadingStudents || students.length === 0}
+            >
+              <UserX className="mr-2 h-4 w-4" /> Mark All Absent
+            </Button>
           </div>
-
 
           {loadingStudents || loadingAttendance ? (
             <div className="flex items-center justify-center py-6">
@@ -331,7 +348,7 @@ export function MarkAttendanceForm() {
                           <RadioGroup
                             onValueChange={(value) => {
                                 field.onChange(value);
-                                setAbsentStudentsForSms([]); // Reset SMS list on change
+                                setAbsentStudentsForSms([]); 
                             }}
                             value={field.value}
                             className="flex space-x-4"
