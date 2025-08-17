@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -70,7 +71,6 @@ export function TeacherDashboardClient() {
   
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
-  // State for the notification dialog
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
 
@@ -254,8 +254,8 @@ export function TeacherDashboardClient() {
             console.warn("Could not check for new application submissions:", error);
         }
 
-        setNotificationMessages(newMessages);
         if (!hasOpenedDialog && newMessages.length > 0) {
+            setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true;
         }
@@ -417,66 +417,66 @@ export function TeacherDashboardClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-    <div className="space-y-8">
-      <WelcomeMessage />
+      <div className="space-y-8">
+        <WelcomeMessage />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-            <CardHeader className="p-4 bg-primary text-primary-foreground">
-                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {mainActionItems.map((item) => (
-            <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-                <CardHeader className="p-4 bg-primary text-primary-foreground">
-                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
-                        {item.title}
-                        {item.id === "manageSubmissions" && totalPendingSubmissions > 0 && (
-                           <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
-                        )}
-                        {item.id === "studentChats" && item.hasNotification && (
-                           <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
-                        )}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
-                    <div className="flex justify-center my-4">
-                        <item.icon className={`h-16 w-16 text-primary`} />
-                    </div>
-                    <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : <div className="text-card-foreground font-medium">{item.description}</div>}
-                    </div>
-                    {item.link ? (
-                        <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
-                            <Link href={item.link}>
-                              {item.buttonText}
-                              <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                            </Link>
-                        </Button>
-                    ) : item.action ? (
-                        <Button 
-                            onClick={item.action} 
-                            className={cn("w-full mt-auto group font-bold text-white", item.className)} 
-                            disabled={item.loading || item.disabled}
-                        >
-                            {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                            {item.buttonText}
-                        </Button>
-                    ) : null}
-                    {item.disabled && item.disabledText && <p className="text-xs text-destructive mt-1">{item.disabledText}</p>}
-                </CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {quickStatsItems.map((item) => (
+            <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+              <CardHeader className="p-4 bg-primary text-primary-foreground">
+                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
+              </CardContent>
             </Card>
-         ))}
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {mainActionItems.map((item) => (
+              <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+                  <CardHeader className="p-4 bg-primary text-primary-foreground">
+                      <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+                          {item.title}
+                          {item.id === "manageSubmissions" && totalPendingSubmissions > 0 && (
+                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                          )}
+                          {item.id === "studentChats" && item.hasNotification && (
+                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                          )}
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                      <div className="flex justify-center my-4">
+                          <item.icon className={`h-16 w-16 text-primary`} />
+                      </div>
+                      <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
+                          {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : <div className="text-card-foreground font-medium">{item.description}</div>}
+                      </div>
+                      {item.link ? (
+                          <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
+                              <Link href={item.link}>
+                                {item.buttonText}
+                                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                              </Link>
+                          </Button>
+                      ) : item.action ? (
+                          <Button 
+                              onClick={item.action} 
+                              className={cn("w-full mt-auto group font-bold text-white", item.className)} 
+                              disabled={item.loading || item.disabled}
+                          >
+                              {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                              {item.buttonText}
+                          </Button>
+                      ) : null}
+                      {item.disabled && item.disabledText && <p className="text-xs text-destructive mt-1">{item.disabledText}</p>}
+                  </CardContent>
+              </Card>
+          ))}
+        </div>
       </div>
-    </div>
     </>
   );
 }
