@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon, Award, School, Edit
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon, Award, School
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -375,28 +375,12 @@ export function StudentDashboardClient() {
       ),
     },
     {
-      id: "unitTest",
-      title: "Unit Test Results / यूनिट टेस्ट परिणाम",
+      id: "results",
+      title: "My Results / मेरे परिणाम",
       link: "/student/results",
-      buttonText: "View Unit Tests",
-      icon: Edit,
-      description: "Check your scores and performance in unit tests.",
-    },
-    {
-      id: "firstSemester",
-      title: "First Semester Results / प्रथम सेमेस्टर परिणाम",
-      link: "/student/results",
-      buttonText: "View 1st Sem Results",
+      buttonText: "View My Results",
       icon: Award,
-      description: "View your detailed first semester progress report.",
-    },
-    {
-      id: "secondSemester",
-      title: "Second Semester Results / द्वितीय सेमेस्टर परिणाम",
-      link: "/student/results",
-      buttonText: "View 2nd Sem Results",
-      icon: Award,
-      description: "View your detailed second semester progress report.",
+      description: "Check your scores for Unit Tests, First Semester, and Second Semester.",
     },
     {
       id: "scholarship",
