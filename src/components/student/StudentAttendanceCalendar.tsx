@@ -166,7 +166,7 @@ export function StudentAttendanceCalendar() {
                 root: { width: '100%' },
                 months: { width: '100%' },
                 month: { width: '100%', spaceY: '1rem' },
-                table: { width: '100%', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: '0.25rem' },
+                table: { width: '100%', maxWidth: '100%', borderCollapse: 'collapse'},
                 head_row: {
                     display: 'flex',
                     width: '100%',
@@ -182,31 +182,47 @@ export function StudentAttendanceCalendar() {
                 row: {
                     display: 'flex',
                     width: '100%',
+                    borderTop: '1px solid hsl(var(--border))'
                 },
                 cell: {
                     flex: 1,
                     position: 'relative',
                     height: 'auto',
-                    paddingBottom: 'calc(100% / 7 - 0.5rem)', // creates square cells
+                    padding: '0.25rem', // Creates the margin effect
                     overflow: 'hidden',
+                    borderLeft: '1px solid hsl(var(--border))',
                 },
                 day: {
-                    position: 'absolute',
-                    top: '0',
-                    left: '0',
-                    right: '0',
-                    bottom: '0',
+                    position: 'relative',
                     height: 'auto',
                     width: 'auto',
+                    paddingBottom: '100%', // Makes the day container a square
                     borderRadius: '0.5rem',
                     fontSize: '1rem',
                     fontWeight: '500'
                 },
-                day_today: {
+                 day_today: {
                   fontWeight: 'bold',
                   color: 'hsl(var(--primary))',
                   border: '2px solid hsl(var(--primary))'
                 },
+                day_selected: {
+                  backgroundColor: 'hsl(var(--primary))',
+                  color: 'hsl(var(--primary-foreground))',
+                },
+                day_content: { // New style to center content inside the square
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                }
+            }}
+             components={{
+              DayContent: ({ date, displayMonth }) => {
+                const isOutside = date.getMonth() !== displayMonth.getMonth();
+                if (isOutside) return <></>; // Don't render content for outside days
+                return <div className="day-content">{format(date, 'd')}</div>;
+              },
             }}
           />
         )}
