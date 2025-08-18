@@ -199,31 +199,48 @@ export function StudentAttendanceCalendar() {
                     height: 'auto',
                     width: 'auto',
                     paddingBottom: '100%', // Makes the day container a square
-                    borderRadius: '0.5rem',
+                    borderRadius: '0', // Changed to remove the border radius from the parent
                     fontSize: '1rem',
                     fontWeight: '500'
                 },
                  day_today: {
                   fontWeight: 'bold',
                   color: 'hsl(var(--primary))',
-                  border: '2px solid hsl(var(--primary))'
+                  border: '2px solid hsl(var(--primary))',
+                  borderRadius: '100%',
                 },
                 day_selected: {
-                  backgroundColor: 'hsl(var(--primary))',
-                  color: 'hsl(var(--primary-foreground))',
+                  backgroundColor: 'transparent',
+                  color: 'inherit',
                 },
-                day_content: { // New style to center content inside the square
+                day_content: { // This centers the content inside the square
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
+                    height: '100%',
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '100%',
                 }
             }}
              components={{
-              DayContent: ({ date, displayMonth }) => {
+              DayContent: ({ date, displayMonth, ...props }) => {
                 const isOutside = date.getMonth() !== displayMonth.getMonth();
                 if (isOutside) return <></>; // Don't render content for outside days
-                return <div className="day-content">{format(date, 'd')}</div>;
+                
+                const modifierStyle = props.activeModifiers.present ? modifierStyles.present 
+                                    : props.activeModifiers.absent ? modifierStyles.absent
+                                    : props.activeModifiers.sunday ? modifierStyles.sunday
+                                    : {};
+
+                return (
+                  <div className="day-content" style={modifierStyle}>
+                    {format(date, 'd')}
+                  </div>
+                );
               },
             }}
           />
