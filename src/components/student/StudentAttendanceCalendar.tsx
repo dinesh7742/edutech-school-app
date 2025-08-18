@@ -166,7 +166,12 @@ export function StudentAttendanceCalendar() {
                 root: { width: '100%' },
                 months: { width: '100%' },
                 month: { width: '100%', spaceY: '1rem' },
-                table: { width: '100%', maxWidth: '100%', borderCollapse: 'collapse'},
+                table: { 
+                  width: '100%', 
+                  maxWidth: '100%', 
+                  borderCollapse: 'separate',
+                  borderSpacing: '0.5rem', // Creates margin between cells
+                },
                 head_row: {
                     display: 'flex',
                     width: '100%',
@@ -182,15 +187,12 @@ export function StudentAttendanceCalendar() {
                 row: {
                     display: 'flex',
                     width: '100%',
-                    borderTop: '1px solid hsl(var(--border))'
                 },
                 cell: {
                     flex: 1,
                     position: 'relative',
                     height: 'auto',
-                    padding: '0.25rem', // Creates the margin effect
                     overflow: 'hidden',
-                    borderLeft: '1px solid hsl(var(--border))',
                 },
                 day: {
                     position: 'relative',
