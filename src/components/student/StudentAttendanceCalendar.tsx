@@ -119,15 +119,15 @@ export function StudentAttendanceCalendar() {
 
   const modifierStyles = {
     present: {
-      color: "white",
+      color: "hsl(var(--primary-foreground))",
       backgroundColor: "hsl(var(--accent))",
     },
     absent: {
-      color: "white",
+      color: "hsl(var(--destructive-foreground))",
       backgroundColor: "hsl(var(--destructive))",
     },
     holiday: {
-      color: "white",
+      color: "hsl(var(--destructive-foreground))",
       backgroundColor: "hsl(var(--destructive))",
     },
     sunday: {
@@ -144,7 +144,7 @@ export function StudentAttendanceCalendar() {
             My Attendance Calendar
         </CardTitle>
         <CardDescription>
-            View your monthly attendance at a glance.
+            View your monthly attendance at a glance for {format(month, "MMMM yyyy")}.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
@@ -161,13 +161,52 @@ export function StudentAttendanceCalendar() {
             onMonthChange={setMonth}
             modifiers={modifiers}
             modifiersStyles={modifierStyles}
-            className="p-0"
+            className="p-0 w-full"
             styles={{
-              day: {
-                borderRadius: '9999px',
-                width: '2.2rem',
-                height: '2.2rem'
-              },
+                root: { width: '100%' },
+                months: { width: '100%' },
+                month: { width: '100%', spaceY: '1rem' },
+                table: { width: '100%', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: '0.25rem' },
+                head_row: {
+                    display: 'flex',
+                    width: '100%',
+                },
+                head_cell: { 
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    textTransform: 'uppercase',
+                    color: 'hsl(var(--muted-foreground))'
+                },
+                row: {
+                    display: 'flex',
+                    width: '100%',
+                },
+                cell: {
+                    flex: 1,
+                    position: 'relative',
+                    height: 'auto',
+                    paddingBottom: 'calc(100% / 7 - 0.5rem)', // creates square cells
+                    overflow: 'hidden',
+                },
+                day: {
+                    position: 'absolute',
+                    top: '0',
+                    left: '0',
+                    right: '0',
+                    bottom: '0',
+                    height: 'auto',
+                    width: 'auto',
+                    borderRadius: '0.5rem',
+                    fontSize: '1rem',
+                    fontWeight: '500'
+                },
+                day_today: {
+                  fontWeight: 'bold',
+                  color: 'hsl(var(--primary))',
+                  border: '2px solid hsl(var(--primary))'
+                },
             }}
           />
         )}
