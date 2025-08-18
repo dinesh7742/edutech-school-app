@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon, Award
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon, Award, School, Edit
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -375,20 +375,36 @@ export function StudentDashboardClient() {
       ),
     },
     {
-      id: "exams",
-      title: "Online Exams / ऑनलाइन परीक्षा",
-      link: "/student/exams",
-      buttonText: "View All Exams",
-      icon: ExamIcon,
-      description: "Take online exams and tests assigned to your class. / अपनी कक्षा को सौंपे गए ऑनलाइन परीक्षा और टेस्ट दें।",
+      id: "unitTest",
+      title: "Unit Test Results / यूनिट टेस्ट परिणाम",
+      link: "/student/results",
+      buttonText: "View Unit Tests",
+      icon: Edit,
+      description: "Check your scores and performance in unit tests.",
     },
     {
-      id: "results",
-      title: "View Results / परिणाम देखें",
+      id: "firstSemester",
+      title: "First Semester Results / प्रथम सेमेस्टर परिणाम",
       link: "/student/results",
-      buttonText: "View My Results",
+      buttonText: "View 1st Sem Results",
       icon: Award,
-      description: "View and download your official academic progress reports.",
+      description: "View your detailed first semester progress report.",
+    },
+    {
+      id: "secondSemester",
+      title: "Second Semester Results / द्वितीय सेमेस्टर परिणाम",
+      link: "/student/results",
+      buttonText: "View 2nd Sem Results",
+      icon: Award,
+      description: "View your detailed second semester progress report.",
+    },
+    {
+      id: "scholarship",
+      title: "Scholarships / छात्रवृत्ति",
+      link: "/student/scholarships", // This page would need to be created
+      buttonText: "View Scholarships",
+      icon: School,
+      description: "Find and apply for available scholarships.",
     },
     {
       id: "circulars",
@@ -622,5 +638,7 @@ export function StudentDashboardClient() {
     </>
   );
 }
+
+    
 
     
