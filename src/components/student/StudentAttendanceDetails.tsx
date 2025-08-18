@@ -2,231 +2,168 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
-import { Loader2, ListChecks } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, getYear, getMonth, setYear, setMonth, parseISO, isWithinInterval } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { format, startOfMonth, endOfMonth, getDaysInMonth, getDay, addMonths, subMonths, parseISO, isWithinInterval, eachDayOfInterval } from "date-fns";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AttendanceRecord {
-  date: string;
-  formattedDate: string;
+  date: Date;
   status: AttendanceStatus;
+  note?: string;
 }
 
-const MINIMUM_ATTENDANCE_THRESHOLD = 75;
+const DayOfWeek = ({ day }: { day: string }) => (
+  <div className="text-center font-medium text-muted-foreground">{day}</div>
+);
 
-const months = Array.from({ length: 12 }, (_, i) => ({
-  value: i, // 0-indexed for Date object
-  label: format(new Date(0, i), "MMMM"),
-}));
+const DayCell = ({ day, status }: { day: number; status: AttendanceStatus | 'future' | 'empty' | 'holiday' }) => {
+  const baseClasses = "flex items-center justify-center h-10 w-10 rounded-full text-sm";
+  const statusClasses = {
+    'Present': 'bg-green-500 text-white',
+    'Absent': 'bg-red-500 text-white',
+    'holiday': 'bg-red-500 text-white',
+    'Late': 'bg-yellow-500 text-white',
+    'Excused': 'bg-blue-500 text-white',
+    'future': 'text-foreground',
+    'empty': '',
+  };
+  return (
+    <div className={cn(baseClasses, statusClasses[status])}>
+      {day > 0 && day}
+    </div>
+  );
+};
 
-const currentFullYear = getYear(new Date());
-const years = Array.from({ length: 5 }, (_, i) => currentFullYear - i); // Current year and last 4 years
+const StatCard = ({ label, value, colorClass }: { label: string; value: number | string; colorClass: string }) => (
+  <div className="flex-1 text-center">
+    <p className={cn("text-sm font-semibold", colorClass)}>{label}</p>
+    <p className="text-2xl font-bold">{value}</p>
+  </div>
+);
 
 export function StudentAttendanceDetails() {
   const { user } = useAuth();
-  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [attendancePercentage, setAttendancePercentage] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [selectedYear, setSelectedYear] = useState<number>(currentFullYear);
-  const [selectedMonth, setSelectedMonth] = useState<number>(getMonth(new Date())); // 0-indexed
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [records, setRecords] = useState<Map<string, AttendanceRecord>>(new Map());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || !user.uid || !user.grade || !user.division) {
-      setIsLoading(false);
-      setError("User details incomplete for fetching attendance.");
-      setAttendanceRecords([]);
-      setAttendancePercentage(null);
+    if (!user || !user.grade || !user.division) {
+      setLoading(false);
       return;
     }
+    setLoading(true);
 
-    setIsLoading(true);
-    setError(null);
+    const firstDay = startOfMonth(currentDate);
+    const lastDay = endOfMonth(currentDate);
 
     const attendanceQuery = query(
       collection(db, "dailyAttendance"),
       where("grade", "==", user.grade),
-      where("division", "==", user.division)
+      where("division", "==", user.division),
+      where("date", ">=", format(firstDay, 'yyyy-MM-dd')),
+      where("date", "<=", format(lastDay, 'yyyy-MM-dd'))
     );
-
-    const unsubscribe = onSnapshot(attendanceQuery, (querySnapshot) => {
-      let presentDays = 0;
-      let totalMarkedDays = 0;
-      const records: AttendanceRecord[] = [];
-      const firstDayOfMonth = startOfMonth(setYear(setMonth(new Date(), selectedMonth), selectedYear));
-      const lastDayOfMonth = endOfMonth(firstDayOfMonth);
-
-      querySnapshot.forEach((doc) => {
-        const log = doc.data() as DailyAttendanceLog;
-        const logDate = parseISO(log.date);
-        
-        if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
-          const studentStatus = log.studentRecords[user.uid!];
-          if (studentStatus) {
-            totalMarkedDays++;
-            if (studentStatus === "Present") {
-              presentDays++;
-            }
-            records.push({
-              date: log.date,
-              formattedDate: format(new Date(log.date + "T00:00:00"), "PPP"),
-              status: studentStatus,
+    
+    const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
+      const newRecords = new Map<string, AttendanceRecord>();
+      snapshot.forEach(doc => {
+        const data = doc.data() as DailyAttendanceLog;
+        const studentStatus = data.studentRecords[user.uid!];
+        if (studentStatus) {
+            newRecords.set(data.date, {
+                date: parseISO(data.date),
+                status: studentStatus,
+                note: data.note
             });
-          }
         }
       });
-      
-      records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
-      setAttendanceRecords(records);
-
-      if (totalMarkedDays > 0) {
-        setAttendancePercentage(Math.round((presentDays / totalMarkedDays) * 100));
-      } else {
-        setAttendancePercentage(null);
-      }
-      setIsLoading(false);
-    }, (err: any) => {
-      console.error("Error fetching attendance data:", err);
-      setError("Could not load attendance data. " + (err.message || ""));
-      setIsLoading(false);
+      setRecords(newRecords);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching attendance: ", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, selectedMonth, selectedYear]);
+  }, [user, currentDate]);
 
+  const daysInMonth = getDaysInMonth(currentDate);
+  const startDayOfWeek = getDay(startOfMonth(currentDate)); // Sunday is 0
+  const firstDayIndex = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Monday is 0
+
+  const presentDays = Array.from(records.values()).filter(r => r.status === 'Present').length;
+  const absentDays = Array.from(records.values()).filter(r => ['Absent', 'Late', 'Excused'].includes(r.status)).length;
+  const holidays = Array.from(records.values()).filter(r => r.note?.toLowerCase().includes('holiday') || r.date.getDay() === 0).length;
+  const workingDays = daysInMonth - holidays;
+  
   return (
-    <Card className="shadow-xl">
-      <CardHeader>
-        <CardTitle className="text-3xl font-bold text-primary flex items-center gap-2">
-          <ListChecks className="h-8 w-8" /> My Attendance Details
-        </CardTitle>
-        <CardDescription>
-          Grade: {user?.grade}{user?.division}
-        </CardDescription>
-        <div className="mt-4 flex flex-col sm:flex-row gap-4 items-center">
-          <div>
-            <Label htmlFor="year-select" className="mb-1 block text-sm font-medium">Year</Label>
-            <Select
-              value={selectedYear.toString()}
-              onValueChange={(value) => setSelectedYear(parseInt(value))}
-            >
-              <SelectTrigger id="year-select" className="w-full sm:w-[120px]">
-                <SelectValue placeholder="Select Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="month-select" className="mb-1 block text-sm font-medium">Month</Label>
-            <Select
-              value={selectedMonth.toString()}
-              onValueChange={(value) => setSelectedMonth(parseInt(value))}
-            >
-              <SelectTrigger id="month-select" className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select Month" />
-              </SelectTrigger>
-              <SelectContent>
-                {months.map((month) => (
-                  <SelectItem key={month.value} value={month.value.toString()}>
-                    {month.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center min-h-[200px]">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="ml-4 text-lg">Loading attendance...</p>
-          </div>
-        ) : error ? (
-          <Card className="shadow-lg border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Error Loading Attendance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{error}</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {attendancePercentage !== null ? (
-              <div className="space-y-2">
-                <p className="text-lg font-medium">
-                  Attendance for {format(new Date(selectedYear, selectedMonth), "MMMM yyyy")}: {" "}
-                  <span className={`font-bold ${attendancePercentage >= MINIMUM_ATTENDANCE_THRESHOLD ? 'text-green-600' : 'text-red-600'}`}>
-                    {attendancePercentage.toFixed(2)}%
-                  </span>
-                </p>
-                <Progress value={attendancePercentage} className="h-3" />
-                {attendancePercentage < MINIMUM_ATTENDANCE_THRESHOLD && (
-                  <p className="text-sm text-destructive">
-                    Your attendance for this month is below the {MINIMUM_ATTENDANCE_THRESHOLD}% minimum.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center">No attendance marked for your class in {format(new Date(selectedYear, selectedMonth), "MMMM yyyy")}.</p>
-            )}
+    <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden">
+      <div className="bg-cyan-500 text-white p-4 text-center relative">
+        <h2 className="text-xl font-bold">{format(currentDate, "MMMM yyyy")}</h2>
+        <div className="absolute bottom-0 left-0 right-0 h-4 bg-background" style={{ borderTopLeftRadius: '100%', borderTopRightRadius: '100%' }}></div>
+      </div>
 
-            {attendanceRecords.length > 0 ? (
-              <div className="overflow-x-auto rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {attendanceRecords.map((record) => (
-                      <TableRow key={record.date}>
-                        <TableCell>{record.formattedDate}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                              record.status === "Present"
-                                ? "bg-green-100 text-green-700"
-                                : record.status === "Absent"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-yellow-100 text-yellow-700"
-                            }`}
-                          >
-                            {record.status}
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              !isLoading && attendancePercentage === null && (
-                 <p className="text-muted-foreground text-center py-6">No attendance records found for your class in {format(new Date(selectedYear, selectedMonth), "MMMM yyyy")}.</p>
-              )
-            )}
-          </>
+      <div className="p-4">
+        {loading ? (
+            <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin"/></div>
+        ) : (
+          <div className="grid grid-cols-7 gap-2">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => <DayOfWeek key={d} day={d} />)}
+            {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} />)}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const dateKey = format(new Date(currentDate.getFullYear(), currentDate.getMonth(), day), 'yyyy-MM-dd');
+              const record = records.get(dateKey);
+              let status: 'Present' | 'Absent' | 'holiday' | 'future' | 'empty' = 'future';
+              
+              if(record) {
+                  if (record.note?.toLowerCase().includes('holiday') || record.date.getDay() === 0) {
+                      status = 'holiday';
+                  } else if (['Absent', 'Late', 'Excused'].includes(record.status)) {
+                      status = 'Absent';
+                  } else {
+                      status = record.status as 'Present';
+                  }
+              }
+
+              return <DayCell key={day} day={day} status={status} />;
+            })}
+          </div>
         )}
-      </CardContent>
+      </div>
+
+      <div className="p-4 space-y-3">
+        <Card className="p-4">
+          <div className="flex justify-around">
+            <StatCard label="HOLIDAY" value={holidays} colorClass="text-gray-500" />
+            <div className="border-l mx-2"></div>
+            <StatCard label="WORKING DAY" value={workingDays} colorClass="text-orange-500" />
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex justify-around">
+            <StatCard label="PRESENT" value={presentDays} colorClass="text-green-500" />
+            <div className="border-l mx-2"></div>
+            <StatCard label="ABSENT" value={absentDays} colorClass="text-red-500" />
+          </div>
+        </Card>
+      </div>
+
+      <div className="p-4 flex justify-between">
+        <Button onClick={() => setCurrentDate(c => subMonths(c, 1))} className="bg-red-500 hover:bg-red-600 rounded-full">
+            <ChevronLeft className="h-4 w-4 mr-1"/> Previous
+        </Button>
+        <Button onClick={() => setCurrentDate(c => addMonths(c, 1))} className="bg-cyan-600 hover:bg-cyan-700 rounded-full">
+            Next Month <ChevronRight className="h-4 w-4 ml-1"/>
+        </Button>
+      </div>
     </Card>
   );
 }

@@ -3,7 +3,7 @@ import { StudentAttendanceDetails } from "@/components/student/StudentAttendance
 
 export default function StudentAttendancePage() {
   return (
-    <div className="py-4">
+    <div className="py-4 flex justify-center">
       <StudentAttendanceDetails />
     </div>
   );
