@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, getDaysInMonth, eachDayOfInterval } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, eachDayOfInterval } from "date-fns";
 
 interface AttendanceRecord {
   date: Date;
@@ -161,88 +161,7 @@ export function StudentAttendanceCalendar() {
             onMonthChange={setMonth}
             modifiers={modifiers}
             modifiersStyles={modifierStyles}
-            className="p-0 w-full"
-            styles={{
-                root: { width: '100%' },
-                months: { width: '100%' },
-                month: { width: '100%', spaceY: '1rem' },
-                table: { 
-                  width: '100%', 
-                  maxWidth: '100%', 
-                  borderCollapse: 'separate',
-                  borderSpacing: '0.5rem', // Creates margin between cells
-                },
-                head_row: {
-                    display: 'flex',
-                    width: '100%',
-                },
-                head_cell: { 
-                    flex: 1,
-                    textAlign: 'center',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold',
-                    textTransform: 'uppercase',
-                    color: 'hsl(var(--muted-foreground))'
-                },
-                row: {
-                    display: 'flex',
-                    width: '100%',
-                },
-                cell: {
-                    flex: 1,
-                    position: 'relative',
-                    height: 'auto',
-                    overflow: 'hidden',
-                },
-                day: {
-                    position: 'relative',
-                    height: 'auto',
-                    width: 'auto',
-                    paddingBottom: '100%', // Makes the day container a square
-                    borderRadius: '0', // Changed to remove the border radius from the parent
-                    fontSize: '1rem',
-                    fontWeight: '500'
-                },
-                 day_today: {
-                  fontWeight: 'bold',
-                  color: 'hsl(var(--primary))',
-                  border: '2px solid hsl(var(--primary))',
-                  borderRadius: '100%',
-                },
-                day_selected: {
-                  backgroundColor: 'transparent',
-                  color: 'inherit',
-                },
-                day_content: { // This centers the content inside the square
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    height: '100%',
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '100%',
-                }
-            }}
-             components={{
-              DayContent: ({ date, displayMonth, ...props }) => {
-                const isOutside = date.getMonth() !== displayMonth.getMonth();
-                if (isOutside) return <></>; // Don't render content for outside days
-                
-                const modifierStyle = props.activeModifiers.present ? modifierStyles.present 
-                                    : props.activeModifiers.absent ? modifierStyles.absent
-                                    : props.activeModifiers.sunday ? modifierStyles.sunday
-                                    : {};
-
-                return (
-                  <div className="day-content" style={modifierStyle}>
-                    {format(date, 'd')}
-                  </div>
-                );
-              },
-            }}
+            className="p-0"
           />
         )}
          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
