@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck, Award, School, BookCopy, BookCheck
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck, Award, School, BookCopy, BookCheck, CalendarPlus, AlertTriangle, Edit, FileArchive
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -222,8 +222,8 @@ export function StudentDashboardClient() {
              setIsLatestHomeworkCompleted(false);
         }
 
-        setNotificationMessages(newMessages);
-        if (!hasOpenedDialog) {
+        if (newMessages.length > 0 && !hasOpenedDialog) {
+            setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true; // Prevent re-opening
         }
@@ -518,7 +518,27 @@ export function StudentDashboardClient() {
       link: "/student/my-applications",
       buttonText: "Access Forms",
       icon: FileSignature,
-      description: "Apply for leave, late arrivals, etc., or download forms. / छुट्टी, देर से आने आदि के लिए आवेदन करें, या फॉर्म डाउनलोड करें।",
+      description: "Apply for leave, late arrivals, certificates, or download forms. / छुट्टी, देर से आने, प्रमाण पत्र आदि के लिए आवेदन करें, या फॉर्म डाउनलोड करें।",
+      renderContent: () => {
+        const applicationItems = [
+          { name: "Leave Application", link: "/student/apply-leave", icon: CalendarPlus },
+          { name: "Late Arrival", link: "/student/late-arrival", icon: AlertTriangle },
+          { name: "Other Forms", link: "/student/other-applications", icon: Edit },
+          { name: "Download Forms", link: "/student/school-forms", icon: FileArchive },
+        ];
+        return (
+          <div className="w-full h-full p-2 rounded-md grid grid-cols-2 gap-2 bg-background">
+            {applicationItems.map(item => (
+              <Link key={item.name} href={item.link} className="group flex flex-col items-center justify-center p-2 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                <div className="flex items-center justify-center h-20 w-full">
+                  <item.icon className="h-10 w-10 text-primary" />
+                </div>
+                <span className="text-xs font-semibold text-center text-foreground">{item.name}</span>
+              </Link>
+            ))}
+          </div>
+        );
+      }
     },
     {
       id: "textbooks",
