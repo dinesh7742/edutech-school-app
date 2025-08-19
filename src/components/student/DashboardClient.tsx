@@ -585,17 +585,15 @@ export function StudentDashboardClient() {
         {dashboardCards.map((card, index) => {
           const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
           const showChatBadge = card.id === "chat" && hasUnreadMessages;
-          const colorClass = cardColors[index % cardColors.length];
           const hasDynamicContent = card.contentData !== undefined;
+          const isNewItem = hasDynamicContent && card.contentData?.item && isNew((card.contentData.item as any).timestamp);
 
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
               <div className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                   {card.title}
-                  {hasDynamicContent && card.contentData.item && isNew(
-                      (card.contentData.item as any).timestamp
-                      ) && (
+                  {isNewItem && (
                     <Badge variant="highlight" className="animate-pulse">New!</Badge>
                   )}
                   {showNotificationBadge && (
