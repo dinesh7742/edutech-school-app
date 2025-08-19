@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, NotificationMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
@@ -48,13 +48,6 @@ const cardColors = [
   "text-chart-4",
   "text-chart-5",
 ];
-
-interface NotificationMessage {
-  link: string;
-  english: string;
-  hindi: string;
-}
-
 
 export function StudentDashboardClient() {
   const { user } = useAuth();
@@ -547,6 +540,18 @@ export function StudentDashboardClient() {
       buttonText: "View Textbooks",
       icon: BookOpen,
       description: "Access your digital textbooks for all subjects. / सभी विषयों के लिए अपनी डिजिटल पाठ्यपुस्तकें एक्सेस करें।",
+      renderContent: () => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+          <NextImage 
+            src="https://i.postimg.cc/rsFxF0Hd/images-1.jpg" 
+            alt="Textbooks"
+            width={200}
+            height={120}
+            className="rounded-md object-cover"
+            data-ai-hint="books stack"
+          />
+        </div>
+      )
     },
     {
       id: "gallery",
