@@ -387,7 +387,7 @@ export function StudentDashboardClient() {
           { name: "Unit Test", link: "/student/results", icon: ClipboardCheck },
           { name: "First Semester", link: "/student/results", icon: BookCopy },
           { name: "Second Semester", link: "/student/results", icon: BookCheck },
-          { name: "Scholarship Exam", link: "/student/results", icon: Award },
+          { name: "Scholarship Exam", link: "/student/scholarships", icon: Award },
         ];
         return (
           <div className="w-full h-full p-2 rounded-md grid grid-cols-2 gap-2 bg-background">
@@ -479,6 +479,18 @@ export function StudentDashboardClient() {
       buttonText: "Open Chat",
       icon: MessageSquare,
       description: "Communicate directly with your class teacher. / अपने कक्षा शिक्षक से सीधे संवाद करें।",
+      renderContent: () => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+          <NextImage 
+            src="https://i.postimg.cc/8zDHqcp6/images.jpg" 
+            alt="Chat with teacher"
+            width={200}
+            height={120}
+            className="rounded-md object-cover"
+            data-ai-hint="chat conversation"
+          />
+        </div>
+      )
     },
     {
       id: "mySchoolApplications",
@@ -581,7 +593,7 @@ export function StudentDashboardClient() {
           const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
           const showChatBadge = card.id === "chat" && hasUnreadMessages;
           const hasDynamicContent = card.contentData !== undefined;
-          const isNewItem = hasDynamicContent && card.contentData.item && isNew((card.contentData.item as any).timestamp);
+          const isNewItem = hasDynamicContent && card.contentData!.item && isNew((card.contentData!.item as any).timestamp);
 
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
@@ -607,14 +619,14 @@ export function StudentDashboardClient() {
                     <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
                 </div>
 
-                {hasDynamicContent && card.contentData.loading ? (
+                {hasDynamicContent && card.contentData!.loading ? (
                   <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                   </div>
                 ) : card.renderContent ? (
                   <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
-                      {card.renderContent(hasDynamicContent ? card.contentData.item : null)}
+                      {card.renderContent(hasDynamicContent ? card.contentData!.item : null)}
                   </div>
                 ) : (
                   <div className="flex-grow flex items-center justify-center min-h-[150px]">
