@@ -409,14 +409,6 @@ export function StudentDashboardClient() {
       }
     },
     {
-      id: "scholarship",
-      title: "Scholarships / छात्रवृत्ति",
-      link: "/student/scholarships", // This page would need to be created
-      buttonText: "View Scholarships",
-      icon: School,
-      description: "Find and apply for available scholarships.",
-    },
-    {
       id: "circulars",
       title: "Circulars / परिपत्र",
       link: "/student/circulars",
