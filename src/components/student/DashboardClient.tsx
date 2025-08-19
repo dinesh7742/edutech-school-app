@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck as ExamIcon, Award, School
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck, Award, School, BookCopy, BookCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -384,23 +384,18 @@ export function StudentDashboardClient() {
       description: "Check your scores for Unit Tests, First Semester, and Second Semester.",
       renderContent: () => {
         const resultItems = [
-          { name: "Unit Test", link: "/student/results", hint: "exam paper test" },
-          { name: "First Semester", link: "/student/results", hint: "report card" },
-          { name: "Second Semester", link: "/student/results", hint: "report document" },
-          { name: "Scholarship Exam", link: "/student/results", hint: "scholarship award" },
+          { name: "Unit Test", link: "/student/results", icon: ClipboardCheck },
+          { name: "First Semester", link: "/student/results", icon: BookCopy },
+          { name: "Second Semester", link: "/student/results", icon: BookCheck },
+          { name: "Scholarship Exam", link: "/student/results", icon: Award },
         ];
         return (
           <div className="w-full h-full p-2 rounded-md grid grid-cols-2 gap-2 bg-background">
             {resultItems.map(item => (
               <Link key={item.name} href={item.link} className="group flex flex-col items-center justify-center p-2 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
-                 <NextImage 
-                   src={`https://placehold.co/100x80.png`} 
-                   alt={item.name} 
-                   width={100} 
-                   height={80} 
-                   className="rounded-md mb-2 object-cover"
-                   data-ai-hint={item.hint}
-                 />
+                 <div className="flex items-center justify-center h-20 w-full">
+                    <item.icon className="h-10 w-10 text-primary" />
+                 </div>
                  <span className="text-xs font-semibold text-center text-foreground">{item.name}</span>
               </Link>
             ))}
@@ -586,7 +581,7 @@ export function StudentDashboardClient() {
           const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
           const showChatBadge = card.id === "chat" && hasUnreadMessages;
           const hasDynamicContent = card.contentData !== undefined;
-          const isNewItem = hasDynamicContent && card.contentData?.item && isNew((card.contentData.item as any).timestamp);
+          const isNewItem = hasDynamicContent && card.contentData.item && isNew((card.contentData.item as any).timestamp);
 
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
