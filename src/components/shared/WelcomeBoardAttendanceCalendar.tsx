@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
-import { Loader2, CalendarDays } from "lucide-react";
+import { Loader2, CalendarDays, Dot } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog } from "@/types";
@@ -58,6 +58,15 @@ export function WelcomeBoardAttendanceCalendar() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [month, setMonth] = useState(new Date());
+
+  const currentMonthHolidays = useMemo(() => {
+    return holidays
+      .filter(h => 
+        h.date.getFullYear() === month.getFullYear() && 
+        h.date.getMonth() === month.getMonth()
+      )
+      .sort((a, b) => a.date.getDate() - b.date.getDate());
+  }, [month]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -193,22 +202,23 @@ export function WelcomeBoardAttendanceCalendar() {
             }}
           />
         )}
-         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-md">
+         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-md w-full border-t pt-4">
             <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-present-bg))]" />
                 <span>Present</span>
-            </div>
-             <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-holiday-bg))]" />
-                <span>Holiday</span>
             </div>
             <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full bg-destructive/30" />
                 <span>Sunday</span>
             </div>
+            {currentMonthHolidays.map((holiday) => (
+               <div key={holiday.name} className="flex items-center gap-2">
+                 <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-holiday-bg))]" />
+                 <span>{holiday.name}</span>
+               </div>
+            ))}
         </div>
       </CardContent>
     </Card>
   );
 }
-
