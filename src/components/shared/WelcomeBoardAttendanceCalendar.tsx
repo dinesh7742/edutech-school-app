@@ -15,12 +15,37 @@ const holidays = specialDays2025.map(day => ({...day, date: parseISO(day.date)})
 
 const DayContent = memo(({ date }: { date: Date }) => {
     const holiday = holidays.find(h => h.date.toDateString() === date.toDateString());
+    const isSunday = date.getDay() === 0;
+
     return (
-        <div className="relative flex flex-col items-center justify-center h-full">
-            <span>{format(date, 'd')}</span>
+        <div className="relative flex flex-col items-center justify-center h-full w-full">
+            {isSunday && !holiday && (
+                 <svg
+                    className="absolute top-0 right-0 w-full h-full text-destructive/30"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <path d="M100 0 L0 100 L100 100 Z" fill="currentColor" />
+                 </svg>
+            )}
             {holiday && (
-                <span className="absolute bottom-0.5 text-[8px] font-bold text-wb-holiday-text leading-none truncate">
+                 <svg
+                    className="absolute top-0 right-0 w-full h-full text-[hsl(var(--wb-holiday-bg))]"
+                    viewBox="0 0 100 100"
+                    preserveAspectRatio="none"
+                  >
+                    <path d="M100 0 L0 100 L100 100 Z" fill="currentColor" />
+                 </svg>
+            )}
+            <span className="relative z-10">{format(date, 'd')}</span>
+            {holiday && (
+                <span className="absolute bottom-1 z-10 text-[8px] font-bold text-wb-holiday-text leading-none truncate px-1">
                     {holiday.name}
+                </span>
+            )}
+             {isSunday && !holiday && (
+                <span className="absolute bottom-1 z-10 text-[8px] font-bold text-destructive-foreground leading-none truncate px-1">
+                    Sunday
                 </span>
             )}
         </div>
@@ -76,14 +101,9 @@ export function WelcomeBoardAttendanceCalendar() {
       color: "hsl(var(--wb-present-text))",
       backgroundColor: "hsl(var(--wb-present-bg))",
     },
-    holiday: {
-        color: "hsl(var(--wb-holiday-text))",
-        backgroundColor: "hsl(var(--wb-holiday-bg))",
-    },
-    sunday: {
-      color: "hsl(var(--destructive-foreground))",
-      backgroundColor: "hsl(var(--destructive) / 0.7)",
-    },
+    // holiday and sunday styling is now handled by DayContent
+    holiday: {},
+    sunday: {},
   };
 
   return (
@@ -117,7 +137,7 @@ export function WelcomeBoardAttendanceCalendar() {
                 root: { width: '100%' },
                 months: { width: '100%' },
                 month: { width: '100%', spaceY: '1rem' },
-                table: { width: '100%', maxWidth: '100%', borderCollapse: 'separate', borderSpacing: '0.5rem' },
+                table: { width: '100%', maxWidth: '100%', borderCollapse: 'collapse'},
                 head_row: {
                     display: 'flex',
                     width: '100%',
@@ -138,8 +158,9 @@ export function WelcomeBoardAttendanceCalendar() {
                     flex: 1,
                     position: 'relative',
                     height: 'auto',
-                    paddingBottom: 'calc(100% / 7 - 1rem)', // creates square cells
+                    paddingBottom: 'calc(100% / 7 - 1rem)',
                     overflow: 'hidden',
+                    border: '1px solid hsl(var(--border))'
                 },
                 day: {
                     position: 'absolute',
@@ -149,9 +170,12 @@ export function WelcomeBoardAttendanceCalendar() {
                     bottom: '0',
                     height: 'auto',
                     width: 'auto',
-                    borderRadius: '0.75rem',
+                    borderRadius: '0', // No radius for the day itself
                     fontSize: '1.5rem',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                 },
                  day_selected: {
                   backgroundColor: 'hsl(var(--primary))',
@@ -162,6 +186,10 @@ export function WelcomeBoardAttendanceCalendar() {
                   color: 'hsl(var(--primary))',
                   border: '2px solid hsl(var(--primary))'
                 },
+                day_outside: {
+                  color: "hsl(var(--muted-foreground))",
+                  opacity: 0.5,
+                }
             }}
           />
         )}
@@ -175,7 +203,7 @@ export function WelcomeBoardAttendanceCalendar() {
                 <span>Holiday</span>
             </div>
             <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full bg-[hsl(var(--destructive)/0.7)]" />
+                <div className="h-4 w-4 rounded-full bg-destructive/30" />
                 <span>Sunday</span>
             </div>
         </div>
@@ -183,3 +211,4 @@ export function WelcomeBoardAttendanceCalendar() {
     </Card>
   );
 }
+
