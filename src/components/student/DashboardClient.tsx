@@ -586,12 +586,14 @@ export function StudentDashboardClient() {
           const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
           const showChatBadge = card.id === "chat" && hasUnreadMessages;
           const colorClass = cardColors[index % cardColors.length];
+          const hasDynamicContent = card.contentData !== undefined;
+
           return (
             <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
               <div className="p-4 bg-primary text-primary-foreground">
                 <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
                   {card.title}
-                  {card.contentData?.item && isNew(
+                  {hasDynamicContent && card.contentData.item && isNew(
                       (card.contentData.item as any).timestamp
                       ) && (
                     <Badge variant="highlight" className="animate-pulse">New!</Badge>
@@ -612,14 +614,14 @@ export function StudentDashboardClient() {
                     <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
                 </div>
 
-                {card.contentData?.loading ? (
+                {hasDynamicContent && card.contentData.loading ? (
                   <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
                   </div>
                 ) : card.renderContent ? (
                   <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
-                      {card.renderContent(card.contentData.item as any)}
+                      {card.renderContent(hasDynamicContent ? card.contentData.item : null)}
                   </div>
                 ) : (
                   <div className="flex-grow flex items-center justify-center min-h-[150px]">
