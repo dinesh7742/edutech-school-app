@@ -580,6 +580,18 @@ export function StudentDashboardClient() {
       buttonText: "View Notifications",
       icon: FileSignature,
       description: "View and acknowledge conduct reports from teachers. / शिक्षकों से आचरण रिपोर्ट देखें और स्वीकार करें।",
+      renderContent: () => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+          <NextImage 
+            src="https://i.postimg.cc/3RSb0RwF/382-3822268-transparent-parent-and-child-reading-clipart-bilingual-families.png" 
+            alt="Parent Notifications"
+            width={200}
+            height={120}
+            className="rounded-md object-contain"
+            data-ai-hint="parent child reading"
+          />
+        </div>
+      )
     },
     {
       id: "icard",
