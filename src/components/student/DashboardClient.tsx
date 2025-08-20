@@ -438,37 +438,29 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications. / महत्वपूर्ण परिपत्र और आधिकारिक संचार।",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
-        <div className="relative w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center shadow-inner overflow-hidden">
-          <NextImage
-            src="https://i.postimg.cc/sxTMF98P/417213.png"
-            alt="Circulars Background"
-            layout="fill"
-            objectFit="cover"
-            className="z-0 opacity-20"
-            data-ai-hint="official document seal"
-          />
-          <div className="relative z-10 p-2 sm:p-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg w-full max-w-xs">
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-card">
+          <div className="p-4 bg-background rounded-lg shadow-lg w-full max-w-xs">
             {data ? (
-                <div className="text-left w-full space-y-1">
-                    <h3 className="font-semibold text-md text-foreground">{data.title}</h3>
-                    <div className="text-xs text-muted-foreground">
-                    <span>Posted: {data.displayDate} by {data.postedByName}</span>
-                    {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
-                    </div>
-                    {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
-                    {data.fileUrl && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => setViewingFile({ url: data.fileUrl!, type: 'pdf', name: data.fileName || 'Circular' })}
-                        >
-                          View Circular
-                        </Button>
-                    )}
+              <div className="text-left w-full space-y-1">
+                <h3 className="font-semibold text-md text-foreground">{data.title}</h3>
+                <div className="text-xs text-muted-foreground">
+                  <span>Posted: {data.displayDate} by {data.postedByName}</span>
+                  {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                 </div>
+                {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
+                {data.fileUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => setViewingFile({ url: data.fileUrl!, type: 'pdf', name: data.fileName || 'Circular' })}
+                  >
+                    View Circular
+                  </Button>
+                )}
+              </div>
             ) : (
-                <p className="text-muted-foreground font-medium">No new circulars relevant to you.</p>
+              <p className="text-muted-foreground font-medium">No new circulars relevant to you.</p>
             )}
           </div>
         </div>
