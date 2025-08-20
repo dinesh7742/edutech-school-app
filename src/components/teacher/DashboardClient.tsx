@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -8,8 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
     Loader2, 
-    UserCheck, 
-    UserX, 
     ClipboardList, 
     BookOpen, 
     Video, 
@@ -72,7 +71,6 @@ export function TeacherDashboardClient() {
   
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
-  // State for the notification dialog
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
 
@@ -161,7 +159,6 @@ export function TeacherDashboardClient() {
     let hasOpenedDialog = false;
 
     const runAllFetches = async () => {
-        // Fetch students first as other fetches might depend on it
         if (teacherUser.grade && teacherUser.division) {
             setLoadingStudents(true);
             setStudentCountError(null);
@@ -170,11 +167,12 @@ export function TeacherDashboardClient() {
                 const q = query(
                     profilesCollectionRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division),
-                    orderBy("firstName")
+                    where("division", "==", teacherUser.division)
                 );
                 const querySnapshot = await getDocs(q);
-                setStudentsInClass(querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile)));
+                const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+                fetchedStudents.sort((a,b) => (a.firstName || "").localeCompare(b.firstName || ""));
+                setStudentsInClass(fetchedStudents);
             } catch (err: any) {
                 console.error("Error fetching students for teacher's class:", err);
                 setStudentCountError("Failed to fetch student data.");
@@ -186,7 +184,6 @@ export function TeacherDashboardClient() {
              setStudentCountError("Your profile is missing grade/division.");
         }
 
-        // Fetch pending counts
         setLoadingPendingCounts(true);
         try {
             const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
@@ -204,7 +201,6 @@ export function TeacherDashboardClient() {
             setLoadingPendingCounts(false);
         }
 
-        // Fetch recent homework submissions
         if (teacherUser.grade && teacherUser.division) {
             setLoadingSubmissions(true);
             try {
@@ -212,14 +208,12 @@ export function TeacherDashboardClient() {
                 const q = query(
                     submissionsRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division),
-                    limit(5)
+                    where("division", "==", teacherUser.division)
                 );
                 const querySnapshot = await getDocs(q);
                 const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
-                // Sort client-side
                 fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
-                setRecentSubmissions(fetchedSubmissions);
+                setRecentSubmissions(fetchedSubmissions.slice(0, 5));
             } catch (err) {
                 console.error("Error fetching recent homework submissions:", err);
             } finally {
@@ -227,7 +221,6 @@ export function TeacherDashboardClient() {
             }
         }
 
-        // Check today's attendance
         if (teacherUser.grade && teacherUser.division) {
             setLoadingTodaysAttendanceStatus(true);
             try {
@@ -243,7 +236,6 @@ export function TeacherDashboardClient() {
             }
         }
 
-        // Check for new notifications FOR POP-UP
         const newMessages: NotificationMessage[] = [];
         const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
         
@@ -263,8 +255,8 @@ export function TeacherDashboardClient() {
             console.warn("Could not check for new application submissions:", error);
         }
 
-        setNotificationMessages(newMessages);
-        if (!hasOpenedDialog) {
+        if (!hasOpenedDialog && newMessages.length > 0) {
+            setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true;
         }
@@ -272,7 +264,6 @@ export function TeacherDashboardClient() {
 
     runAllFetches();
 
-    // Set up real-time listener for chat messages
     const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid));
     const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
         let unreadFound = false;
@@ -384,113 +375,16 @@ export function TeacherDashboardClient() {
   ];
 
   const mainActionItems = [
-     {
-      id: "postContent",
-      title: "Manage Content",
-      description: (
-        <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><FileText className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Notices</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><ClipboardList className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Homework</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><FileText className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Circulars</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><BookOpen className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Textbooks</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><ImageIconLucide className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Gallery</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><Video className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Live Classes</span></div>
-          <div className="flex items-center gap-2 p-2 border rounded-md bg-background shadow-sm"><Upload className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Progress Cards</span></div>
-        </div>
-      ),
-      link: "/teacher/post-content",
-      buttonText: "Post Content",
-      icon: ClipboardList,
-    },
-    {
-      id: "studentData",
-      title: "Student Data",
-      description: "View and manage student profiles for your assigned classes and the entire school.",
-      link: "/teacher/student-data",
-      buttonText: "View Student List",
-      icon: Users,
-    },
-    {
-      id: "markAttendance",
-      title: "Mark Attendance",
-      description: getAttendanceCardDescription(),
-      link: "/teacher/mark-attendance",
-      buttonText: "Mark Attendance",
-      icon: ListChecks,
-    },
-     {
-      id: "manageSubmissions",
-      title: "Manage Student Submissions",
-      description: (
-        loadingPendingCounts ? (
-          <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /><span className="text-sm text-muted-foreground">Loading...</span></div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2 w-full text-sm p-1">
-            <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-              <div className="flex items-center gap-2"><MailOpen className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Leave</span></div>
-              {pendingLeaveCount > 0 && <Badge variant="destructive">{pendingLeaveCount}</Badge>}
-            </div>
-            <div className="flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-              <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Late</span></div>
-              {pendingLateArrivalCount > 0 && <Badge variant="destructive">{pendingLateArrivalCount}</Badge>}
-            </div>
-             <div className="col-span-2 flex items-center justify-between gap-2 p-2 border rounded-md bg-background shadow-sm">
-                <div className="flex items-center gap-2"><FileSignature className="h-4 w-4 text-primary flex-shrink-0" /><span className="font-semibold">Other</span></div>
-                {pendingOtherAppsCount > 0 && <Badge variant="destructive">{pendingOtherAppsCount}</Badge>}
-            </div>
-          </div>
-        )
-      ),
-      link: "/teacher/leave-applications",
-      buttonText: "Review Submissions",
-      icon: ClipboardCheck,
-    },
-     {
-      id: "studentChats",
-      title: "Student Chats",
-      description: "Communicate directly with students and parents in your class.",
-      link: "/teacher/chat",
-      buttonText: "Open Chats",
-      icon: MessageSquare,
-      hasNotification: hasUnreadMessages,
-    },
-    {
-      id: "studentConduct",
-      title: "Student Conduct",
-      description: "File or view student conduct reports and complaints for parent notification.",
-      link: "/teacher/conduct-record",
-      buttonText: "Manage Complaints",
-      icon: MessageSquareWarning,
-    },
-    {
-      id: "progressReports",
-      title: "Progress Reports",
-      description: "Download templates and upload completed progress reports for your class.",
-      link: "/teacher/progress-reports",
-      buttonText: "Manage Reports",
-      icon: BarChart3,
-    },
-     {
-      id: "dropoutBox",
-      title: "Dropout Box",
-      description: "View and manage students who have been removed from the active list.",
-      link: "/teacher/dropout-list",
-      buttonText: "Manage Dropouts",
-      icon: Archive,
-    },
-     {
-      id: "downloadData",
-      title: "Download Class Data",
-      description: "Download an Excel sheet of student data for your assigned class.",
-      action: handleDownloadStudentData,
-      buttonText: "Download Excel",
-      loading: isDownloadingStudentData,
-      disabled: !teacherUser?.grade || !teacherUser?.division,
-      disabledText: "Update profile with grade/division to enable.",
-      icon: Download,
-    },
+    { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
+    { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
+    { id: "markAttendance", title: "Mark Attendance", description: getAttendanceCardDescription(), link: "/teacher/mark-attendance", buttonText: "Mark Attendance", icon: ListChecks, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "manageSubmissions", title: "Manage Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
+    { id: "studentChats", title: "Student Chats", description: "Communicate directly with students and parents.", link: "/teacher/chat", buttonText: "Open Chats", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-teal-600 hover:bg-teal-700" },
+    { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-red-600 hover:bg-red-700" },
+    { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-orange-500 hover:bg-orange-600" },
+    { id: "dropoutBox", title: "Dropout Box", description: "View and manage students removed from active lists.", link: "/teacher/dropout-list", buttonText: "Manage Dropouts", icon: Archive, className: "bg-slate-600 hover:bg-slate-700" },
+    { id: "downloadData", title: "Download Class Data", description: "Download an Excel sheet of student data for your class.", action: handleDownloadStudentData, buttonText: "Download Excel", loading: isDownloadingStudentData, disabled: !teacherUser?.grade || !teacherUser?.division, disabledText: "Update profile with grade/division to enable.", icon: Download, className: "bg-indigo-600 hover:bg-indigo-700" },
   ];
-
 
   return (
     <>
@@ -524,66 +418,66 @@ export function TeacherDashboardClient() {
         </AlertDialogContent>
       </AlertDialog>
 
-    <div className="space-y-8">
-      <WelcomeMessage />
+      <div className="space-y-8">
+        <WelcomeMessage />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {quickStatsItems.map((item) => (
-          <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
-            <CardHeader className="p-4 bg-primary text-primary-foreground">
-                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-             <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-         {mainActionItems.map((item) => (
-            <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden">
-                <CardHeader className="p-4 bg-primary text-primary-foreground">
-                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
-                        {item.title}
-                        {item.id === "manageSubmissions" && totalPendingSubmissions > 0 && (
-                           <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
-                        )}
-                        {item.id === "studentChats" && item.hasNotification && (
-                           <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
-                        )}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
-                    <div className="flex justify-center my-4">
-                        <item.icon className={`h-16 w-16 text-primary`} />
-                    </div>
-                    <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                         {typeof item.description === 'string' ? <CardDescription>{item.description}</CardDescription> : item.description}
-                    </div>
-                    {item.link ? (
-                        <Button asChild className={cn("w-full mt-auto group font-bold text-primary-foreground", {
-                            "bg-pink-500 hover:bg-pink-600": item.id === "postContent",
-                            "bg-green-600 hover:bg-green-700": item.id === "studentData",
-                            "bg-transparent hover:bg-primary/10 text-primary": !["postContent", "studentData"].includes(item.id),
-                        })}>
-                            <Link href={item.link}>
-                              {item.buttonText}
-                              <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                            </Link>
-                        </Button>
-                    ) : item.action ? (
-                        <Button onClick={item.action} className="w-full mt-auto group font-bold bg-transparent text-primary hover:bg-primary/10" variant="link" disabled={item.loading || item.disabled}>
-                            {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                            {item.buttonText}
-                        </Button>
-                    ) : null}
-                    {item.disabled && item.disabledText && <p className="text-xs text-destructive mt-1">{item.disabledText}</p>}
-                </CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {quickStatsItems.map((item) => (
+            <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+              <CardHeader className="p-4 bg-primary text-primary-foreground">
+                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
+              </CardContent>
             </Card>
-         ))}
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {mainActionItems.map((item) => (
+              <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+                  <CardHeader className="p-4 bg-primary text-primary-foreground">
+                      <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+                          {item.title}
+                          {item.id === "manageSubmissions" && totalPendingSubmissions > 0 && (
+                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                          )}
+                          {item.id === "studentChats" && item.hasNotification && (
+                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                          )}
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                      <div className="flex justify-center my-4">
+                          <item.icon className={`h-16 w-16 text-primary`} />
+                      </div>
+                      <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
+                          {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : <div className="text-card-foreground font-medium">{item.description}</div>}
+                      </div>
+                      {item.link ? (
+                          <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
+                              <Link href={item.link}>
+                                {item.buttonText}
+                                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                              </Link>
+                          </Button>
+                      ) : item.action ? (
+                          <Button 
+                              onClick={item.action} 
+                              className={cn("w-full mt-auto group font-bold text-white", item.className)} 
+                              disabled={item.loading || item.disabled}
+                          >
+                              {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                              {item.buttonText}
+                          </Button>
+                      ) : null}
+                      {item.disabled && item.disabledText && <p className="text-xs text-destructive mt-1">{item.disabledText}</p>}
+                  </CardContent>
+              </Card>
+          ))}
+        </div>
       </div>
-    </div>
     </>
   );
 }
