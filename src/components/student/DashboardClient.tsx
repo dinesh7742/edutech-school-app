@@ -560,6 +560,18 @@ export function StudentDashboardClient() {
       buttonText: "View Gallery",
       icon: ImageIcon,
       description: "Explore photos from school events and activities. / स्कूल की घटनाओं और गतिविधियों की तस्वीरें देखें।",
+      renderContent: () => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+          <NextImage
+            src="https://i.postimg.cc/hvVChjWv/images.jpg"
+            alt="Photo Gallery"
+            width={200}
+            height={120}
+            className="rounded-md object-contain"
+            data-ai-hint="gallery photos event"
+          />
+        </div>
+      ),
     },
     {
       id: "conductRecord",
