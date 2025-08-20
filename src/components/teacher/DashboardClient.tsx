@@ -312,7 +312,7 @@ export function TeacherDashboardClient() {
                     <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
                 </Avatar>
                 <div className="text-left space-y-2 flex-grow">
-                    <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
+                    <p className="text-2xl font-bold text-foreground whitespace-nowrap">{teacherUser?.displayName}</p>
                     <div className="flex items-center text-sm text-muted-foreground gap-2">
                         <GraduationCap className="h-4 w-4 text-primary" />
                         <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
