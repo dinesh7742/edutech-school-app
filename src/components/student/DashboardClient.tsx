@@ -435,14 +435,21 @@ export function StudentDashboardClient() {
       description: "Important circulars and official communications. / महत्वपूर्ण परिपत्र और आधिकारिक संचार।",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
-         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+        <div className="relative w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center shadow-inner overflow-hidden">
+          <NextImage
+            src="https://i.postimg.cc/sxTMF98P/417213.png"
+            alt="Circulars Background"
+            layout="fill"
+            objectFit="cover"
+            className="z-0 opacity-20"
+            data-ai-hint="official document seal"
+          />
+          <div className="relative z-10 p-2 sm:p-4 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg w-full max-w-xs">
             {data ? (
-                <div className="text-left w-full space-y-1 p-1 sm:p-2 border rounded-md bg-card shadow-sm">
-                    <h3 className="font-semibold text-md">{data.title}</h3>
+                <div className="text-left w-full space-y-1">
+                    <h3 className="font-semibold text-md text-foreground">{data.title}</h3>
                     <div className="text-xs text-muted-foreground">
                     <span>Posted: {data.displayDate} by {data.postedByName}</span>
-                    {data.grade && <span> | For: Grade {data.grade}{data.division ? ` Div ${data.division}` : ' (All Div)'}</span>}
-                    {!data.grade && ' | School Wide'}
                     {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                     </div>
                     {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap">{data.description}</p>}
@@ -460,6 +467,7 @@ export function StudentDashboardClient() {
             ) : (
                 <p className="text-muted-foreground font-medium">No new circulars relevant to you.</p>
             )}
+          </div>
         </div>
       ),
     },
@@ -638,7 +646,7 @@ export function StudentDashboardClient() {
             <AlertDialogDescription>
                 Here are the latest updates from your teacher. Click on any item to go directly to that page.
                 <br />
-                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के लिए किसी भी आइटम पर क्लिक करें।
+                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के لیے کسی بھی आइटम پر کلک करें।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
