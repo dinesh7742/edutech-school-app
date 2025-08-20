@@ -290,7 +290,7 @@ export function StudentDashboardClient() {
       title: "Notice Board / सूचना पट्ट",
       link: "/student/notices",
       buttonText: "View All Notices",
-      icon: FileText,
+      iconUrl: "https://i.postimg.cc/3x9MTThL/9436150.png",
       description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -707,7 +707,11 @@ export function StudentDashboardClient() {
               </div>
               <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
                  <div className="flex justify-center my-4">
-                    <card.icon className={`h-16 w-16 text-primary`} />
+                    {card.iconUrl ? (
+                      <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
+                    ) : (
+                      <card.icon className={`h-16 w-16 text-primary`} />
+                    )}
                 </div>
                  <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
                     <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
