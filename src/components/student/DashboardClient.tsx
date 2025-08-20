@@ -296,7 +296,7 @@ export function StudentDashboardClient() {
       renderContent: (data: Notice | null) => (
         <div className="relative w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center shadow-inner overflow-hidden">
           <NextImage
-            src="https://i.postimg.cc/wBpbPXdb/cork-board-with-white-note-papers-107791-27036.jpg"
+            src="https://i.postimg.cc/xT5nj16C/cork-board-with-white-note-papers-107791-27036.jpg"
             alt="Notice Board"
             layout="fill"
             objectFit="cover"
@@ -646,7 +646,7 @@ export function StudentDashboardClient() {
             <AlertDialogDescription>
                 Here are the latest updates from your teacher. Click on any item to go directly to that page.
                 <br />
-                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के لیے کسی بھی आइटम پر کلک करें।
+                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के لیے किसी भी आइटम पर کلک करें।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
