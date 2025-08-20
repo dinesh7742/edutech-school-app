@@ -331,50 +331,61 @@ export function StudentDashboardClient() {
       description: "Check your latest assignments and due dates. / अपने नवीनतम असाइनमेंट और देय तिथियों की जांच करें।",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
-        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
-           {data ? (
-              <div className="text-left w-full space-y-1 p-1 sm:p-2 rounded-md bg-card">
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-between items-center text-center bg-card">
+           <NextImage 
+            src="https://i.postimg.cc/PrX9fzpG/cartoon-children-doing-homework-together-two-cartoon-children-sit-side-side-table-fully-focused-comp.jpg"
+            alt="Homework"
+            width={200}
+            height={120}
+            className="rounded-md object-cover mt-2"
+            data-ai-hint="children homework study"
+          />
+          <div className="flex-grow w-full flex items-center justify-center">
+            {data ? (
+              <div className="text-left w-full space-y-1 p-1 sm:p-2 rounded-md">
                 <h3 className="font-semibold text-md text-card-foreground">{data.title}</h3>
                 <div className="text-xs text-muted-foreground">
                   <span>Subject: {data.subject} | Due: {data.dueDate}</span> <br />
                   <span>Posted: {data.displayDate} by {data.postedByName}</span>
                   {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                 </div>
-                {data.description && <p className="text-sm line-clamp-3 whitespace-pre-wrap text-card-foreground">{data.description}</p>}
                 
                 {data.attachments && data.attachments.length > 0 && (
                    <Button
                       variant="outline"
                       size="sm"
                       className="mt-2"
-                      onClick={() => data.attachments && setViewingFile({ url: data.attachments[0].url, type: data.attachments[0].type, name: data.attachments[0].name })}
+                      onClick={(e) => { e.stopPropagation(); data.attachments && setViewingFile({ url: data.attachments[0].url, type: data.attachments[0].type, name: data.attachments[0].name })}}
                     >
                       View Attachment
                     </Button>
                 )}
-
-                {!isLatestHomeworkCompleted && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2 w-full"
-                    onClick={() => handleMarkHomeworkCompleted(data)}
-                    disabled={completingHomework}
-                  >
-                    {completingHomework && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Mark as Completed
-                  </Button>
-                )}
-                {isLatestHomeworkCompleted && (
-                  <Badge variant="accent" className="mt-2 w-full flex items-center justify-center text-center py-2 px-4 text-sm">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Homework Completed
-                  </Badge>
-                )}
               </div>
             ) : (
-                <p className="text-muted-foreground font-medium">No new homework for your class.</p>
+                <p className="text-muted-foreground font-medium p-4">No new homework for your class.</p>
             )}
+          </div>
+          {data && (
+            <div className="w-full p-1 sm:p-2">
+              {!isLatestHomeworkCompleted ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={(e) => { e.stopPropagation(); handleMarkHomeworkCompleted(data)}}
+                  disabled={completingHomework}
+                >
+                  {completingHomework && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Mark as Completed
+                </Button>
+              ) : (
+                <Badge variant="accent" className="w-full flex items-center justify-center text-center py-2 px-4 text-sm">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Homework Completed
+                </Badge>
+              )}
+            </div>
+          )}
         </div>
       ),
     },
@@ -534,7 +545,7 @@ export function StudentDashboardClient() {
         const applicationItems = [
           { name: "Leave Application", link: "/student/apply-leave", icon: CalendarPlus },
           { name: "Late Arrival", link: "/student/late-arrival", icon: AlertTriangle },
-          { name: "Other Forms", link: "/student/other-applications", icon: Edit },
+          { name: "Bonafide Certificate", link: "/student/other-applications/submit?formType=BonafideCertificateRequest", icon: FileText },
           { name: "Download Forms", link: "/student/school-forms", icon: FileArchive },
         ];
         return (
@@ -646,7 +657,7 @@ export function StudentDashboardClient() {
             <AlertDialogDescription>
                 Here are the latest updates from your teacher. Click on any item to go directly to that page.
                 <br />
-                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के لیے किसी भी आइटम पर کلک करें।
+                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के लिए किसी भी आइटम पर क्लिक करें।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
