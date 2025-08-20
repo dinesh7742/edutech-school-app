@@ -629,6 +629,18 @@ export function StudentDashboardClient() {
       buttonText: "Get My I-Card",
       icon: Contact,
       description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
+      renderContent: () => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+          <NextImage 
+            src="https://i.postimg.cc/Px4PwpZR/images-2025-08-20-T195046-534.jpg" 
+            alt="I-Card"
+            width={200}
+            height={120}
+            className="rounded-md object-contain"
+            data-ai-hint="identity card"
+          />
+        </div>
+      ),
     },
     {
       id: "attendance",
