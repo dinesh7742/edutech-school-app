@@ -294,27 +294,19 @@ export function StudentDashboardClient() {
       description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
-        <div className="relative w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center shadow-inner overflow-hidden">
-          <NextImage
-            src="https://i.postimg.cc/xT5nj16C/cork-board-with-white-note-papers-107791-27036.jpg"
-            alt="Notice Board"
-            layout="fill"
-            objectFit="cover"
-            className="z-0"
-            data-ai-hint="cork board paper"
-          />
-          <div className="relative z-10 p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-lg w-full max-w-xs">
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-card">
+          <div className="p-4 bg-background rounded-lg shadow-lg w-full max-w-xs">
             {data ? (
-              <div className="text-gray-800 space-y-2">
+              <div className="text-foreground space-y-2">
                 <h3 className="font-bold text-lg underline">{data.title}</h3>
-                <div className="text-xs text-gray-600">
+                <div className="text-xs text-muted-foreground">
                   <span>Posted: {data.displayDate} by {data.postedByName}</span>
                   {isNew(data.timestamp) && <Badge variant="highlight" className="ml-2 text-xs">New</Badge>}
                 </div>
                 <p className="text-sm text-left line-clamp-4 whitespace-pre-wrap">{data.content}</p>
               </div>
             ) : (
-              <div className="text-gray-500">
+              <div className="text-muted-foreground">
                 <p>No new notices relevant to you.</p>
               </div>
             )}
