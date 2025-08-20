@@ -495,11 +495,11 @@ export function StudentDashboardClient() {
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
           <NextImage 
-            src="https://i.postimg.cc/8zDHqcp6/images.jpg" 
+            src="https://i.postimg.cc/RF84S3St/pngtree-chating-on-phone-illustrations-png-image-17628344.png" 
             alt="Chat with teacher"
             width={200}
             height={120}
-            className="rounded-md object-cover"
+            className="rounded-md object-contain"
             data-ai-hint="chat conversation"
           />
         </div>
