@@ -386,7 +386,7 @@ export function StudentDashboardClient() {
       title: "My Results / मेरे परिणाम",
       link: "/student/results",
       buttonText: "View My Results",
-      icon: Award,
+      iconUrl: "https://i.postimg.cc/FRqtfgCw/download.png",
       description: "Check your scores for Unit Tests, First Semester, and Second Semester.",
       renderContent: () => {
         const resultItems = [
