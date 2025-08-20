@@ -290,7 +290,7 @@ export function StudentDashboardClient() {
       title: "Notice Board / सूचना पट्ट",
       link: "/student/notices",
       buttonText: "View All Notices",
-      iconUrl: "https://i.postimg.cc/3x9MTThL/9436150.png",
+      iconUrl: "https://i.postimg.cc/xT5nj16C/cork-board-with-white-note-papers-107791-27036.jpg",
       description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -414,7 +414,7 @@ export function StudentDashboardClient() {
       title: "Online Exams / ऑनलाइन परीक्षा",
       link: "/student/exams",
       buttonText: "Go to Exams",
-      icon: School,
+      iconUrl: "https://i.postimg.cc/85BDjnrc/images.png",
       description: "Take online exams and tests assigned by your teachers. / अपने शिक्षकों द्वारा सौंपे गए ऑनलाइन परीक्षा और टेस्ट दें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -434,7 +434,7 @@ export function StudentDashboardClient() {
       title: "Circulars / परिपत्र",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      icon: FileText,
+      iconUrl: "https://i.postimg.cc/sxTMF98P/417213.png",
       description: "Important circulars and official communications. / महत्वपूर्ण परिपत्र और आधिकारिक संचार।",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
