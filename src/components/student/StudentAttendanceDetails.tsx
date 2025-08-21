@@ -28,8 +28,8 @@ const DayCell = ({ day, status }: { day: number; status: AttendanceStatus | 'fut
     'Present': 'bg-green-500 text-white',
     'Absent': 'bg-red-500 text-white',
     'holiday': 'bg-red-500 text-white',
-    'Late': 'bg-yellow-500 text-white',
-    'Excused': 'bg-blue-500 text-white',
+    'Late': 'bg-yellow-500 text-white', // Not in the new design, but kept for logic
+    'Excused': 'bg-blue-500 text-white', // Not in the new design, but kept for logic
     'future': 'text-foreground',
     'empty': '',
   };
@@ -82,6 +82,13 @@ export function StudentAttendanceDetails() {
                 status: studentStatus,
                 note: data.note
             });
+        } else if (data.note && (data.note.toLowerCase().includes('holiday') || data.note.toLowerCase().includes('sunday'))) {
+            // If student record is missing but it's a holiday, add it
+             newRecords.set(data.date, {
+                date: parseISO(data.date),
+                status: 'Absent', // Treat as absent for coloring
+                note: data.note
+            });
         }
       });
       setRecords(newRecords);
@@ -99,9 +106,9 @@ export function StudentAttendanceDetails() {
   const firstDayIndex = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Monday is 0
 
   const presentDays = Array.from(records.values()).filter(r => r.status === 'Present').length;
-  const absentDays = Array.from(records.values()).filter(r => ['Absent', 'Late', 'Excused'].includes(r.status)).length;
   const holidays = Array.from(records.values()).filter(r => r.note?.toLowerCase().includes('holiday') || r.date.getDay() === 0).length;
   const workingDays = daysInMonth - holidays;
+  const absentDays = workingDays - presentDays;
   
   return (
     <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden">
@@ -119,17 +126,17 @@ export function StudentAttendanceDetails() {
             {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} />)}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
-              const dateKey = format(new Date(currentDate.getFullYear(), currentDate.getMonth(), day), 'yyyy-MM-dd');
+              const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+              const dateKey = format(date, 'yyyy-MM-dd');
               const record = records.get(dateKey);
+              
               let status: 'Present' | 'Absent' | 'holiday' | 'future' | 'empty' = 'future';
               
-              if(record) {
-                  if (record.note?.toLowerCase().includes('holiday') || record.date.getDay() === 0) {
+              if (record) {
+                  if (record.note?.toLowerCase().includes('holiday') || date.getDay() === 0) {
                       status = 'holiday';
-                  } else if (['Absent', 'Late', 'Excused'].includes(record.status)) {
-                      status = 'Absent';
                   } else {
-                      status = record.status as 'Present';
+                      status = record.status as 'Present' | 'Absent';
                   }
               }
 
@@ -157,11 +164,11 @@ export function StudentAttendanceDetails() {
       </div>
 
       <div className="p-4 flex justify-between">
-        <Button onClick={() => setCurrentDate(c => subMonths(c, 1))} className="bg-red-500 hover:bg-red-600 rounded-full">
-            <ChevronLeft className="h-4 w-4 mr-1"/> Previous
+        <Button onClick={() => setCurrentDate(c => subMonths(c, 1))} className="bg-red-500 hover:bg-red-600 rounded-full px-6">
+             Previous
         </Button>
-        <Button onClick={() => setCurrentDate(c => addMonths(c, 1))} className="bg-cyan-600 hover:bg-cyan-700 rounded-full">
-            Next Month <ChevronRight className="h-4 w-4 ml-1"/>
+        <Button onClick={() => setCurrentDate(c => addMonths(c, 1))} className="bg-cyan-600 hover:bg-cyan-700 rounded-full px-6">
+            Next Month
         </Button>
       </div>
     </Card>
