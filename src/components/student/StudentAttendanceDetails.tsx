@@ -6,10 +6,10 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, getDaysInMonth, getDay, addMonths, subMonths, parseISO, isWithinInterval, eachDayOfInterval } from "date-fns";
+import { format, startOfMonth, endOfMonth, getDaysInMonth, getDay, addMonths, subMonths, parseISO, isWithinInterval, eachDayOfInterval, isAfter } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AttendanceRecord {
@@ -22,14 +22,12 @@ const DayOfWeek = ({ day }: { day: string }) => (
   <div className="text-center font-medium text-muted-foreground">{day}</div>
 );
 
-const DayCell = ({ day, status }: { day: number; status: AttendanceStatus | 'future' | 'empty' | 'holiday' }) => {
+const DayCell = ({ day, status }: { day: number; status: 'Present' | 'Absent' | 'holiday' | 'future' | 'empty' }) => {
   const baseClasses = "flex items-center justify-center h-10 w-10 rounded-full text-sm";
   const statusClasses = {
     'Present': 'bg-green-500 text-white',
     'Absent': 'bg-red-500 text-white',
     'holiday': 'bg-red-500 text-white',
-    'Late': 'bg-yellow-500 text-white', // Not in the new design, but kept for logic
-    'Excused': 'bg-blue-500 text-white', // Not in the new design, but kept for logic
     'future': 'text-foreground',
     'empty': '',
   };
@@ -83,8 +81,7 @@ export function StudentAttendanceDetails() {
                 note: data.note
             });
         } else if (data.note && (data.note.toLowerCase().includes('holiday') || data.note.toLowerCase().includes('sunday'))) {
-            // If student record is missing but it's a holiday, add it
-             newRecords.set(data.date, {
+            newRecords.set(data.date, {
                 date: parseISO(data.date),
                 status: 'Absent', // Treat as absent for coloring
                 note: data.note
@@ -102,16 +99,16 @@ export function StudentAttendanceDetails() {
   }, [user, currentDate]);
 
   const daysInMonth = getDaysInMonth(currentDate);
-  const startDayOfWeek = getDay(startOfMonth(currentDate)); // Sunday is 0
-  const firstDayIndex = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Monday is 0
+  const startDayOfWeek = getDay(startOfMonth(currentDate)); // Sunday is 0, Monday is 1
+  const firstDayIndex = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Adjust to have Monday as the first day (index 0)
 
   const presentDays = Array.from(records.values()).filter(r => r.status === 'Present').length;
   const holidays = Array.from(records.values()).filter(r => r.note?.toLowerCase().includes('holiday') || r.date.getDay() === 0).length;
   const workingDays = daysInMonth - holidays;
-  const absentDays = workingDays - presentDays;
+  const absentDays = workingDays > 0 ? workingDays - presentDays : 0;
   
   return (
-    <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden">
+    <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden bg-background">
       <div className="bg-cyan-500 text-white p-4 text-center relative">
         <h2 className="text-xl font-bold">{format(currentDate, "MMMM yyyy")}</h2>
         <div className="absolute bottom-0 left-0 right-0 h-4 bg-background" style={{ borderTopLeftRadius: '100%', borderTopRightRadius: '100%' }}></div>
@@ -122,7 +119,7 @@ export function StudentAttendanceDetails() {
             <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin"/></div>
         ) : (
           <div className="grid grid-cols-7 gap-2">
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(d => <DayOfWeek key={d} day={d} />)}
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <DayOfWeek key={i} day={d} />)}
             {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} />)}
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
@@ -133,12 +130,17 @@ export function StudentAttendanceDetails() {
               let status: 'Present' | 'Absent' | 'holiday' | 'future' | 'empty' = 'future';
               
               if (record) {
-                  if (record.note?.toLowerCase().includes('holiday') || date.getDay() === 0) {
-                      status = 'holiday';
-                  } else {
-                      status = record.status as 'Present' | 'Absent';
-                  }
+                if (record.note?.toLowerCase().includes('holiday') || date.getDay() === 0) {
+                  status = 'holiday';
+                } else if (record.status) {
+                  status = record.status as 'Present' | 'Absent';
+                }
+              } else if (isAfter(date, new Date())) {
+                 status = 'future';
+              } else if (date.getDay() === 0) { // Mark sundays even if no record
+                 status = 'holiday';
               }
+
 
               return <DayCell key={day} day={day} status={status} />;
             })}
@@ -147,14 +149,14 @@ export function StudentAttendanceDetails() {
       </div>
 
       <div className="p-4 space-y-3">
-        <Card className="p-4">
+        <Card className="p-4 bg-muted/50">
           <div className="flex justify-around">
             <StatCard label="HOLIDAY" value={holidays} colorClass="text-gray-500" />
             <div className="border-l mx-2"></div>
             <StatCard label="WORKING DAY" value={workingDays} colorClass="text-orange-500" />
           </div>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 bg-muted/50">
           <div className="flex justify-around">
             <StatCard label="PRESENT" value={presentDays} colorClass="text-green-500" />
             <div className="border-l mx-2"></div>
@@ -164,10 +166,10 @@ export function StudentAttendanceDetails() {
       </div>
 
       <div className="p-4 flex justify-between">
-        <Button onClick={() => setCurrentDate(c => subMonths(c, 1))} className="bg-red-500 hover:bg-red-600 rounded-full px-6">
+        <Button onClick={() => setCurrentDate(c => subMonths(c, 1))} className="bg-red-500 hover:bg-red-600 rounded-full px-6 text-white">
              Previous
         </Button>
-        <Button onClick={() => setCurrentDate(c => addMonths(c, 1))} className="bg-cyan-600 hover:bg-cyan-700 rounded-full px-6">
+        <Button onClick={() => setCurrentDate(c => addMonths(c, 1))} className="bg-cyan-600 hover:bg-cyan-700 rounded-full px-6 text-white">
             Next Month
         </Button>
       </div>
