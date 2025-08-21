@@ -568,7 +568,6 @@ export function StudentDashboardClient() {
       title: "Photo Gallery / फोटो गैलरी",
       link: "/student/gallery",
       buttonText: "View Gallery",
-      icon: ImageIcon,
       description: "Explore photos from school events and activities. / स्कूल की घटनाओं और गतिविधियों की तस्वीरें देखें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -588,7 +587,6 @@ export function StudentDashboardClient() {
       title: "Parent Notifications / अभिभावक सूचनाएं",
       link: "/student/conduct-record",
       buttonText: "View Notifications",
-      icon: FileSignature,
       description: "View and acknowledge conduct reports from teachers. / शिक्षकों से आचरण रिपोर्ट देखें और स्वीकार करें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -608,7 +606,6 @@ export function StudentDashboardClient() {
       title: "Download I-Card / आई-कार्ड डाउनलोड करें",
       link: "/student/icard",
       buttonText: "Get My I-Card",
-      icon: Contact,
       description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
