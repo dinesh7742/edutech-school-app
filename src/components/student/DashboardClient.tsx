@@ -639,7 +639,7 @@ export function StudentDashboardClient() {
       title: "My Profile / मेरी प्रोफाइल",
       link: "/student/profile",
       buttonText: "Go to Profile",
-      icon: Users,
+      iconUrl: "https://i.postimg.cc/FHHWBKfh/201818.png",
       description: "Manage your personal information and settings. / अपनी व्यक्तिगत जानकारी और सेटिंग्स प्रबंधित करें।",
     },
   ];
