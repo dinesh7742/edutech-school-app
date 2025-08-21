@@ -290,7 +290,7 @@ export function StudentDashboardClient() {
       title: "Notice Board / सूचना पट्ट",
       link: "/student/notices",
       buttonText: "View All Notices",
-      iconUrl: "https://i.postimg.cc/xT5nj16C/cork-board-with-white-note-papers-107791-27036.jpg",
+      iconUrl: "https://i.postimg.cc/3x9MTThL/9436150.png",
       description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -434,7 +434,7 @@ export function StudentDashboardClient() {
       title: "Circulars / परिपत्र",
       link: "/student/circulars",
       buttonText: "View All Circulars",
-      iconUrl: "https://i.postimg.cc/sxTMF98P/417213.png",
+      icon: FileText,
       description: "Important circulars and official communications. / महत्वपूर्ण परिपत्र और आधिकारिक संचार।",
       contentData: latestCircular,
       renderContent: (data: Circular | null) => (
@@ -631,7 +631,7 @@ export function StudentDashboardClient() {
       title: "My Attendance / मेरी उपस्थिति",
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
-      icon: CheckCircle,
+      iconUrl: "https://i.postimg.cc/ydYwhTFy/download-1.png",
       description: "View your detailed attendance records. / अपने विस्तृत उपस्थिति रिकॉर्ड देखें।",
     },
     {
@@ -710,7 +710,7 @@ export function StudentDashboardClient() {
                     {card.iconUrl ? (
                       <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
                     ) : (
-                      <card.icon className={`h-16 w-16 text-primary`} />
+                      card.icon && <card.icon className={`h-16 w-16 text-primary`} />
                     )}
                 </div>
                  <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
