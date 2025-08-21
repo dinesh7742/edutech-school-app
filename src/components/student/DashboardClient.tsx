@@ -414,7 +414,6 @@ export function StudentDashboardClient() {
       title: "Online Exams / ऑनलाइन परीक्षा",
       link: "/student/exams",
       buttonText: "Go to Exams",
-      iconUrl: "https://i.postimg.cc/85BDjnrc/images.png",
       description: "Take online exams and tests assigned by your teachers. / अपने शिक्षकों द्वारा सौंपे गए ऑनलाइन परीक्षा और टेस्ट दें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -503,7 +502,6 @@ export function StudentDashboardClient() {
       title: "Chat with Teacher / शिक्षक के साथ चैट करें",
       link: "/student/chat",
       buttonText: "Open Chat",
-      icon: MessageSquare,
       description: "Communicate directly with your class teacher. / अपने कक्षा शिक्षक से सीधे संवाद करें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -551,7 +549,6 @@ export function StudentDashboardClient() {
       title: "Textbooks / पाठ्यपुस्तकें",
       link: "/student/textbooks",
       buttonText: "View Textbooks",
-      icon: BookOpen,
       description: "Access your digital textbooks for all subjects. / सभी विषयों के लिए अपनी डिजिटल पाठ्यपुस्तकें एक्सेस करें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
