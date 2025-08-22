@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, getDaysInMonth, getDay, addMonths, subMonths, parseISO, isWithinInterval, eachDayOfInterval, isAfter } from "date-fns";
+import { format, startOfMonth, endOfMonth, getDaysInMonth, getDay, addMonths, subMonths, parseISO, isWithinInterval, isAfter } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -60,32 +60,37 @@ export function StudentAttendanceDetails() {
 
     const firstDay = startOfMonth(currentDate);
     const lastDay = endOfMonth(currentDate);
-
+    
+    // Modified query to prevent missing index error.
+    // We fetch all records for the class and then filter by date on the client.
     const attendanceQuery = query(
       collection(db, "dailyAttendance"),
       where("grade", "==", user.grade),
-      where("division", "==", user.division),
-      where("date", ">=", format(firstDay, 'yyyy-MM-dd')),
-      where("date", "<=", format(lastDay, 'yyyy-MM-dd'))
+      where("division", "==", user.division)
     );
     
     const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
       const newRecords = new Map<string, AttendanceRecord>();
       snapshot.forEach(doc => {
         const data = doc.data() as DailyAttendanceLog;
-        const studentStatus = data.studentRecords[user.uid!];
-        if (studentStatus) {
-            newRecords.set(data.date, {
-                date: parseISO(data.date),
-                status: studentStatus,
-                note: data.note
-            });
-        } else if (data.note && (data.note.toLowerCase().includes('holiday') || data.note.toLowerCase().includes('sunday'))) {
-            newRecords.set(data.date, {
-                date: parseISO(data.date),
-                status: 'Absent', // Treat as absent for coloring
-                note: data.note
-            });
+        const logDate = parseISO(data.date);
+
+        // Client-side date filtering
+        if (isWithinInterval(logDate, { start: firstDay, end: lastDay })) {
+            const studentStatus = data.studentRecords[user.uid!];
+            if (studentStatus) {
+                newRecords.set(data.date, {
+                    date: logDate,
+                    status: studentStatus,
+                    note: data.note
+                });
+            } else if (data.note && (data.note.toLowerCase().includes('holiday') || data.note.toLowerCase().includes('sunday'))) {
+                newRecords.set(data.date, {
+                    date: logDate,
+                    status: 'Absent', // Treat as absent for coloring
+                    note: data.note
+                });
+            }
         }
       });
       setRecords(newRecords);
@@ -104,8 +109,15 @@ export function StudentAttendanceDetails() {
 
   const presentDays = Array.from(records.values()).filter(r => r.status === 'Present').length;
   const holidays = Array.from(records.values()).filter(r => r.note?.toLowerCase().includes('holiday') || r.date.getDay() === 0).length;
-  const workingDays = daysInMonth - holidays;
-  const absentDays = workingDays > 0 ? workingDays - presentDays : 0;
+  
+  // Calculate working days only from marked attendance days to avoid counting future days
+  const markedDays = new Set(Array.from(records.values()).map(r => format(r.date, 'yyyy-MM-dd')));
+  const workingDays = Array.from(markedDays).filter(d => {
+      const date = parseISO(d);
+      return date.getDay() !== 0 && !records.get(d)?.note?.toLowerCase().includes('holiday');
+  }).length;
+  
+  const absentDays = workingDays > presentDays ? workingDays - presentDays : 0;
   
   return (
     <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden bg-background">
@@ -139,8 +151,10 @@ export function StudentAttendanceDetails() {
                  status = 'future';
               } else if (date.getDay() === 0) { // Mark sundays even if no record
                  status = 'holiday';
+              } else if (date < new Date()){
+                 // If it's a past weekday with no record, mark as absent.
+                 status = 'Absent';
               }
-
 
               return <DayCell key={day} day={day} status={status} />;
             })}
