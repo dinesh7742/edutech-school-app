@@ -48,6 +48,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
+
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -73,6 +75,10 @@ export function TeacherDashboardClient() {
 
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
+  
+  const [birthdayStudent, setBirthdayStudent] = useState<StudentProfile | null>(null);
+  const [showBirthdayPopup, setShowBirthdayPopup] = useState(false);
+
 
   const { totalStudents, maleStudents, femaleStudents } = useMemo(() => {
     const total = studentsInClass.length;
@@ -171,7 +177,24 @@ export function TeacherDashboardClient() {
                     orderBy("firstName")
                 );
                 const querySnapshot = await getDocs(q);
-                setStudentsInClass(querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile)));
+                const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+                setStudentsInClass(fetchedStudents);
+
+                // Check for birthdays
+                const today = format(new Date(), 'MM-dd');
+                const studentWithBirthday = fetchedStudents.find(student => 
+                    student.dateOfBirth && format(new Date(student.dateOfBirth), 'MM-dd') === today
+                );
+
+                if (studentWithBirthday) {
+                    const lastShown = localStorage.getItem(`birthday_${studentWithBirthday.uid}`);
+                    const todayStr = format(new Date(), 'yyyy-MM-dd');
+                    if (lastShown !== todayStr) {
+                        setBirthdayStudent(studentWithBirthday);
+                        setShowBirthdayPopup(true);
+                    }
+                }
+
             } catch (err: any) {
                 console.error("Error fetching students for teacher's class:", err);
                 setStudentCountError("Failed to fetch student data.");
@@ -277,6 +300,13 @@ export function TeacherDashboardClient() {
 
     return () => unsubscribe();
   }, [teacherUser, toast]);
+  
+  const closeBirthdayPopup = () => {
+    if (birthdayStudent) {
+        localStorage.setItem(`birthday_${birthdayStudent.uid}`, format(new Date(), 'yyyy-MM-dd'));
+    }
+    setShowBirthdayPopup(false);
+  };
 
   const getAttendanceCardDescription = () => {
     if (loadingTodaysAttendanceStatus) return "Checking today's attendance status...";
@@ -387,6 +417,9 @@ export function TeacherDashboardClient() {
 
   return (
     <>
+       {showBirthdayPopup && birthdayStudent && (
+        <BirthdayPopup student={birthdayStudent} onClose={closeBirthdayPopup} />
+      )}
       <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

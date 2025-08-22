@@ -13,12 +13,14 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, AppNotification } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, AppNotification, StudentProfile } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 import NextImage from 'next/image';
+import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
+import { format } from 'date-fns';
 
 interface LatestContent<T> {
   item: T | null;
@@ -31,14 +33,6 @@ const isNew = (timestamp: Timestamp | undefined): boolean => {
   const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   return itemDate > twentyFourHoursAgo;
 };
-
-const cardColors = [
-  "text-chart-1",
-  "text-chart-2",
-  "text-chart-3",
-  "text-chart-4",
-  "text-chart-5",
-];
 
 export function StudentDashboardClient() {
   const { user } = useAuth();
@@ -56,11 +50,41 @@ export function StudentDashboardClient() {
 
   const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
   
+  const [birthdayStudent, setBirthdayStudent] = useState<StudentProfile | null>(null);
+  const [showBirthdayPopup, setShowBirthdayPopup] = useState(false);
+  
   useEffect(() => {
     if (!user?.uid) {
       setLoadingNotifications(false);
       return;
     }
+
+    const checkBirthday = async () => {
+        if (!user.uid) return;
+
+        const profileDocRef = doc(db, "studentProfiles", user.uid);
+        const profileDoc = await getDoc(profileDocRef);
+
+        if (profileDoc.exists()) {
+            const studentData = profileDoc.data() as StudentProfile;
+            if (studentData.dateOfBirth) {
+                const today = format(new Date(), 'MM-dd');
+                const birthDate = format(new Date(studentData.dateOfBirth), 'MM-dd');
+                
+                if (today === birthDate) {
+                    const lastShown = localStorage.getItem(`birthday_${studentData.uid}`);
+                    const todayStr = format(new Date(), 'yyyy-MM-dd');
+                    if (lastShown !== todayStr) {
+                         setBirthdayStudent(studentData);
+                         setShowBirthdayPopup(true);
+                    }
+                }
+            }
+        }
+    };
+
+    checkBirthday();
+    
 
     // Listener for new direct notifications (e.g., absence)
     const notificationsRef = collection(db, "notifications");
@@ -250,6 +274,13 @@ export function StudentDashboardClient() {
         unsubscribeNotifications();
     };
   }, [user, toast]);
+  
+  const closeBirthdayPopup = () => {
+    if (birthdayStudent) {
+        localStorage.setItem(`birthday_${birthdayStudent.uid}`, format(new Date(), 'yyyy-MM-dd'));
+    }
+    setShowBirthdayPopup(false);
+  };
 
   const handleMarkHomeworkCompleted = async (homeworkItem: Homework) => {
     if (!user || !homeworkItem || !user.uid || !user.grade || !user.division) {
@@ -297,7 +328,7 @@ export function StudentDashboardClient() {
       title: "Notice Board / सूचना पट्ट",
       link: "/student/notices",
       buttonText: "View All Notices",
-      iconUrl: "https://i.postimg.cc/3x9MTThL/9436150.png",
+      icon: FileText,
       description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -392,7 +423,7 @@ export function StudentDashboardClient() {
       title: "My Results / मेरे परिणाम",
       link: "/student/results",
       buttonText: "View My Results",
-      iconUrl: "https://i.postimg.cc/FRqtfgCw/download.png",
+      icon: Award,
       description: "Check your scores for Unit Tests, First Semester, and Second Semester.",
       renderContent: () => {
         const resultItems = [
@@ -612,7 +643,6 @@ export function StudentDashboardClient() {
       title: "Download I-Card / आई-कार्ड डाउनलोड करें",
       link: "/student/icard",
       buttonText: "Get My I-Card",
-      iconUrl: "https://i.postimg.cc/Px4PwpZR/images-2025-08-20-T195046-534.jpg",
       description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
@@ -632,7 +662,6 @@ export function StudentDashboardClient() {
       title: "My Attendance / मेरी उपस्थिति",
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
-      iconUrl: "https://i.postimg.cc/ydYwhTFy/download-1.png",
       description: "View your detailed attendance records. / अपने विस्तृत उपस्थिति रिकॉर्ड देखें।",
     },
     {
@@ -647,6 +676,9 @@ export function StudentDashboardClient() {
   
   return (
     <>
+      {showBirthdayPopup && birthdayStudent && (
+        <BirthdayPopup student={birthdayStudent} onClose={closeBirthdayPopup} />
+      )}
       <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
       <div className="space-y-8">
         <WelcomeMessage />
