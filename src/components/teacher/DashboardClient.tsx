@@ -167,12 +167,11 @@ export function TeacherDashboardClient() {
                 const q = query(
                     profilesCollectionRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division)
+                    where("division", "==", teacherUser.division),
+                    orderBy("firstName")
                 );
                 const querySnapshot = await getDocs(q);
-                const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
-                fetchedStudents.sort((a,b) => (a.firstName || "").localeCompare(b.firstName || ""));
-                setStudentsInClass(fetchedStudents);
+                setStudentsInClass(querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile)));
             } catch (err: any) {
                 console.error("Error fetching students for teacher's class:", err);
                 setStudentCountError("Failed to fetch student data.");
@@ -312,7 +311,7 @@ export function TeacherDashboardClient() {
                     <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
                 </Avatar>
                 <div className="text-left space-y-2 flex-grow">
-                    <p className="text-2xl font-bold text-foreground whitespace-nowrap">{teacherUser?.displayName}</p>
+                    <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
                     <div className="flex items-center text-sm text-muted-foreground gap-2">
                         <GraduationCap className="h-4 w-4 text-primary" />
                         <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>

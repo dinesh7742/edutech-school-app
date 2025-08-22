@@ -15,7 +15,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, NotificationMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
-import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
+import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 import {
@@ -606,7 +606,7 @@ export function StudentDashboardClient() {
       title: "Download I-Card / आई-कार्ड डाउनलोड करें",
       link: "/student/icard",
       buttonText: "Get My I-Card",
-      description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
+      description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें。",
       renderContent: () => (
         <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
           <NextImage 
@@ -673,7 +673,7 @@ export function StudentDashboardClient() {
     <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
     <div className="space-y-8">
       <WelcomeMessage />
-      <StudentAttendanceCalendar />
+      <StudentAttendanceDetails />
       <TodaySpecial />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
