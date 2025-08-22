@@ -364,3 +364,13 @@ export interface NotificationMessage {
   english: string;
   hindi: string;
 }
+
+export interface AppNotification {
+    id: string;
+    recipientUid: string;
+    type: 'Absent' | 'NewHomework' | 'NewNotice' | 'NewCircular' | 'NewLiveClass';
+    message: string;
+    link: string;
+    timestamp: Timestamp | FieldValue;
+    isRead: boolean;
+}

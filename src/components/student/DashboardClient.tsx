@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, NotificationMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
@@ -67,6 +67,7 @@ export function StudentDashboardClient() {
   
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState<any[]>([]);
 
 
   useEffect(() => {
@@ -75,6 +76,37 @@ export function StudentDashboardClient() {
       return;
     }
     let hasOpenedDialog = false;
+
+    // Listener for new direct notifications (e.g., absence)
+    const notificationsRef = collection(db, "notifications");
+    const notificationsQuery = query(
+      notificationsRef,
+      where("recipientUid", "==", user.uid),
+      where("isRead", "==", false)
+    );
+    const unsubscribeNotifications = onSnapshot(notificationsQuery, async (snapshot) => {
+      const newNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      if (newNotifications.length > 0) {
+        setUnreadNotifications(newNotifications);
+        const newMessages: NotificationMessage[] = newNotifications.map(n => ({
+          link: n.link,
+          english: n.message,
+          hindi: "" // Assuming no hindi message for direct notifications for now
+        }));
+        
+        setNotificationMessages(prev => {
+            const existingMessages = new Set(prev.map(p => p.english));
+            const filteredNew = newMessages.filter(nm => !existingMessages.has(nm.english));
+            return [...prev, ...filteredNew];
+        });
+
+        if (!hasOpenedDialog && newMessages.length > 0) {
+            setIsNotificationDialogOpen(true);
+            hasOpenedDialog = true;
+        }
+      }
+    });
 
     const fetchPendingNotifications = async () => {
       setLoadingNotifications(true);
@@ -215,10 +247,15 @@ export function StudentDashboardClient() {
              setIsLatestHomeworkCompleted(false);
         }
 
+        setNotificationMessages(prev => {
+            const existingMessages = new Set(prev.map(p => p.english));
+            const filteredNew = newMessages.filter(nm => !existingMessages.has(nm.english));
+            return [...prev, ...filteredNew];
+        });
+
         if (newMessages.length > 0 && !hasOpenedDialog) {
-            setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
-            hasOpenedDialog = true; // Prevent re-opening
+            hasOpenedDialog = true; // Prevent re-opening for content fetches
         }
     };
     checkAllContent();
@@ -226,7 +263,7 @@ export function StudentDashboardClient() {
     // Check for unread messages
     const chatsRef = collection(db, "chats");
     const chatsQuery = query(chatsRef, where("participants", "array-contains", user.uid));
-    const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+    const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
       let unreadFound = false;
       snapshot.forEach((chatDoc) => {
         const messages = (chatDoc.data().messages || []) as ChatMessage[];
@@ -241,7 +278,10 @@ export function StudentDashboardClient() {
       setHasUnreadMessages(unreadFound);
     });
     
-    return () => unsubscribe();
+    return () => {
+        unsubscribeChats();
+        unsubscribeNotifications();
+    };
   }, [user, toast]);
 
   const handleMarkHomeworkCompleted = async (homeworkItem: Homework) => {
@@ -281,6 +321,23 @@ export function StudentDashboardClient() {
       });
     } finally {
       setCompletingHomework(false);
+    }
+  };
+  
+  const handleDialogClose = async () => {
+    setIsNotificationDialogOpen(false);
+    if (unreadNotifications.length > 0) {
+        const batch = writeBatch(db);
+        unreadNotifications.forEach(notif => {
+            const notifRef = doc(db, 'notifications', notif.id);
+            batch.update(notifRef, { isRead: true });
+        });
+        try {
+            await batch.commit();
+            setUnreadNotifications([]);
+        } catch (error) {
+            console.error("Error marking notifications as read: ", error);
+        }
     }
   };
 
@@ -606,19 +663,8 @@ export function StudentDashboardClient() {
       title: "Download I-Card / आई-कार्ड डाउनलोड करें",
       link: "/student/icard",
       buttonText: "Get My I-Card",
-      description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें。",
-      renderContent: () => (
-        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
-          <NextImage 
-            src="https://i.postimg.cc/Px4PwpZR/images-2025-08-20-T195046-534.jpg" 
-            alt="I-Card"
-            width={200}
-            height={120}
-            className="rounded-md object-contain"
-            data-ai-hint="identity card"
-          />
-        </div>
-      ),
+      iconUrl: "https://i.postimg.cc/Px4PwpZR/images-2025-08-20-T195046-534.jpg",
+      description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
     },
     {
       id: "attendance",
@@ -645,15 +691,15 @@ export function StudentDashboardClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Today's Announcements / आज की घोषणाएँ</AlertDialogTitle>
             <AlertDialogDescription>
-                Here are the latest updates from your teacher. Click on any item to go directly to that page.
+                Here are the latest updates. Click on any item to go directly to that page.
                 <br />
-                यहां आपके शिक्षक के नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के लिए किसी भी आइटम पर क्लिक करें।
+                यहां नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के लिए किसी भी आइटम पर क्लिक करें।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
             {notificationMessages.length > 0 ? (
                 notificationMessages.map((msg, index) => (
-                    <Link key={index} href={msg.link} onClick={() => setIsNotificationDialogOpen(false)} className="block p-3 border rounded-md hover:bg-muted transition-colors">
+                    <Link key={index} href={msg.link} onClick={handleDialogClose} className="block p-3 border rounded-md hover:bg-muted transition-colors">
                         <p className="font-semibold">{msg.english}</p>
                         <p className="text-sm text-muted-foreground">{msg.hindi}</p>
                     </Link>
@@ -665,7 +711,7 @@ export function StudentDashboardClient() {
             )}
           </div>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setIsNotificationDialogOpen(false)}>OK</AlertDialogAction>
+            <AlertDialogAction onClick={handleDialogClose}>OK</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -703,9 +749,9 @@ export function StudentDashboardClient() {
                  <div className="flex justify-center my-4">
                     {card.iconUrl ? (
                       <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
-                    ) : (
-                      card.icon && <card.icon className={`h-16 w-16 text-primary`} />
-                    )}
+                    ) : card.icon ? (
+                      <card.icon className={`h-16 w-16 text-primary`} />
+                    ) : null}
                 </div>
                  <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
                     <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>

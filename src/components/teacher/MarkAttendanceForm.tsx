@@ -14,7 +14,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { CalendarIcon, CheckCircle, Loader2, Users, XCircle, Search, MessageSquare, Send, UserX } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import type { StudentProfile, DailyAttendanceLog, AttendanceStatus } from "@/types";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -182,6 +182,9 @@ export function MarkAttendanceForm() {
     }
     setIsSubmitting(true);
     setAbsentStudentsForSms([]); 
+
+    const batch = writeBatch(db);
+    const notificationsRef = collection(db, "notifications");
     const formattedDate = format(selectedDate, "yyyy-MM-dd");
     const attendanceDocId = `${formattedDate}_${teacherUser.grade}_${teacherUser.division}`;
     
@@ -195,27 +198,41 @@ export function MarkAttendanceForm() {
       lastUpdatedAt: serverTimestamp(),
       note: attendanceNote || "",
     };
+    
+    const attendanceDocRef = doc(db, "dailyAttendance", attendanceDocId);
+    batch.set(attendanceDocRef, attendanceData, { merge: true });
 
-    try {
-      const attendanceDocRef = doc(db, "dailyAttendance", attendanceDocId);
-      await setDoc(attendanceDocRef, attendanceData, { merge: true });
-      toast({ title: "Success", description: `Attendance for ${formattedDate} saved successfully.` });
+    const studentMap = new Map(students.map(s => [s.uid, s]));
+    const absentees: AbsentStudentInfo[] = [];
 
-      const studentMap = new Map(students.map(s => [s.uid, s]));
-      const absentees: AbsentStudentInfo[] = [];
-
-      for (const studentUid in data) {
+    for (const studentUid in data) {
         if (data[studentUid] === "Absent") {
-          const student = studentMap.get(studentUid);
-          if (student) {
-            absentees.push({
-                uid: student.uid,
-                name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
-                contactNumber: student.contactNumber,
-            });
-          }
+            const student = studentMap.get(studentUid);
+            if (student) {
+                absentees.push({
+                    uid: student.uid,
+                    name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+                    contactNumber: student.contactNumber,
+                });
+                
+                // Create a notification for the absent student
+                const notificationDocRef = doc(notificationsRef);
+                batch.set(notificationDocRef, {
+                    recipientUid: student.uid,
+                    type: 'Absent',
+                    message: `You were marked absent on ${format(selectedDate, "PPP")}.`,
+                    link: '/student/attendance',
+                    timestamp: serverTimestamp(),
+                    isRead: false
+                });
+            }
         }
-      }
+    }
+    
+    try {
+      await batch.commit();
+      toast({ title: "Success", description: `Attendance for ${formattedDate} saved successfully.` });
+      
       setAbsentStudentsForSms(absentees);
       if (absentees.length > 0) {
         toast({
