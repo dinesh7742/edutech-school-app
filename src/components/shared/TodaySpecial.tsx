@@ -1,90 +1,63 @@
 
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarDays, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2 } from 'lucide-react';
+import { getDailySpecial, type DailySpecialOutput } from '@/ai/flows/get-daily-special';
+import { format } from 'date-fns';
 
-export interface SpecialDay {
-  date: string; // YYYY-MM-DD
-  name: string;
-  description?: string;
-}
+const eventIcons: Record<DailySpecialOutput['type'], React.ElementType> = {
+  Historical: Landmark,
+  Science: FlaskConical,
+  Arts: BookOpen,
+  Anniversary: Cake,
+  Other: Sparkles,
+};
 
-// Expanded list of special days and festivals for 2025.
-// In a real application, this would come from a database or API.
-export const specialDays2025: SpecialDay[] = [
-  { date: '2025-01-01', name: "New Year's Day" },
-  { date: '2025-01-13', name: 'Lohri' },
-  { date: '2025-01-14', name: 'Makar Sankranti / Pongal' },
-  { date: '2025-01-15', name: 'Uttarayan' },
-  { date: '2025-01-26', name: 'Republic Day' },
-  { date: '2025-02-12', name: 'Vasant Panchami' },
-  { date: '2025-02-26', name: 'Mahashivratri' },
-  { date: '2025-03-14', name: 'Holi' },
-  { date: '2025-03-15', name: 'Holi (Dhuleti)' },
-  { date: '2025-03-29', name: 'Gudi Padwa / Ugadi' },
-  { date: '2025-03-30', name: 'Ramadan Begins (Tentative)' },
-  { date: '2025-04-06', name: 'Ram Navami' },
-  { date: '2025-04-14', name: 'Dr. Ambedkar Jayanti / Tamil New Year / Vishu' },
-  { date: '2025-04-18', name: 'Good Friday' },
-  { date: '2025-04-20', name: 'Easter Sunday' },
-  { date: '2025-04-29', name: 'Eid-ul-Fitr (Tentative)' },
-  { date: '2025-05-01', name: 'Maharashtra Day / May Day' },
-  { date: '2025-05-05', name: 'Buddha Purnima' },
-  { date: '2025-06-06', name: 'Eid-ul-Adha (Bakrid) (Tentative)' },
-  { date: '2025-06-29', name: 'Rath Yatra' },
-  { date: '2025-07-06', name: 'Ashadi Ekadashi' },
-  { date: '2025-08-09', name: 'Raksha Bandhan' },
-  { date: '2025-08-15', name: 'Independence Day' },
-  { date: '2025-08-18', name: 'Janmashtami' },
-  { date: '2025-08-29', name: 'Ganesh Chaturthi' },
-  { date: '2025-09-08', name: 'Onam' },
-  { date: '2025-09-23', name: 'Navratri Begins' },
-  { date: '2025-10-02', name: 'Gandhi Jayanti / Dussehra' },
-  { date: '2025-10-21', name: 'Diwali (Lakshmi Puja)' },
-  { date: '2025-10-22', name: 'Diwali (Govardhan Puja)' },
-  { date: '2025-10-23', name: 'Bhai Dooj' },
-  { date: '2025-11-05', name: 'Guru Nanak Jayanti' },
-  { date: '2025-12-25', name: 'Christmas Day' },
-];
+const eventColors: Record<DailySpecialOutput['type'], string> = {
+  Historical: "bg-blue-500",
+  Science: "bg-green-500",
+  Arts: "bg-purple-500",
+  Anniversary: "bg-pink-500",
+  Other: "bg-gray-500",
+};
+
 
 export function TodaySpecial() {
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
-  const [todaySpecialEvent, setTodaySpecialEvent] = useState<SpecialDay | null>(null);
+  const [dailyEvent, setDailyEvent] = useState<DailySpecialOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const now = new Date();
     setCurrentDate(now);
+    
+    const todayString = format(now, "yyyy-MM-dd");
 
-    const year = now.getFullYear();
-    // Only use 2025 special days if current year is 2025 for this demo
-    if (year === 2025) {
-        const month = (now.getMonth() + 1).toString().padStart(2, '0'); // Month is 0-indexed
-        const day = now.getDate().toString().padStart(2, '0');
-        const todayString = `${year}-${month}-${day}`;
+    const fetchEvent = async () => {
+      setIsLoading(true);
+      try {
+        const event = await getDailySpecial({ date: todayString });
+        setDailyEvent(event);
+      } catch (error) {
+        console.error("Error fetching daily special event:", error);
+        setDailyEvent(null); // Set to null on error
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        const event = specialDays2025.find(sd => sd.date === todayString);
-        setTodaySpecialEvent(event || null);
-    } else {
-        setTodaySpecialEvent(null); // No special event for other years in this demo
-    }
+    fetchEvent();
 
-  }, []); // Empty dependency array ensures this runs once on mount client-side
+  }, []);
 
   if (!currentDate) {
-    // Render a placeholder or skeleton while date is being determined client-side
     return (
-      <Card className="shadow-lg rounded-lg bg-card text-card-foreground my-6">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold flex items-center">
-            <CalendarDays className="mr-2 h-6 w-6 text-primary" />
-            Today's Date & Special
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-lg">Loading date...</p>
-        </CardContent>
+      <Card className="shadow-lg rounded-2xl bg-muted text-card-foreground my-6 p-6 flex items-center justify-center min-h-[200px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading Today's Date...</p>
       </Card>
     );
   }
@@ -95,29 +68,39 @@ export function TodaySpecial() {
     month: 'long',
     day: 'numeric',
   });
+  
+  const EventIcon = dailyEvent ? eventIcons[dailyEvent.type] : Sparkles;
 
   return (
-    <Card className="shadow-lg rounded-lg bg-card text-card-foreground my-6">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold flex items-center">
-          <CalendarDays className="mr-2 h-6 w-6 text-primary" data-ai-hint="calendar date" />
+    <Card className="shadow-2xl rounded-2xl bg-gradient-to-br from-card to-background/50 text-card-foreground my-6 overflow-hidden border-2 border-primary/20">
+      <CardHeader className="p-6 bg-primary/10">
+        <CardTitle className="text-2xl font-bold flex items-center gap-3 text-primary">
+          <CalendarDays className="h-7 w-7" data-ai-hint="calendar date" />
           Today's Date & Special
         </CardTitle>
+        <p className="text-lg text-muted-foreground pt-1">{formattedDate}</p>
       </CardHeader>
-      <CardContent>
-        <p className="text-lg font-medium mb-2">{formattedDate}</p>
-        {todaySpecialEvent ? (
-          <div className="mt-2 p-3 rounded-md bg-primary/10 border border-primary/30">
-            <p className="text-xl font-semibold text-primary flex items-center">
-              <Sparkles className="mr-2 h-5 w-5" data-ai-hint="stars celebration" />
-              {todaySpecialEvent.name}
-            </p>
-            {todaySpecialEvent.description && (
-              <p className="text-sm text-muted-foreground mt-1">{todaySpecialEvent.description}</p>
-            )}
+      <CardContent className="p-6">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-[120px] text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="mt-4 text-muted-foreground">Finding something interesting for today...</p>
+          </div>
+        ) : dailyEvent ? (
+          <div className="flex flex-col sm:flex-row items-center gap-6">
+            <div className={`flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-white ${eventColors[dailyEvent.type]}`}>
+               <EventIcon className="h-10 w-10" />
+            </div>
+            <div className="text-center sm:text-left">
+              <Badge variant="secondary" className="mb-2">{dailyEvent.type}</Badge>
+              <h3 className="text-xl font-bold text-foreground">{dailyEvent.eventName}</h3>
+              <p className="text-base text-muted-foreground mt-1">{dailyEvent.description}</p>
+            </div>
           </div>
         ) : (
-          <p className="text-muted-foreground">No special event listed for today (for 2025 in this demo).</p>
+          <div className="text-center text-muted-foreground min-h-[120px] flex items-center justify-center">
+            <p>No special event could be loaded for today. It's a great day to make your own history!</p>
+          </div>
         )}
       </CardContent>
     </Card>
