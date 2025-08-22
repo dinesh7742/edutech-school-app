@@ -8,7 +8,7 @@ import { Loader2, CalendarDays, Dot } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog } from "@/types";
-import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, eachDayOfInterval } from "date-fns";
 import { specialDays2025, type SpecialDay } from "./TodaySpecial";
 
 const holidays = specialDays2025.map(day => ({...day, date: parseISO(day.date)}));
@@ -58,15 +58,40 @@ export function WelcomeBoardAttendanceCalendar() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [month, setMonth] = useState(new Date());
+  const [holidayNotes, setHolidayNotes] = useState<{ date: Date; note: string }[]>([]);
 
   const currentMonthHolidays = useMemo(() => {
-    return holidays
-      .filter(h => 
-        h.date.getFullYear() === month.getFullYear() && 
-        h.date.getMonth() === month.getMonth()
+    const dynamicHolidays = holidayNotes.map(hn => ({
+      date: hn.date,
+      name: hn.note,
+      description: `Holiday on ${format(hn.date, "PPP")}`,
+    }));
+    
+    const staticHolidays = holidays.filter(h => 
+      h.date.getFullYear() === month.getFullYear() && 
+      h.date.getMonth() === month.getMonth()
+    );
+
+    const allDays: { date: Date; name: string }[] = [
+      ...staticHolidays,
+      ...dynamicHolidays,
+    ];
+
+    const sundays = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) })
+      .filter(d => d.getDay() === 0);
+      
+    sundays.forEach(sunday => {
+      if (!allDays.some(hd => hd.date.toDateString() === sunday.toDateString())) {
+        allDays.push({ date: sunday, name: "Sunday" });
+      }
+    });
+
+    return allDays
+      .filter((holiday, index, self) => 
+         index === self.findIndex((t) => t.date.toDateString() === holiday.date.toDateString())
       )
       .sort((a, b) => a.date.getDate() - b.date.getDate());
-  }, [month]);
+  }, [month, holidayNotes]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -76,6 +101,7 @@ export function WelcomeBoardAttendanceCalendar() {
 
     const unsubscribe = onSnapshot(attendanceQuery, (querySnapshot) => {
       const records: Date[] = [];
+      const notes: { date: Date; note: string }[] = [];
       const firstDayOfMonth = startOfMonth(month);
       const lastDayOfMonth = endOfMonth(month);
 
@@ -85,9 +111,13 @@ export function WelcomeBoardAttendanceCalendar() {
         
         if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
             records.push(logDate);
+            if (log.note) {
+              notes.push({ date: logDate, note: log.note });
+            }
         }
       });
       
+      setHolidayNotes(notes);
       setPresentDays(records);
       setIsLoading(false);
     }, (err: any) => {
@@ -211,13 +241,26 @@ export function WelcomeBoardAttendanceCalendar() {
                 <div className="h-4 w-4 rounded-full bg-destructive/30" />
                 <span>Sunday</span>
             </div>
-            {currentMonthHolidays.map((holiday) => (
-               <div key={holiday.name} className="flex items-center gap-2">
+             <div className="flex items-center gap-2">
                  <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-holiday-bg))]" />
-                 <span>{holiday.name}</span>
-               </div>
-            ))}
+                 <span>Holiday</span>
+            </div>
         </div>
+
+        {currentMonthHolidays.length > 0 && (
+          <div className="mt-6 w-full border-t pt-4">
+            <h4 className="text-lg font-semibold text-center text-primary mb-3">Special Days in {format(month, 'MMMM')}</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                {currentMonthHolidays.map((holiday) => (
+                   <div key={holiday.name + holiday.date.toISOString()} className="flex items-center">
+                     <Dot className="h-5 w-5 text-muted-foreground mr-1 flex-shrink-0" />
+                     <span className="font-medium">{format(holiday.date, 'do:')}</span>
+                     <span className="text-muted-foreground ml-2 truncate">{holiday.name}</span>
+                   </div>
+                ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

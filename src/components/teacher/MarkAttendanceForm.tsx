@@ -337,14 +337,27 @@ export function MarkAttendanceForm() {
                 </div>
               </div>
             </div>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={markAllAbsent}
-              disabled={loadingStudents || students.length === 0}
-            >
-              <UserX className="mr-2 h-4 w-4" /> Mark All Absent
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="flex-grow">
+                  <Label htmlFor="attendanceNote">Note for today's attendance (e.g., Holiday, Event)</Label>
+                  <Textarea 
+                    id="attendanceNote"
+                    value={attendanceNote}
+                    onChange={(e) => setAttendanceNote(e.target.value)}
+                    placeholder="Optional: Add a note here..."
+                    rows={1}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={markAllAbsent}
+                  disabled={loadingStudents || students.length === 0}
+                  className="w-full sm:w-auto"
+                >
+                  <UserX className="mr-2 h-4 w-4" /> Mark All Absent
+                </Button>
+            </div>
           </div>
 
           {loadingStudents || loadingAttendance ? (
@@ -402,17 +415,6 @@ export function MarkAttendanceForm() {
               )}
             </div>
           )}
-
-          <div>
-              <Label htmlFor="attendanceNote">Note for today's attendance (e.g., Holiday, Event)</Label>
-              <Textarea 
-                id="attendanceNote"
-                value={attendanceNote}
-                onChange={(e) => setAttendanceNote(e.target.value)}
-                placeholder="Optional: Add a note here..."
-                rows={2}
-              />
-          </div>
 
           <Button type="submit" className="w-full" disabled={isSubmitting || loadingStudents || loadingAttendance || students.length === 0}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
