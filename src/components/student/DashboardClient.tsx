@@ -13,20 +13,11 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, NotificationMessage } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, AppNotification } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import NextImage from 'next/image';
 
 interface LatestContent<T> {
@@ -65,17 +56,11 @@ export function StudentDashboardClient() {
 
   const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
   
-  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
-  const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
-  const [unreadNotifications, setUnreadNotifications] = useState<any[]>([]);
-
-
   useEffect(() => {
     if (!user?.uid) {
       setLoadingNotifications(false);
       return;
     }
-    let hasOpenedDialog = false;
 
     // Listener for new direct notifications (e.g., absence)
     const notificationsRef = collection(db, "notifications");
@@ -85,25 +70,32 @@ export function StudentDashboardClient() {
       where("isRead", "==", false)
     );
     const unsubscribeNotifications = onSnapshot(notificationsQuery, async (snapshot) => {
-      const newNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const newNotifications = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as AppNotification) }));
       
       if (newNotifications.length > 0) {
-        setUnreadNotifications(newNotifications);
-        const newMessages: NotificationMessage[] = newNotifications.map(n => ({
-          link: n.link,
-          english: n.message,
-          hindi: "" // Assuming no hindi message for direct notifications for now
-        }));
-        
-        setNotificationMessages(prev => {
-            const existingMessages = new Set(prev.map(p => p.english));
-            const filteredNew = newMessages.filter(nm => !existingMessages.has(nm.english));
-            return [...prev, ...filteredNew];
+        const batch = writeBatch(db);
+        newNotifications.forEach(notif => {
+          // Show a toast for each new notification
+          toast({
+            title: `New Notification: ${notif.type}`,
+            description: notif.message,
+            action: (
+              <Link href={notif.link}>
+                <Button variant="outline" size="sm">
+                  View
+                </Button>
+              </Link>
+            )
+          });
+          // Mark as read immediately after showing
+          const notifRef = doc(db, 'notifications', notif.id);
+          batch.update(notifRef, { isRead: true });
         });
 
-        if (!hasOpenedDialog && newMessages.length > 0) {
-            setIsNotificationDialogOpen(true);
-            hasOpenedDialog = true;
+        try {
+            await batch.commit();
+        } catch (error) {
+            console.error("Error marking notifications as read: ", error);
         }
       }
     });
@@ -164,34 +156,24 @@ export function StudentDashboardClient() {
     };
     
     const checkAllContent = async () => {
-        const newMessages: NotificationMessage[] = [];
         
         const notice = await fetchGenericLatestItem<Notice>("notices", setLatestNotice, (data) => ({
           ...data,
           timestamp: data.timestamp as Timestamp,
           displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
         } as Notice));
-        if (notice && isNew(notice.timestamp)) {
-            newMessages.push({ link: "/student/notices", english: "A new Notice has been posted.", hindi: "एक नई सूचना पोस्ट की गई है।" });
-        }
 
         const circular = await fetchGenericLatestItem<Circular>("circulars", setLatestCircular, (data) => ({
           ...data,
           timestamp: data.timestamp as Timestamp,
           displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
         } as Circular));
-         if (circular && isNew(circular.timestamp)) {
-            newMessages.push({ link: "/student/circulars", english: "A new Circular has been published.", hindi: "एक नया परिपत्र प्रकाशित किया गया है।" });
-        }
 
         const liveClass = await fetchGenericLatestItem<LiveClass>("liveClasses", setLatestLiveClass, (data) => ({
           ...data,
           timestamp: data.timestamp as Timestamp,
           displayDate: data.timestamp ? new Date((data.timestamp as Timestamp).seconds * 1000).toLocaleDateString() : 'N/A',
         } as LiveClass));
-         if (liveClass && isNew(liveClass.timestamp)) {
-            newMessages.push({ link: "/student/live-classes", english: "A new Live Class has been scheduled.", hindi: "एक नई लाइव क्लास निर्धारित की गई है।" });
-        }
         
         // Specific logic for Homework
         if (user?.uid && user?.grade && user?.division) {
@@ -220,10 +202,6 @@ export function StudentDashboardClient() {
                   } as Homework;
                   setLatestHomework({ item: currentHomeworkItem, loading: false });
 
-                  if (currentHomeworkItem && isNew(currentHomeworkItem.timestamp)) {
-                    newMessages.push({ link: "/student/homework", english: "New Homework has been assigned.", hindi: "नया होमवर्क दिया गया है।" });
-                  }
-
                   const submissionDocId = `${currentHomeworkItem.id}_${user.uid}`;
                   const submissionDocRef = doc(db, "homeworkSubmissions", submissionDocId);
                   const submissionSnap = await getDoc(submissionDocRef);
@@ -245,17 +223,6 @@ export function StudentDashboardClient() {
         } else {
              setLatestHomework({ item: null, loading: false });
              setIsLatestHomeworkCompleted(false);
-        }
-
-        setNotificationMessages(prev => {
-            const existingMessages = new Set(prev.map(p => p.english));
-            const filteredNew = newMessages.filter(nm => !existingMessages.has(nm.english));
-            return [...prev, ...filteredNew];
-        });
-
-        if (newMessages.length > 0 && !hasOpenedDialog) {
-            setIsNotificationDialogOpen(true);
-            hasOpenedDialog = true; // Prevent re-opening for content fetches
         }
     };
     checkAllContent();
@@ -324,23 +291,6 @@ export function StudentDashboardClient() {
     }
   };
   
-  const handleDialogClose = async () => {
-    setIsNotificationDialogOpen(false);
-    if (unreadNotifications.length > 0) {
-        const batch = writeBatch(db);
-        unreadNotifications.forEach(notif => {
-            const notifRef = doc(db, 'notifications', notif.id);
-            batch.update(notifRef, { isRead: true });
-        });
-        try {
-            await batch.commit();
-            setUnreadNotifications([]);
-        } catch (error) {
-            console.error("Error marking notifications as read: ", error);
-        }
-    }
-  };
-
   const dashboardCards = [
     {
       id: "notices",
@@ -665,6 +615,18 @@ export function StudentDashboardClient() {
       buttonText: "Get My I-Card",
       iconUrl: "https://i.postimg.cc/Px4PwpZR/images-2025-08-20-T195046-534.jpg",
       description: "Download your official school identity card. / अपना आधिकारिक स्कूल पहचान पत्र डाउनलोड करें।",
+      renderContent: () => (
+        <div className="w-full h-full p-2 rounded-md flex flex-col justify-center items-center text-center bg-background">
+          <NextImage
+            src="https://i.postimg.cc/Px4PwpZR/images-2025-08-20-T195046-534.jpg"
+            alt="Download I-Card"
+            width={120}
+            height={120}
+            className="rounded-md object-contain"
+            data-ai-hint="id card person"
+          />
+        </div>
+      ),
     },
     {
       id: "attendance",
@@ -686,102 +648,72 @@ export function StudentDashboardClient() {
   
   return (
     <>
-      <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Today's Announcements / आज की घोषणाएँ</AlertDialogTitle>
-            <AlertDialogDescription>
-                Here are the latest updates. Click on any item to go directly to that page.
-                <br />
-                यहां नवीनतम अपडेट दिए गए हैं। सीधे उस पेज पर जाने के लिए किसी भी आइटम पर क्लिक करें।
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
-            {notificationMessages.length > 0 ? (
-                notificationMessages.map((msg, index) => (
-                    <Link key={index} href={msg.link} onClick={handleDialogClose} className="block p-3 border rounded-md hover:bg-muted transition-colors">
-                        <p className="font-semibold">{msg.english}</p>
-                        <p className="text-sm text-muted-foreground">{msg.hindi}</p>
+      <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
+      <div className="space-y-8">
+        <WelcomeMessage />
+        <StudentAttendanceDetails />
+        <TodaySpecial />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {dashboardCards.map((card, index) => {
+            const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
+            const showChatBadge = card.id === "chat" && hasUnreadMessages;
+            const hasDynamicContent = !!card.contentData;
+            const isNewItem = hasDynamicContent && card.contentData.item && isNew((card.contentData.item as any).timestamp);
+
+            return (
+              <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
+                <div className="p-4 bg-primary text-primary-foreground">
+                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+                    {card.title}
+                    {isNewItem && (
+                      <Badge variant="highlight" className="animate-pulse">New!</Badge>
+                    )}
+                    {showNotificationBadge && (
+                      <Badge variant="destructive" className="animate-pulse">New!</Badge>
+                    )}
+                    {showChatBadge && (
+                      <Badge variant="destructive" className="animate-pulse">New!</Badge>
+                    )}
+                  </CardTitle>
+                </div>
+                <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                   <div className="flex justify-center my-4">
+                      {card.iconUrl ? (
+                        <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
+                      ) : card.icon ? (
+                        <card.icon className={`h-16 w-16 text-primary`} />
+                      ) : null}
+                  </div>
+                   <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
+                      <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
+                  </div>
+
+                  {hasDynamicContent && card.contentData.loading ? (
+                    <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
+                    </div>
+                  ) : card.renderContent ? (
+                    <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
+                        {card.renderContent(hasDynamicContent ? card.contentData.item : null)}
+                    </div>
+                  ) : (
+                    <div className="flex-grow flex items-center justify-center min-h-[150px]">
+                    </div>
+                  )}
+                  <Button asChild className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default">
+                    <Link href={card.link}>
+                      {card.buttonText}
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </Link>
-                ))
-            ) : (
-                <p className="text-center text-muted-foreground py-4">
-                    No new announcements today. / आज कोई नई घोषणा नहीं है।
-                </p>
-            )}
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={handleDialogClose}>OK</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-    <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
-    <div className="space-y-8">
-      <WelcomeMessage />
-      <StudentAttendanceDetails />
-      <TodaySpecial />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {dashboardCards.map((card, index) => {
-          const showNotificationBadge = card.id === "conductRecord" && pendingNotificationCount > 0;
-          const showChatBadge = card.id === "chat" && hasUnreadMessages;
-          const hasDynamicContent = !!card.contentData;
-          const isNewItem = hasDynamicContent && card.contentData.item && isNew((card.contentData.item as any).timestamp);
-
-          return (
-            <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
-              <div className="p-4 bg-primary text-primary-foreground">
-                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
-                  {card.title}
-                  {isNewItem && (
-                    <Badge variant="highlight" className="animate-pulse">New!</Badge>
-                  )}
-                  {showNotificationBadge && (
-                    <Badge variant="destructive" className="animate-pulse">New!</Badge>
-                  )}
-                  {showChatBadge && (
-                    <Badge variant="destructive" className="animate-pulse">New!</Badge>
-                  )}
-                </CardTitle>
-              </div>
-              <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
-                 <div className="flex justify-center my-4">
-                    {card.iconUrl ? (
-                      <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
-                    ) : card.icon ? (
-                      <card.icon className={`h-16 w-16 text-primary`} />
-                    ) : null}
-                </div>
-                 <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
-                    <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
-                </div>
-
-                {hasDynamicContent && card.contentData.loading ? (
-                  <div className="flex flex-col items-center justify-center flex-grow py-4 min-h-[150px]">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground mt-2">Loading latest...</p>
-                  </div>
-                ) : card.renderContent ? (
-                  <div className="flex-grow w-full min-h-[150px] flex items-center justify-center">
-                      {card.renderContent(hasDynamicContent ? card.contentData.item : null)}
-                  </div>
-                ) : (
-                  <div className="flex-grow flex items-center justify-center min-h-[150px]">
-                  </div>
-                )}
-                <Button asChild className="w-auto px-6 mt-auto font-bold bg-primary text-primary-foreground" variant="default">
-                  <Link href={card.link}>
-                    {card.buttonText}
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
-    </div>
     </>
   );
 }
