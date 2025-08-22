@@ -6,12 +6,12 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const DailySpecialInputSchema = z.object({
+const DailySpecialInputSchema = z.object({
   date: z.string().describe('The date to get the special event for, in YYYY-MM-DD format.'),
 });
 export type DailySpecialInput = z.infer<typeof DailySpecialInputSchema>;
 
-export const DailySpecialOutputSchema = z.object({
+const DailySpecialOutputSchema = z.object({
   eventName: z.string().describe('A short, catchy name for the event.'),
   description: z.string().describe('A one or two sentence, engaging description of the event.'),
   type: z.enum(['Historical', 'Science', 'Arts', 'Anniversary', 'Other']).describe('The category of the event.'),
