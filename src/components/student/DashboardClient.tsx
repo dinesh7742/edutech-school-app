@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck, Award, School, BookCopy, BookCheck, CalendarPlus, AlertTriangle, Edit, FileArchive
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck, Award, School, BookCopy, BookCheck, CalendarPlus, AlertTriangle, Edit, FileArchive
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -326,7 +326,6 @@ export function StudentDashboardClient() {
       title: "Homework / गृहकार्य",
       link: "/student/homework",
       buttonText: "View All Homework",
-      icon: ClipboardList,
       description: "Check your latest assignments and due dates. / अपने नवीनतम असाइनमेंट और देय तिथियों की जांच करें।",
       contentData: latestHomework,
       renderContent: (data: Homework | null) => (
@@ -678,7 +677,7 @@ export function StudentDashboardClient() {
                   </CardTitle>
                 </div>
                 <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
-                   <div className="flex justify-center my-4">
+                   <div className="flex justify-center my-4 min-h-[64px] items-center">
                       {card.iconUrl ? (
                         <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
                       ) : card.icon ? (
