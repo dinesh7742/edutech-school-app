@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview A flow to get a special event for a given day.
  */
@@ -28,6 +29,9 @@ const dailySpecialPrompt = ai.definePrompt({
   output: { schema: DailySpecialOutputSchema },
   prompt: `
     You are a fascinating almanac. For the given date, {{{date}}}, find one interesting and significant event that occurred on that day in history.
+    
+    Strongly prioritize events, discoveries, and anniversaries related to India. If a significant Indian event is available for the date, please choose that one. Otherwise, you can select a globally relevant event.
+    
     Focus on globally relevant events, scientific discoveries, famous birthdays or death anniversaries, or major cultural moments.
     Avoid obscure or trivial events. The event should be something a student would find interesting.
 
