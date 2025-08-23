@@ -85,7 +85,6 @@ export function StudentDashboardClient() {
 
     checkBirthday();
     
-
     // Listener for new direct notifications (e.g., absence)
     const notificationsRef = collection(db, "notifications");
     const notificationsQuery = query(
@@ -103,13 +102,13 @@ export function StudentDashboardClient() {
           toast({
             title: `New Notification: ${notif.type}`,
             description: notif.message,
-            action: (
+            action: notif.link ? (
               <Link href={notif.link}>
                 <Button variant="outline" size="sm">
                   View
                 </Button>
               </Link>
-            )
+            ) : undefined,
           });
           // Mark as read immediately after showing
           const notifRef = doc(db, 'notifications', notif.id);
@@ -328,7 +327,6 @@ export function StudentDashboardClient() {
       title: "Notice Board / सूचना पट्ट",
       link: "/student/notices",
       buttonText: "View All Notices",
-      icon: FileText,
       description: "Latest school announcements and updates. / नवीनतम स्कूल घोषणाएँ और अपडेट।",
       contentData: latestNotice,
       renderContent: (data: Notice | null) => (
@@ -663,13 +661,14 @@ export function StudentDashboardClient() {
       link: "/student/attendance",
       buttonText: "View Detailed Attendance",
       description: "View your detailed attendance records. / अपने विस्तृत उपस्थिति रिकॉर्ड देखें।",
+      icon: Users,
     },
     {
       id: "profile",
       title: "My Profile / मेरी प्रोफाइल",
       link: "/student/profile",
       buttonText: "Go to Profile",
-      iconUrl: "https://i.postimg.cc/FHHWBKfh/201818.png",
+      icon: Contact,
       description: "Manage your personal information and settings. / अपनी व्यक्तिगत जानकारी और सेटिंग्स प्रबंधित करें।",
     },
   ];
@@ -710,10 +709,8 @@ export function StudentDashboardClient() {
                 </div>
                 <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
                    <div className="flex justify-center my-4 min-h-[64px] items-center">
-                      {card.iconUrl ? (
-                        <NextImage src={card.iconUrl} alt={`${card.title} icon`} width={64} height={64} className="h-16 w-16 object-contain" />
-                      ) : card.icon ? (
-                        <card.icon className={`h-16 w-16 text-primary`} />
+                      {card.renderContent && !card.icon ? null : card.icon ? (
+                         <card.icon className={`h-16 w-16 text-primary`} />
                       ) : null}
                   </div>
                    <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
