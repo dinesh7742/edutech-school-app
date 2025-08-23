@@ -421,7 +421,6 @@ export function StudentDashboardClient() {
       title: "My Results / मेरे परिणाम",
       link: "/student/results",
       buttonText: "View My Results",
-      icon: Award,
       description: "Check your scores for Unit Tests, First Semester, and Second Semester.",
       renderContent: () => {
         const resultItems = [
@@ -556,7 +555,6 @@ export function StudentDashboardClient() {
       title: "My School Applications / मेरे स्कूल आवेदन",
       link: "/student/my-applications",
       buttonText: "Access Forms",
-      icon: FileSignature,
       description: "Apply for leave, late arrivals, certificates, or download forms. / छुट्टी, देर से आने, प्रमाण पत्र आदि के लिए आवेदन करें, या फॉर्म डाउनलोड करें।",
       renderContent: () => {
         const applicationItems = [
@@ -690,6 +688,7 @@ export function StudentDashboardClient() {
             const showChatBadge = card.id === "chat" && hasUnreadMessages;
             const hasDynamicContent = !!card.contentData;
             const isNewItem = hasDynamicContent && card.contentData.item && isNew((card.contentData.item as any).timestamp);
+            const hasIcon = !!card.icon;
 
             return (
               <Card key={card.id} className="text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400">
@@ -708,11 +707,11 @@ export function StudentDashboardClient() {
                   </CardTitle>
                 </div>
                 <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
-                   <div className="flex justify-center my-4 min-h-[64px] items-center">
-                      {card.renderContent && !card.icon ? null : card.icon ? (
-                         <card.icon className={`h-16 w-16 text-primary`} />
-                      ) : null}
-                  </div>
+                  {hasIcon && (
+                    <div className="flex justify-center my-4 min-h-[64px] items-center">
+                        <card.icon className={`h-16 w-16 text-primary`} />
+                    </div>
+                  )}
                    <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
                       <CardDescription className="text-card-foreground font-medium">{card.description}</CardDescription>
                   </div>
