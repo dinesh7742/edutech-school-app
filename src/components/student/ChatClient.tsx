@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, MessageSquare, Paperclip, X } from "lucide-react";
+import { Loader2, Send, MessageSquare, Paperclip, X, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
@@ -23,10 +23,10 @@ export function ChatClient() {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [teacher, setTeacher] = useState<AppUser | null>(null);
   const [chatId, setChatId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [participantInfo, setParticipantInfo] = useState<Record<string, any>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,50 +61,18 @@ export function ChatClient() {
       }
   };
 
+  useEffect(() => {
+    if (user?.grade && user?.division) {
+      const newChatId = `group_chat_${user.grade}_${user.division}`;
+      setChatId(newChatId);
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
+
 
   useEffect(() => {
-    if (!user || !user.grade || !user.division) {
-      setIsLoading(false);
-      return;
-    }
-
-    const findTeacherAndSetupChat = async () => {
-      setIsLoading(true);
-      try {
-        const usersRef = collection(db, "users");
-        const q = query(
-          usersRef,
-          where("role", "==", "teacher"),
-          where("grade", "==", user.grade),
-          where("division", "==", user.division)
-        );
-        const querySnapshot = await getDocs(q);
-
-        if (!querySnapshot.empty) {
-          const teacherDoc = querySnapshot.docs[0];
-          const teacherData = teacherDoc.data() as AppUser;
-          setTeacher({ ...teacherData, uid: teacherDoc.id });
-
-          // Create a consistent chat ID
-          const newChatId = [user.uid, teacherDoc.id].sort().join('_');
-          setChatId(newChatId);
-        } else {
-          toast({ title: "No Teacher Found", description: "Could not find a class teacher assigned to your grade and division.", variant: "destructive" });
-        }
-      } catch (error) {
-        console.error("Error finding teacher:", error);
-        toast({ title: "Error", description: "Could not initialize chat.", variant: "destructive" });
-      }
-    };
-
-    findTeacherAndSetupChat();
-  }, [user, toast]);
-
-  useEffect(() => {
-    if (!chatId) {
-      setIsLoading(false);
-      return;
-    }
+    if (!chatId) return;
     
     setIsLoading(true);
     const chatDocRef = doc(db, "chats", chatId);
@@ -114,9 +82,9 @@ export function ChatClient() {
         const chatData = docSnap.data();
         const currentMessages = chatData.messages || [];
         setMessages(currentMessages);
-        markMessagesAsRead(chatId, currentMessages);
+        setParticipantInfo(chatData.participantInfo || {});
+        if(user) markMessagesAsRead(chatId, currentMessages);
       } else {
-        // Chat doesn't exist yet, so no messages
         setMessages([]);
       }
       setIsLoading(false);
@@ -160,7 +128,7 @@ export function ChatClient() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((newMessage.trim() === "" && !attachmentFile) || !user || !teacher || !chatId) return;
+    if ((newMessage.trim() === "" && !attachmentFile) || !user || !chatId) return;
 
     setIsSending(true);
     
@@ -179,34 +147,24 @@ export function ChatClient() {
       senderName: user.displayName || "Student",
       timestamp: Timestamp.now(),
       attachment: attachmentData,
-      readBy: [user.uid], // Mark as read by sender initially
+      readBy: [user.uid],
     };
 
     try {
       const chatDocRef = doc(db, "chats", chatId);
       const chatDoc = await getDoc(chatDocRef);
 
-      const participantInfo = {
-            [user.uid]: { name: user.displayName, role: 'student', photoURL: user.photoURL || null },
-            [teacher.uid]: { name: teacher.displayName, role: 'teacher', photoURL: teacher.photoURL || null }
-      };
-
       if (chatDoc.exists()) {
         const existingMessages = chatDoc.data().messages || [];
         await setDoc(chatDocRef, {
           messages: [...existingMessages, messageData],
-          participantInfo, // Update participant info in case of profile changes
           lastMessageTimestamp: serverTimestamp(),
           lastMessageText: newMessage.trim() || `Attachment: ${attachmentFile?.name}`,
         }, { merge: true });
       } else {
-        await setDoc(chatDocRef, {
-          participants: [user.uid, teacher.uid],
-          participantInfo,
-          messages: [messageData],
-          lastMessageTimestamp: serverTimestamp(),
-          lastMessageText: newMessage.trim() || `Attachment: ${attachmentFile?.name}`,
-        });
+        // If chat doesn't exist, this implies a logic issue as student should be part of one.
+        // For now, let's prevent creating a new one from student side to avoid orphaned chats.
+        toast({ title: "Chat Error", description: "This group chat has not been initialized by your teacher yet.", variant: "destructive" });
       }
       setNewMessage("");
       removeAttachment();
@@ -229,20 +187,13 @@ export function ChatClient() {
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-xl">
       <CardHeader className="flex flex-row items-center gap-4">
-        {teacher ? (
-          <Avatar>
-            <AvatarImage src={teacher.photoURL || undefined} alt={teacher.displayName || "Teacher"}/>
-            <AvatarFallback>{getInitials(teacher.displayName)}</AvatarFallback>
-          </Avatar>
-        ) : (
-          <div className="bg-muted rounded-full p-2">
-            <MessageSquare className="h-6 w-6 text-muted-foreground" />
-          </div>
-        )}
+        <div className="bg-muted rounded-full p-3">
+          <Users className="h-6 w-6 text-muted-foreground" />
+        </div>
         <div>
-          <CardTitle>Chat with {teacher?.displayName || 'your Teacher'}</CardTitle>
+          <CardTitle>Class Group Chat</CardTitle>
           <CardDescription>
-            {teacher ? `Class Teacher for Grade ${user?.grade}-${user?.division}` : 'Loading teacher details...'}
+            {user ? `Grade ${user.grade}-${user.division}` : 'Loading...'}
           </CardDescription>
         </div>
       </CardHeader>
@@ -259,17 +210,20 @@ export function ChatClient() {
           ) : (
             messages.map((msg, index) => {
               const isSender = msg.senderId === user?.uid;
+              const senderInfo = participantInfo[msg.senderId];
               const timestamp = msg.timestamp instanceof Timestamp ? msg.timestamp.toDate() : new Date();
+
               return (
                 <div key={index} className={`flex items-end gap-2 ${isSender ? "justify-end" : "justify-start"}`}>
                   {!isSender && (
                      <Avatar className="h-8 w-8">
-                       <AvatarImage src={teacher?.photoURL || undefined} />
-                       <AvatarFallback>{getInitials(teacher?.displayName)}</AvatarFallback>
+                       <AvatarImage src={senderInfo?.photoURL || undefined} />
+                       <AvatarFallback>{getInitials(senderInfo?.name)}</AvatarFallback>
                      </Avatar>
                   )}
                   <div className={`max-w-xs md:max-w-md p-1 rounded-2xl ${isSender ? "bg-primary text-primary-foreground rounded-br-none" : "bg-background rounded-bl-none border"}`}>
                     <div className="p-2">
+                       {!isSender && <p className="text-xs font-semibold text-primary mb-1">{senderInfo?.name || 'User'}</p>}
                       {msg.attachment && msg.attachment.type.startsWith("image/") && (
                         <a href={msg.attachment.url} target="_blank" rel="noopener noreferrer" className="block mb-2">
                             <Image src={msg.attachment.url} alt={msg.attachment.name} width={200} height={200} className="rounded-lg object-cover" />
@@ -318,9 +272,9 @@ export function ChatClient() {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type your message..."
-            disabled={!teacher || isSending}
+            disabled={!chatId || isSending}
           />
-          <Button type="submit" disabled={!teacher || isSending || (newMessage.trim() === '' && !attachmentFile)}>
+          <Button type="submit" disabled={!chatId || isSending || (newMessage.trim() === '' && !attachmentFile)}>
             {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             <span className="sr-only">Send</span>
           </Button>
