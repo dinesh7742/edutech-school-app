@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ClipboardCheck, ArrowRight, Loader2 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, orderBy, getDocs, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
 import type { Exam } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
@@ -24,7 +24,6 @@ export function ExamListClient() {
       setLoading(true);
       try {
         const examsCollection = collection(db, "exams");
-        // The orderBy was removed to prevent the missing index error. Sorting is now done client-side.
         const q = query(
           examsCollection, 
           where("grade", "==", user.grade),

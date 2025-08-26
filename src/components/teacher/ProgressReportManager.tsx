@@ -52,8 +52,7 @@ export function ProgressReportManager() {
         const q = query(
           profilesRef,
           where("grade", "==", teacherUser.grade),
-          where("division", "==", teacherUser.division),
-          orderBy("penNumber")
+          where("division", "==", teacherUser.division)
         );
         const querySnapshot = await getDocs(q);
         const fetchedStudents = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));

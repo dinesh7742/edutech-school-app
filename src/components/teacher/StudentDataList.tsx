@@ -35,6 +35,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type CombinedStudentData = StudentProfile & AppUser;
 
@@ -298,9 +300,12 @@ export function StudentDataList() {
                     grade={gradeFilter}
                     onGradeChange={(val) => {
                         setGradeFilter(val === "All" ? "All" : val);
+                        if(val === "All") {
+                            setDivisionFilter("All");
+                        }
                     }}
                     division={divisionFilter}
-                    onDivisionChange={(val) => setDivisionFilter(val)}
+                    onDivisionChange={setDivisionFilter}
                 />
             </div>
           </div>

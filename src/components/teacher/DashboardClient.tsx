@@ -8,7 +8,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-    Loader2, ClipboardList, BookOpen, Video, ClipboardCheck, Users, Download, ListChecks, ArrowRight, BarChart3, MessageSquareWarning, MessageSquare, Archive, GraduationCap, Phone
+    Loader2, 
+    ClipboardList, 
+    Users, 
+    Download, 
+    ListChecks, 
+    ArrowRight, 
+    BarChart3, 
+    MessageSquareWarning, 
+    MessageSquare, 
+    Archive,
+    GraduationCap,
+    Phone,
+    BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -35,12 +47,15 @@ export function TeacherDashboardClient() {
   
   const [studentsInClass, setStudentsInClass] = useState<StudentProfile[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
+  const [studentCountError, setStudentCountError] = useState<string | null>(null);
 
   const [isDownloadingStudentData, setIsDownloadingStudentData] = useState(false);
   const [recentSubmissions, setRecentSubmissions] = useState<HomeworkSubmission[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
-  const [pendingSubmissionsCount, setPendingSubmissionsCount] = useState(0);
+  const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
+  const [pendingLateArrivalCount, setPendingLateArrivalCount] = useState(0);
+  const [pendingOtherAppsCount, setPendingOtherAppsCount] = useState(0);
   const [loadingPendingCounts, setLoadingPendingCounts] = useState(true);
 
   const [todaysAttendanceMarked, setTodaysAttendanceMarked] = useState<boolean | null>(null);
@@ -50,7 +65,7 @@ export function TeacherDashboardClient() {
 
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
-  
+
   const { totalStudents, maleStudents, femaleStudents } = useMemo(() => {
     const total = studentsInClass.length;
     const males = studentsInClass.filter(s => s.gender === 'Male').length;
@@ -70,7 +85,7 @@ export function TeacherDashboardClient() {
     if (!teacherUser?.grade || !teacherUser?.division) {
       toast({
         title: "Cannot Download Data",
-        description: "Your profile is missing assigned grade/division.",
+        description: "Your profile is missing assigned grade/division. Please update your profile.",
         variant: "destructive",
       });
       return;
@@ -115,7 +130,7 @@ export function TeacherDashboardClient() {
 
       toast({
         title: "Download Started",
-        description: "Student data Excel sheet is being prepared.",
+        description: "Student data Excel sheet is being prepared for download.",
       });
 
     } catch (error: any) {
@@ -130,99 +145,232 @@ export function TeacherDashboardClient() {
     }
   };
 
+
   useEffect(() => {
     if (!teacherUser) return;
-
     let hasOpenedDialog = false;
 
-    const fetchAllData = async () => {
-      // Fetch students in class
-      if (teacherUser.grade && teacherUser.division) {
-        setLoadingStudents(true);
-        const profilesQuery = query(collection(db, "studentProfiles"), where("grade", "==", teacherUser.grade), where("division", "==", teacherUser.division), orderBy("firstName"));
-        getDocs(profilesQuery).then(snapshot => {
-          setStudentsInClass(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile)));
-        }).catch(err => console.error("Error fetching students:", err)).finally(() => setLoadingStudents(false));
-      } else {
-        setLoadingStudents(false);
-      }
-      
-      // Fetch pending submission counts
-      setLoadingPendingCounts(true);
-      const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
-      const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
-      const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
-      Promise.all([getCountFromServer(leaveQuery), getCountFromServer(lateArrivalQuery), getCountFromServer(otherAppsQuery)])
-        .then(([leave, late, other]) => {
-          setPendingSubmissionsCount(leave.data().count + late.data().count + other.data().count);
-        }).catch(err => console.error("Error fetching submission counts:", err)).finally(() => setLoadingPendingCounts(false));
-
-      // Fetch recent homework submissions
-      if (teacherUser.grade && teacherUser.division) {
-        setLoadingSubmissions(true);
-        const submissionsQuery = query(collection(db, "homeworkSubmissions"), where("grade", "==", teacherUser.grade), where("division", "==", teacherUser.division), orderBy("completedAt", "desc"), limit(5));
-        getDocs(submissionsQuery).then(snapshot => {
-          setRecentSubmissions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HomeworkSubmission)));
-        }).catch(err => console.error("Error fetching submissions:", err)).finally(() => setLoadingSubmissions(false));
-      }
-
-      // Check today's attendance
-      if (teacherUser.grade && teacherUser.division) {
-        setLoadingTodaysAttendanceStatus(true);
-        const todayStr = format(new Date(), "yyyy-MM-dd");
-        const attendanceDocId = `${todayStr}_${teacherUser.grade}_${teacherUser.division}`;
-        getDoc(doc(db, "dailyAttendance", attendanceDocId)).then(docSnap => {
-          setTodaysAttendanceMarked(docSnap.exists());
-        }).catch(err => console.error("Error checking attendance:", err)).finally(() => setLoadingTodaysAttendanceStatus(false));
-      }
-
-      // Check for new notifications to show in dialog
-      const newMessages: NotificationMessage[] = [];
-      const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
-      const checkNewCollection = async (collectionName: string, link: string, engMsg: string, hindiMsg: string) => {
-        const q = query(collection(db, collectionName), where("status", "==", "Pending"), where("applicationTimestamp", ">=", twentyFourHoursAgo));
-        const snapshot = await getCountFromServer(q);
-        if (snapshot.data().count > 0) {
-            newMessages.push({ link, english: `${engMsg} (${snapshot.data().count} new)`, hindi: `${hindiMsg} (${snapshot.data().count} नई)` });
+    const runAllFetches = async () => {
+        if (teacherUser.grade && teacherUser.division) {
+            setLoadingStudents(true);
+            setStudentCountError(null);
+            try {
+                const profilesCollectionRef = collection(db, "studentProfiles");
+                const q = query(
+                    profilesCollectionRef,
+                    where("grade", "==", teacherUser.grade),
+                    where("division", "==", teacherUser.division)
+                );
+                const querySnapshot = await getDocs(q);
+                const studentList = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+                studentList.sort((a,b) => (a.firstName || "").localeCompare(b.firstName || ""));
+                setStudentsInClass(studentList);
+            } catch (err: any) {
+                console.error("Error fetching students for teacher's class:", err);
+                setStudentCountError("Failed to fetch student data.");
+            } finally {
+                setLoadingStudents(false);
+            }
+        } else {
+             setLoadingStudents(false);
+             setStudentCountError("Your profile is missing grade/division.");
         }
-      };
-      
-      try {
-        await checkNewCollection("leaveApplications", "/teacher/leave-applications", "New Leave Applications", "नए अवकाश आवेदन");
+
+        setLoadingPendingCounts(true);
+        try {
+            const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
+            const lateArrivalQuery = query(collection(db, "lateArrivalRequests"), where("status", "==", "Pending"));
+            const otherAppsQuery = query(collection(db, "otherStudentApplications"), where("status", "==", "Pending"));
+            const [leaveSnapshot, lateArrivalSnapshot, otherAppsSnapshot] = await Promise.all([
+                getCountFromServer(leaveQuery), getCountFromServer(lateArrivalQuery), getCountFromServer(otherAppsQuery),
+            ]);
+            setPendingLeaveCount(leaveSnapshot.data().count);
+            setPendingLateArrivalCount(lateArrivalSnapshot.data().count);
+            setPendingOtherAppsCount(otherAppsSnapshot.data().count);
+        } catch (err) {
+            console.error("Error fetching pending submission counts:", err);
+        } finally {
+            setLoadingPendingCounts(false);
+        }
+
+        if (teacherUser.grade && teacherUser.division) {
+            setLoadingSubmissions(true);
+            try {
+                const submissionsRef = collection(db, "homeworkSubmissions");
+                const q = query(
+                    submissionsRef,
+                    where("grade", "==", teacherUser.grade),
+                    where("division", "==", teacherUser.division)
+                );
+                const querySnapshot = await getDocs(q);
+                const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
+                fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
+                setRecentSubmissions(fetchedSubmissions.slice(0, 5));
+            } catch (err) {
+                console.error("Error fetching recent homework submissions:", err);
+            } finally {
+                setLoadingSubmissions(false);
+            }
+        }
+
+        if (teacherUser.grade && teacherUser.division) {
+            setLoadingTodaysAttendanceStatus(true);
+            try {
+                const todayStr = format(new Date(), "yyyy-MM-dd");
+                const attendanceDocId = `${todayStr}_${teacherUser.grade}_${teacherUser.division}`;
+                const docSnap = await getDoc(doc(db, "dailyAttendance", attendanceDocId));
+                setTodaysAttendanceMarked(docSnap.exists());
+            } catch (error) {
+                console.error("Error checking today's attendance:", error);
+                setTodaysAttendanceMarked(null);
+            } finally {
+                setLoadingTodaysAttendanceStatus(false);
+            }
+        }
+
+        const newMessages: NotificationMessage[] = [];
+        const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
+        
+        const checkNewCollection = async (collectionName: string, link: string, engMsg: string, hindiMsg: string, dateField = "applicationTimestamp") => {
+            const q = query(collection(db, collectionName), where("status", "==", "Pending"), where(dateField, ">=", twentyFourHoursAgo));
+            const snapshot = await getCountFromServer(q);
+            if (snapshot.data().count > 0) {
+                newMessages.push({ link, english: `${engMsg} (${snapshot.data().count} new)`, hindi: `${hindiMsg} (${snapshot.data().count} नई)` });
+            }
+        };
+
+        try {
+            await checkNewCollection("leaveApplications", "/teacher/leave-applications", "New Leave Applications received.", "नए अवकाश आवेदन प्राप्त हुए हैं।");
+            await checkNewCollection("lateArrivalRequests", "/teacher/leave-applications", "New Late Arrival requests received.", "देर से आने के नए अनुरोध प्राप्त हुए हैं।");
+            await checkNewCollection("otherStudentApplications", "/teacher/leave-applications", "New Other Applications received.", "अन्य नए आवेदन प्राप्त हुए हैं।");
+        } catch (error) {
+            console.warn("Could not check for new application submissions:", error);
+        }
+
         if (!hasOpenedDialog && newMessages.length > 0) {
             setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
             hasOpenedDialog = true;
         }
-      } catch (error) { console.warn("Could not check for new submissions:", error); }
     };
 
-    fetchAllData();
+    runAllFetches();
 
-    // Listen for unread messages
     const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid));
     const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
-        setHasUnreadMessages(snapshot.docs.some(chatDoc => 
-            (chatDoc.data().messages || []).some((msg: ChatMessage) => msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid!))
-        ));
+        let unreadFound = false;
+        snapshot.forEach(chatDoc => {
+            const messages = (chatDoc.data().messages || []) as ChatMessage[];
+            if (messages.some(msg => msg.senderId !== teacherUser.uid && !msg.readBy?.includes(teacherUser.uid!))) {
+                unreadFound = true;
+            }
+        });
+        setHasUnreadMessages(unreadFound);
     });
 
     return () => unsubscribe();
-  }, [teacherUser]);
+  }, [teacherUser, toast]);
 
   const getAttendanceCardDescription = () => {
-    if (loadingTodaysAttendanceStatus) return "Checking status...";
-    if (todaysAttendanceMarked) return "Attendance for today has been marked.";
-    if (todaysAttendanceMarked === false) return <span className="font-semibold text-destructive">Attendance for today is pending!</span>;
-    if (teacherUser && (!teacherUser.grade || !teacherUser.division)) return "Update profile to mark attendance.";
-    return "Mark daily attendance for your class.";
+    if (loadingTodaysAttendanceStatus) return "Checking today's attendance status...";
+    if (todaysAttendanceMarked) return "Attendance for today has already been marked. You can still modify it.";
+    if (todaysAttendanceMarked === false) return <span className="font-semibold text-destructive">Attendance for today needs to be marked!</span>;
+    if (teacherUser && (!teacherUser.grade || !teacherUser.division)) return "Please update your profile with assigned grade and division to mark attendance.";
+    return "Mark daily attendance for students in your assigned class.";
   };
+  
+  const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
+  
+  const quickStatsItems = [
+    {
+      id: "teacherInfoAndStudentCount",
+      title: `Teacher's Corner & Class ${teacherUser?.grade || 'N/A'}-${teacherUser?.division || ''}`,
+      content: loadingStudents ? (
+        <div className="flex items-center justify-center space-x-2 h-full">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      ) : studentCountError ? (
+         <p className="text-xs text-destructive text-center">{studentCountError}</p>
+      ) : (
+        <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
+            <div className="text-center border-b-2 border-primary pb-2">
+                <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
+                <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
+            </div>
+            <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
+                <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
+                    <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
+                    <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
+                </Avatar>
+                <div className="text-left space-y-2 flex-grow">
+                    <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
+                    <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <GraduationCap className="h-4 w-4 text-primary" />
+                        <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
+                    </div>
+                     <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
+                    </div>
+                     <div className="flex items-center text-sm text-muted-foreground gap-2">
+                        <Phone className="h-4 w-4 text-primary" />
+                        <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
+                 <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
+                 <div className="mt-2 flex w-full justify-around items-center">
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-primary">{totalStudents}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Total Students</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Boys</p>
+                    </div>
+                    <div className="text-center">
+                        <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
+                        <p className="text-xs font-medium text-muted-foreground">Girls</p>
+                    </div>
+                 </div>
+            </div>
+        </div>
+      )
+    },
+    {
+      id: "recentSubmissions",
+      title: "Recent Homework Submissions",
+      content: loadingSubmissions ? (
+         <div className="flex items-center justify-center space-x-2 h-full">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <span className="text-muted-foreground">Loading...</span>
+        </div>
+      ) : recentSubmissions.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
+      ) : (
+        <div className="w-full h-full max-h-[400px] overflow-y-auto p-2">
+            <ul className="space-y-2 text-xs text-left">
+              {recentSubmissions.map((sub) => (
+                <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
+                  <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
+                  <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
+                  <p className="text-muted-foreground">Completed: {sub.completedAt ? format((sub.completedAt as Timestamp).toDate(), "PP pp") : "N/A"}</p>
+                </li>
+              ))}
+            </ul>
+        </div>
+      )
+    },
+  ];
 
   const mainActionItems = [
     { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
     { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
     { id: "markAttendance", title: "Mark Attendance", description: getAttendanceCardDescription(), link: "/teacher/mark-attendance", buttonText: "Mark Attendance", icon: ListChecks, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "manageSubmissions", title: "Manage Student Submissions", description: loadingPendingCounts ? <Loader2 className="h-5 w-5 animate-spin"/> : `Review applications. ${pendingSubmissionsCount} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
+    { id: "manageSubmissions", title: "Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
     { id: "studentChats", title: "Student Chats", description: "Communicate directly with students and parents.", link: "/teacher/chat", buttonText: "Open Chats", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-teal-600 hover:bg-teal-700" },
     { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-red-600 hover:bg-red-700" },
     { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-orange-500 hover:bg-orange-600" },
@@ -237,9 +385,9 @@ export function TeacherDashboardClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Today's Notifications / आज की सूचनाएं</AlertDialogTitle>
             <AlertDialogDescription>
-                New items require your attention. Click to review.
+                Here are your new items requiring attention. Click to review.
                 <br />
-                नई वस्तुएं पर आपके ध्यान की आवश्यकता है। समीक्षा के लिए क्लिक करें।
+                यहां आपके ध्यान देने योग्य नई वस्तुएं हैं। समीक्षा के लिए क्लिक करें।
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
@@ -250,9 +398,15 @@ export function TeacherDashboardClient() {
                         <p className="text-sm text-muted-foreground">{msg.hindi}</p>
                     </Link>
                 ))
-            ) : <p className="text-center text-muted-foreground py-4">No new submissions today.</p>}
+            ) : (
+                <p className="text-center text-muted-foreground py-4">
+                    No new submissions or messages today. / आज कोई नया सबमिशन या संदेश नहीं है।
+                </p>
+            )}
           </div>
-          <AlertDialogFooter><AlertDialogAction onClick={() => setIsNotificationDialogOpen(false)}>OK</AlertDialogAction></AlertDialogFooter>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsNotificationDialogOpen(false)}>OK</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
@@ -260,56 +414,57 @@ export function TeacherDashboardClient() {
         <WelcomeMessage />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="shadow-lg">
-            <CardHeader><CardTitle>Teacher's Corner</CardTitle></CardHeader>
-            <CardContent>
-              {loadingStudents ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : (
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <Avatar className="h-24 w-24 border-4 border-primary/20"><AvatarImage src={teacherUser?.photoURL || undefined} /><AvatarFallback className="text-3xl">{getInitials(teacherUser?.displayName)}</AvatarFallback></Avatar>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-bold">{teacherUser?.displayName}</p>
-                    <p className="text-muted-foreground">Class Teacher: {teacherUser?.grade}-{teacherUser?.division}</p>
-                    <p className="text-sm text-muted-foreground">{teacherUser?.educationQualification}</p>
-                  </div>
-                  <div className="flex justify-around w-full pt-4 border-t">
-                      <div><p className="text-2xl font-bold">{totalStudents}</p><p className="text-xs text-muted-foreground">Total Students</p></div>
-                      <div><p className="text-2xl font-bold">{maleStudents}</p><p className="text-xs text-muted-foreground">Boys</p></div>
-                      <div><p className="text-2xl font-bold">{femaleStudents}</p><p className="text-xs text-muted-foreground">Girls</p></div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          <Card className="shadow-lg">
-            <CardHeader><CardTitle>Recent Homework Submissions</CardTitle></CardHeader>
-            <CardContent>
-              {loadingSubmissions ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : recentSubmissions.length === 0 ? <p className="text-sm text-muted-foreground">No recent submissions.</p> : (
-                <ul className="space-y-3">
-                  {recentSubmissions.map(sub => (
-                    <li key={sub.id} className="text-sm"><span className="font-semibold">{sub.studentName}</span> submitted "{sub.homeworkTitle}".</li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
+          {quickStatsItems.map((item) => (
+            <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+              <CardHeader className="p-4 bg-primary text-primary-foreground">
+                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {mainActionItems.map((item) => (
-              <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-transform hover:-translate-y-1">
-                  <CardHeader className="flex-grow">
-                      <div className="flex justify-center mb-3"><item.icon className={`h-12 w-12 text-primary`} /></div>
-                      <CardTitle className="text-xl">{item.title}</CardTitle>
-                      <CardDescription className="text-sm min-h-[40px] mt-2">{item.description}</CardDescription>
+              <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+                  <CardHeader className="p-4 bg-primary text-primary-foreground">
+                      <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
+                          {item.title}
+                          {item.id === "manageSubmissions" && totalPendingSubmissions > 0 && (
+                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                          )}
+                          {item.id === "studentChats" && item.hasNotification && (
+                            <Badge variant="destructive" className="animate-pulse ml-2">New!</Badge>
+                          )}
+                      </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <Button asChild className={cn("w-full mt-auto group", item.className)}>
-                        {item.link ? <Link href={item.link}>{item.buttonText} <ArrowRight className="ml-2 h-4 w-4"/></Link> : 
-                        <button onClick={item.action} disabled={item.loading || item.disabled}>
-                            {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                            {item.buttonText}
-                        </button>}
-                    </Button>
+                  <CardContent className="flex flex-col flex-grow items-center justify-between p-4 space-y-3">
+                      <div className="flex justify-center my-4">
+                          <item.icon className={`h-16 w-16 text-primary`} />
+                      </div>
+                      <div className="text-sm min-h-[4rem] px-2 flex-grow flex flex-col items-center justify-center w-full">
+                          {typeof item.description === 'string' ? <CardDescription className="text-card-foreground font-medium">{item.description}</CardDescription> : <div className="text-card-foreground font-medium">{item.description}</div>}
+                      </div>
+                      {item.link ? (
+                          <Button asChild className={cn("w-full mt-auto group font-bold text-white", item.className)}>
+                              <Link href={item.link}>
+                                {item.buttonText}
+                                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                              </Link>
+                          </Button>
+                      ) : item.action ? (
+                          <Button 
+                              onClick={item.action} 
+                              className={cn("w-full mt-auto group font-bold text-white", item.className)} 
+                              disabled={item.loading || item.disabled}
+                          >
+                              {item.loading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+                              {item.buttonText}
+                          </Button>
+                      ) : null}
+                      {item.disabled && item.disabledText && <p className="text-xs text-destructive mt-1">{item.disabledText}</p>}
                   </CardContent>
               </Card>
           ))}

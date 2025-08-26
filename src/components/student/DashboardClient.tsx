@@ -7,12 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, GalleryHorizontal, Edit
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, GalleryHorizontal, Edit, Image as ImageIcon
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
+import { collection, query, where, getDocs, Timestamp, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
 import { format } from 'date-fns';
+import Image from "next/image";
 
 interface LatestContent {
   notice: Notice | null;
@@ -76,7 +77,6 @@ export function StudentDashboardClient() {
 
     checkBirthday();
     
-    // Listener for new direct notifications (e.g., absence)
     const notificationsRef = collection(db, "notifications");
     const notificationsQuery = query(
       notificationsRef,
@@ -107,7 +107,6 @@ export function StudentDashboardClient() {
     const fetchDashboardData = async () => {
       setLoadingContent(true);
 
-      // Fetch pending conduct notifications
       try {
         const complaintsRef = collection(db, "complaints");
         const complaintsQuery = query(complaintsRef, where("studentUid", "==", user.uid), where("status", "==", "Pending Acknowledgment"));
@@ -117,14 +116,13 @@ export function StudentDashboardClient() {
       
 
       try {
-        // Fetch latest items for the student's specific class or school-wide
         const relevantGrade = user.grade;
         const relevantDivision = user.division;
 
-        const noticeQuery = query(collection(db, "notices"), where('grade', 'in', [null, '', relevantGrade]), orderBy("timestamp", "desc"), limit(1));
-        const homeworkQuery = query(collection(db, "homework"), where("grade", "==", relevantGrade), where("division", "==", relevantDivision), orderBy("timestamp", "desc"), limit(1));
-        const circularQuery = query(collection(db, "circulars"), where('grade', 'in', [null, '', relevantGrade]), orderBy("timestamp", "desc"), limit(1));
-        const liveClassQuery = query(collection(db, "liveClasses"), where('grade', 'in', [null, '', relevantGrade]), orderBy("timestamp", "desc"), limit(1));
+        const noticeQuery = query(collection(db, "notices"), where('grade', 'in', [null, '', relevantGrade]));
+        const homeworkQuery = query(collection(db, "homework"), where("grade", "==", relevantGrade), where("division", "==", relevantDivision));
+        const circularQuery = query(collection(db, "circulars"), where('grade', 'in', [null, '', relevantGrade]));
+        const liveClassQuery = query(collection(db, "liveClasses"), where('grade', 'in', [null, '', relevantGrade]));
 
         const [noticeSnap, homeworkSnap, circularSnap, liveClassSnap] = await Promise.all([
             getDocs(noticeQuery),
@@ -132,11 +130,18 @@ export function StudentDashboardClient() {
             getDocs(circularQuery),
             getDocs(liveClassQuery),
         ]);
+        
+        const sortAndGetLatest = (snapshot: any) => {
+          if (snapshot.empty) return null;
+          const docs = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+          docs.sort((a: any, b: any) => (b.timestamp as Timestamp).toMillis() - (a.timestamp as Timestamp).toMillis());
+          return docs[0];
+        }
 
-        const latestNotice = noticeSnap.empty ? null : { id: noticeSnap.docs[0].id, ...noticeSnap.docs[0].data() } as Notice;
-        const latestHomework = homeworkSnap.empty ? null : { id: homeworkSnap.docs[0].id, ...homeworkSnap.docs[0].data() } as Homework;
-        const latestCircular = circularSnap.empty ? null : { id: circularSnap.docs[0].id, ...circularSnap.docs[0].data() } as Circular;
-        const latestLiveClass = liveClassSnap.empty ? null : { id: liveClassSnap.docs[0].id, ...liveClassSnap.docs[0].data() } as LiveClass;
+        const latestNotice = sortAndGetLatest(noticeSnap);
+        const latestHomework = sortAndGetLatest(homeworkSnap);
+        const latestCircular = sortAndGetLatest(circularSnap);
+        const latestLiveClass = sortAndGetLatest(liveClassSnap);
 
         setLatestContent({ notice: latestNotice, homework: latestHomework, circular: latestCircular, liveClass: latestLiveClass });
         
@@ -152,7 +157,6 @@ export function StudentDashboardClient() {
 
     fetchDashboardData();
     
-    // Check for unread messages
     const chatId = `group_chat_${user.grade}_${user.division}`;
     const chatDocRef = doc(db, "chats", chatId);
     const unsubscribeChat = onSnapshot(chatDocRef, (chatDoc) => {
@@ -193,10 +197,46 @@ export function StudentDashboardClient() {
   };
 
   const dashboardCards = [
-    { id: "notices", title: "Notice Board", link: "/student/notices", contentData: latestContent.notice, icon: FileText, buttonText: "View All" },
-    { id: "homework", title: "Homework", link: "/student/homework", contentData: latestContent.homework, icon: ClipboardList, buttonText: "View All" },
-    { id: "circulars", title: "Circulars", link: "/student/circulars", contentData: latestContent.circular, icon: FileText, buttonText: "View All" },
-    { id: "liveClasses", title: "Live Classes", link: "/student/live-classes", contentData: latestContent.liveClass, icon: Video, buttonText: "View All" }
+    { 
+      id: "notices", 
+      title: "Notice Board", 
+      link: "/student/notices", 
+      contentData: latestContent.notice, 
+      icon: FileText, 
+      buttonText: "View All",
+      imageSrc: "https://i.postimg.cc/8PcsgRzF/notice-board-2.png",
+      imageHint: "notice board pin",
+    },
+    { 
+      id: "homework", 
+      title: "Homework", 
+      link: "/student/homework", 
+      contentData: latestContent.homework, 
+      icon: ClipboardList, 
+      buttonText: "View All",
+      imageSrc: "https://i.postimg.cc/G2B0p7s9/homework.png",
+      imageHint: "homework book paper",
+    },
+    { 
+      id: "circulars", 
+      title: "Circulars", 
+      link: "/student/circulars", 
+      contentData: latestContent.circular, 
+      icon: FileText, 
+      buttonText: "View All",
+      imageSrc: "https://i.postimg.cc/50MRsFN8/circular.png",
+      imageHint: "circular document paper",
+    },
+    { 
+      id: "liveClasses", 
+      title: "Live Classes", 
+      link: "/student/live-classes", 
+      contentData: latestContent.liveClass, 
+      icon: Video, 
+      buttonText: "View All",
+      imageSrc: "https://i.postimg.cc/Z5f0wYjQ/live-class.png",
+      imageHint: "video call conference",
+    }
   ];
 
   const quickActionLinks = [
@@ -240,38 +280,43 @@ export function StudentDashboardClient() {
             </Link>
           ))}
         </div>
-
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
-            <Card key={card.id} className="shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex justify-between items-center">
-                  <span className="flex items-center gap-2">
-                    {card.icon && <card.icon className="h-6 w-6 text-primary" />} 
-                    {card.title}
-                  </span>
-                  <Button asChild variant="link" size="sm">
-                    <Link href={card.link}>View All <ArrowRight className="ml-1 h-4 w-4" /></Link>
-                  </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[150px]">
-                {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : !card.contentData ? <p className="text-muted-foreground text-center">No new {card.id.toLowerCase()} found.</p> :
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-lg">{card.contentData.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{card.contentData.description}</p>
-                    {card.id === "homework" && (
-                      <div className="pt-2">
-                        {!isLatestHomeworkCompleted ? (
-                          <Button size="sm" onClick={handleMarkHomeworkCompleted} disabled={completingHomework}>
-                            {completingHomework ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />} Mark as Completed
-                          </Button>
-                        ) : <Badge variant="accent"><CheckCircle className="mr-2 h-4 w-4"/>Completed</Badge>}
-                      </div>
-                    )}
+            <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-br from-yellow-300 to-orange-400 p-4">
+                  <CardTitle className="text-white flex justify-between items-center text-xl">
+                    <span className="flex items-center gap-2">
+                       {card.icon && <card.icon className="h-6 w-6" />} 
+                       {card.title}
+                    </span>
+                    <Button asChild variant="link" size="sm" className="text-white">
+                      <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 flex items-center gap-4 min-h-[150px]">
+                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
+                      <Image src={card.imageSrc} alt={card.title} width={96} height={96} data-ai-hint={card.imageHint} />
                   </div>
-                }
-              </CardContent>
+                  <div className="flex-grow">
+                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : !card.contentData ? <p className="text-muted-foreground text-center">No new {card.id.toLowerCase()} found.</p> :
+                      <div className="space-y-1">
+                          <h3 className="font-semibold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
+                          {card.contentData.description && <p className="text-sm text-muted-foreground line-clamp-2">{card.contentData.description}</p>}
+                          {(card.id === "homework") && (
+                          <div className="pt-2">
+                              {!isLatestHomeworkCompleted ? (
+                              <Button size="sm" onClick={handleMarkHomeworkCompleted} disabled={completingHomework}>
+                                  {completingHomework ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />} Mark as Completed
+                              </Button>
+                              ) : <Badge variant="accent"><CheckCircle className="mr-2 h-4 w-4"/>Completed</Badge>}
+                          </div>
+                          )}
+                      </div>
+                      }
+                  </div>
+                </CardContent>
             </Card>
           ))}
         </div>
