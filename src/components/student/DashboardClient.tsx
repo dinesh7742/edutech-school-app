@@ -7,18 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, BarChart3, Contact, MessageSquare, ClipboardCheck, Award, School, BookCopy, BookCheck, CalendarPlus, AlertTriangle, Edit, FileArchive, GalleryHorizontal
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, GalleryHorizontal, Edit
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, orderBy, limit, getDocs, Timestamp, where, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, HomeworkAttachment, ChatMessage, AppNotification, StudentProfile } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
-import NextImage from 'next/image';
 import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
 import { format } from 'date-fns';
 
@@ -37,7 +36,6 @@ export function StudentDashboardClient() {
   const [loadingContent, setLoadingContent] = useState(true);
 
   const [pendingNotificationCount, setPendingNotificationCount] = useState(0);
-  const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   const [isLatestHomeworkCompleted, setIsLatestHomeworkCompleted] = useState(false);
@@ -51,7 +49,6 @@ export function StudentDashboardClient() {
   useEffect(() => {
     if (!user?.uid) {
       setLoadingContent(false);
-      setLoadingNotifications(false);
       return;
     }
 
@@ -109,23 +106,25 @@ export function StudentDashboardClient() {
     
     const fetchDashboardData = async () => {
       setLoadingContent(true);
-      setLoadingNotifications(true);
 
+      // Fetch pending conduct notifications
       try {
-        // Fetch pending conduct notifications
         const complaintsRef = collection(db, "complaints");
         const complaintsQuery = query(complaintsRef, where("studentUid", "==", user.uid), where("status", "==", "Pending Acknowledgment"));
         const complaintsSnapshot = await getCountFromServer(complaintsQuery);
         setPendingNotificationCount(complaintsSnapshot.data().count);
       } catch (error) { console.error("Error fetching pending notifications:", error); }
-      setLoadingNotifications(false);
+      
 
       try {
-        // Fetch latest items
-        const noticeQuery = query(collection(db, "notices"), orderBy("timestamp", "desc"), limit(1));
-        const homeworkQuery = query(collection(db, "homework"), where("grade", "==", user.grade), where("division", "==", user.division), orderBy("timestamp", "desc"), limit(1));
-        const circularQuery = query(collection(db, "circulars"), orderBy("timestamp", "desc"), limit(1));
-        const liveClassQuery = query(collection(db, "liveClasses"), orderBy("timestamp", "desc"), limit(1));
+        // Fetch latest items for the student's specific class or school-wide
+        const relevantGrade = user.grade;
+        const relevantDivision = user.division;
+
+        const noticeQuery = query(collection(db, "notices"), where('grade', 'in', [null, '', relevantGrade]), orderBy("timestamp", "desc"), limit(1));
+        const homeworkQuery = query(collection(db, "homework"), where("grade", "==", relevantGrade), where("division", "==", relevantDivision), orderBy("timestamp", "desc"), limit(1));
+        const circularQuery = query(collection(db, "circulars"), where('grade', 'in', [null, '', relevantGrade]), orderBy("timestamp", "desc"), limit(1));
+        const liveClassQuery = query(collection(db, "liveClasses"), where('grade', 'in', [null, '', relevantGrade]), orderBy("timestamp", "desc"), limit(1));
 
         const [noticeSnap, homeworkSnap, circularSnap, liveClassSnap] = await Promise.all([
             getDocs(noticeQuery),
@@ -154,16 +153,17 @@ export function StudentDashboardClient() {
     fetchDashboardData();
     
     // Check for unread messages
-    const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", user.uid));
-    const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
-      setHasUnreadMessages(snapshot.docs.some(chatDoc => {
-        const messages = (chatDoc.data().messages || []) as ChatMessage[];
-        return messages.some(msg => msg.senderId !== user?.uid && !msg.readBy?.includes(user?.uid || ''));
-      }));
+    const chatId = `group_chat_${user.grade}_${user.division}`;
+    const chatDocRef = doc(db, "chats", chatId);
+    const unsubscribeChat = onSnapshot(chatDocRef, (chatDoc) => {
+        if(chatDoc.exists()) {
+            const messages = (chatDoc.data().messages || []) as ChatMessage[];
+            setHasUnreadMessages(messages.some(msg => msg.senderId !== user.uid && !msg.readBy?.includes(user.uid || '')));
+        }
     });
     
     return () => {
-        unsubscribeChats();
+        unsubscribeChat();
         unsubscribeNotifications();
     };
   }, [user, toast]);
@@ -220,15 +220,22 @@ export function StudentDashboardClient() {
         <StudentAttendanceDetails />
         <TodaySpecial />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {quickActionLinks.map(link => (
             <Link key={link.id} href={link.link}>
-              <Card className="text-center p-4 h-full flex flex-col items-center justify-center transition-transform hover:-translate-y-1 hover:shadow-lg">
+              <Card className="text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400 text-primary-foreground">
                 <div className="relative">
-                  <link.icon className="h-10 w-10 text-primary mb-2" />
-                  {link.hasNotification && <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-destructive animate-ping"></span>}
+                  <link.icon className="h-10 w-10 mb-2 text-white" />
+                  {link.hasNotification && (
+                    <>
+                     <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    </span>
+                    </>
+                  )}
                 </div>
-                <p className="font-semibold text-foreground">{link.title}</p>
+                <p className="font-semibold text-white">{link.title}</p>
               </Card>
             </Link>
           ))}
@@ -239,7 +246,10 @@ export function StudentDashboardClient() {
             <Card key={card.id} className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex justify-between items-center">
-                  <span className="flex items-center gap-2"><card.icon className="h-6 w-6 text-primary" /> {card.title}</span>
+                  <span className="flex items-center gap-2">
+                    {card.icon && <card.icon className="h-6 w-6 text-primary" />} 
+                    {card.title}
+                  </span>
                   <Button asChild variant="link" size="sm">
                     <Link href={card.link}>View All <ArrowRight className="ml-1 h-4 w-4" /></Link>
                   </Button>
