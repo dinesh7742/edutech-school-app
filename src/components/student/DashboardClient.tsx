@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, Edit, MessageSquareWarning, MessageSquare
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquareWarning, MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -269,7 +269,13 @@ export function StudentDashboardClient() {
                 <CardHeader className="p-4">
                   <CardTitle className="flex justify-between items-center text-xl">
                     <span className="flex items-center gap-2 font-bold">
-                       {card.title}
+                       {card.title === "Notice Board" ? (
+                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
+                           {card.title}
+                         </span>
+                       ) : (
+                         card.title
+                       )}
                     </span>
                     <Button asChild variant="ghost" size="sm" className="text-black hover:bg-black/20 hover:text-white">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
