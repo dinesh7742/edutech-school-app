@@ -267,29 +267,6 @@ export function StudentDashboardClient() {
         <StudentAttendanceDetails />
         <TodaySpecial />
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {quickActionLinks.map(link => (
-            <Link key={link.id} href={link.link}>
-              <Card className={cn(
-                "text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group bg-gradient-to-br from-yellow-500 to-orange-600"
-              )}>
-                <div className="relative mb-2">
-                  <div className="p-3 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
-                    <link.icon className="h-8 w-8 text-blue-700" />
-                  </div>
-                  {link.hasNotification && (
-                    <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500/75 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border-2 border-white"></span>
-                    </span>
-                  )}
-                </div>
-                <p className="font-bold text-sm text-black">{link.title}</p>
-              </Card>
-            </Link>
-          ))}
-        </div>
-        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
             <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden group">
@@ -329,6 +306,30 @@ export function StudentDashboardClient() {
             </Card>
           ))}
         </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {quickActionLinks.map(link => (
+            <Link key={link.id} href={link.link}>
+              <Card className={cn(
+                "text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group bg-gradient-to-br from-yellow-400 to-orange-500"
+              )}>
+                <div className="relative mb-2">
+                  <div className="p-3 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
+                    <link.icon className="h-8 w-8 text-blue-800" />
+                  </div>
+                  {link.hasNotification && (
+                    <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500/75 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border-2 border-white"></span>
+                    </span>
+                  )}
+                </div>
+                <p className="font-bold text-sm text-black">{link.title}</p>
+              </Card>
+            </Link>
+          ))}
+        </div>
+        
       </div>
     </>
   );
