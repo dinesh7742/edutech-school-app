@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, MessageSquareWarning, Award, ImageIcon, School, Edit
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, ImageIcon, School, Edit, MessageSquareWarning
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -246,16 +246,16 @@ export function StudentDashboardClient() {
   ];
 
   const quickActionLinks = [
-    { id: "results", title: "Results", link: "/student/results", icon: Award, gradient: "from-blue-500 to-indigo-600" },
-    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit, gradient: "from-green-500 to-teal-600" },
-    { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature, gradient: "from-purple-500 to-pink-600" },
-    { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen, gradient: "from-orange-500 to-red-600" },
-    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon, gradient: "from-yellow-400 to-amber-500" },
-    { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact, gradient: "from-sky-500 to-cyan-600" },
-    { id: "profile", title: "My Profile", link: "/student/profile", icon: Users, gradient: "from-rose-500 to-fuchsia-600" },
-    { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages, gradient: "from-lime-500 to-emerald-600" },
-    { id: "conduct", title: "Parent Notifications", link: "/student/conduct-record", icon: MessageSquareWarning, hasNotification: pendingNotificationCount > 0, gradient: "from-red-500 to-rose-700" },
-    { id: "school", title: "About School", link: "/student/about-school", icon: School, gradient: "from-slate-500 to-slate-700" },
+    { id: "results", title: "Results", link: "/student/results", icon: Award },
+    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
+    { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
+    { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
+    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
+    { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact },
+    { id: "profile", title: "My Profile", link: "/student/profile", icon: Users },
+    { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages },
+    { id: "conduct", title: "Parent Notifications", link: "/student/conduct-record", icon: MessageSquareWarning, hasNotification: pendingNotificationCount > 0 },
+    { id: "school", title: "About School", link: "/student/about-school", icon: School },
   ];
 
   return (
@@ -271,21 +271,20 @@ export function StudentDashboardClient() {
           {quickActionLinks.map(link => (
             <Link key={link.id} href={link.link}>
               <Card className={cn(
-                "text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group text-white",
-                link.gradient
+                "text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group bg-gradient-to-br from-yellow-500 to-orange-600"
               )}>
                 <div className="relative mb-2">
                   <div className="p-3 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
-                    <link.icon className="h-8 w-8 text-white" />
+                    <link.icon className="h-8 w-8 text-blue-700" />
                   </div>
                   {link.hasNotification && (
                     <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/75 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-white"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500/75 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-600 border-2 border-white"></span>
                     </span>
                   )}
                 </div>
-                <p className="font-semibold text-sm text-white">{link.title}</p>
+                <p className="font-bold text-sm text-black">{link.title}</p>
               </Card>
             </Link>
           ))}
