@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, ImageIcon, School, Edit, MessageSquareWarning
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, Edit, MessageSquareWarning, MessageSquare
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -212,6 +212,7 @@ export function StudentDashboardClient() {
       buttonText: "View All",
       imageSrc: "https://i.postimg.cc/8PcsgRzF/notice-board-2.png",
       imageHint: "notice board pin",
+      gradient: "from-blue-400 to-indigo-500",
     },
     { 
       id: "homework", 
@@ -222,6 +223,7 @@ export function StudentDashboardClient() {
       buttonText: "View All",
       imageSrc: "https://i.postimg.cc/G2B0p7s9/homework.png",
       imageHint: "homework book paper",
+      gradient: "from-green-400 to-teal-500",
     },
     { 
       id: "circulars", 
@@ -232,6 +234,7 @@ export function StudentDashboardClient() {
       buttonText: "View All",
       imageSrc: "https://i.postimg.cc/50MRsFN8/circular.png",
       imageHint: "circular document paper",
+      gradient: "from-purple-400 to-pink-500",
     },
     { 
       id: "liveClasses", 
@@ -242,6 +245,7 @@ export function StudentDashboardClient() {
       buttonText: "View All",
       imageSrc: "https://i.postimg.cc/Z5f0wYjQ/live-class.png",
       imageHint: "video call conference",
+      gradient: "from-red-400 to-orange-500",
     }
   ];
 
@@ -269,31 +273,31 @@ export function StudentDashboardClient() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
-            <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden group">
-                <CardHeader className="bg-muted/30 p-4">
-                  <CardTitle className="text-primary flex justify-between items-center text-xl">
+            <Card key={card.id} className={cn("shadow-lg rounded-2xl overflow-hidden group text-white", card.gradient)}>
+                <CardHeader className="p-4">
+                  <CardTitle className="flex justify-between items-center text-xl">
                     <span className="flex items-center gap-2">
                        <card.icon className="h-6 w-6" /> 
                        {card.title}
                     </span>
-                    <Button asChild variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
+                    <Button asChild variant="ghost" size="sm" className="text-white hover:bg-white/20">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                     </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
-                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-primary/5 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
+                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-white/10 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
                       <Image src={card.imageSrc} alt={card.title} width={80} height={80} data-ai-hint={card.imageHint} className="object-contain"/>
                   </div>
                   <div className="flex-grow text-center sm:text-left">
-                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : !card.contentData ? <p className="text-muted-foreground text-center">No new {card.id.toLowerCase()} found.</p> :
+                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center">No new {card.id.toLowerCase()} found.</p> :
                       <div className="space-y-1">
                           <h3 className="font-semibold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
-                          {card.contentData.description && <p className="text-sm text-muted-foreground line-clamp-2">{card.contentData.description}</p>}
+                          {card.contentData.description && <p className="text-sm opacity-90 line-clamp-2">{card.contentData.description}</p>}
                           {(card.id === "homework") && (
                           <div className="pt-2">
                               {!isLatestHomeworkCompleted ? (
-                              <Button size="sm" onClick={handleMarkHomeworkCompleted} disabled={completingHomework}>
+                              <Button size="sm" onClick={handleMarkHomeworkCompleted} disabled={completingHomework} variant="secondary">
                                   {completingHomework ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />} Mark as Completed
                               </Button>
                               ) : <Badge variant="accent"><CheckCircle className="mr-2 h-4 w-4"/>Completed</Badge>}
