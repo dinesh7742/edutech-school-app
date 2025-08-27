@@ -9,7 +9,15 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog } from "@/types";
 import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval, eachDayOfInterval } from "date-fns";
-import { specialDays2025, type SpecialDay } from "./TodaySpecial";
+
+// In a real app, this would come from a shared helper or API
+const specialDays2025: { date: string; name: string }[] = [
+  { date: '2025-01-26', name: 'Republic Day' },
+  { date: '2025-08-15', name: 'Independence Day' },
+  { date: '2025-10-02', name: 'Gandhi Jayanti' },
+  { date: '2025-12-25', name: 'Christmas Day' },
+  // Add other national/major school holidays
+];
 
 const holidays = specialDays2025.map(day => ({...day, date: parseISO(day.date)}));
 
@@ -97,18 +105,24 @@ export function WelcomeBoardAttendanceCalendar() {
     setIsLoading(true);
     setError(null);
 
-    const attendanceQuery = query(collection(db, "dailyAttendance"));
+    const firstDayOfMonth = startOfMonth(month);
+    const lastDayOfMonth = endOfMonth(month);
+
+    const attendanceQuery = query(
+        collection(db, "dailyAttendance"),
+        where("date", ">=", format(firstDayOfMonth, "yyyy-MM-dd")),
+        where("date", "<=", format(lastDayOfMonth, "yyyy-MM-dd"))
+    );
 
     const unsubscribe = onSnapshot(attendanceQuery, (querySnapshot) => {
       const records: Date[] = [];
       const notes: { date: Date; note: string }[] = [];
-      const firstDayOfMonth = startOfMonth(month);
-      const lastDayOfMonth = endOfMonth(month);
-
+      
       querySnapshot.forEach((doc) => {
         const log = doc.data() as DailyAttendanceLog;
         const logDate = parseISO(log.date);
         
+        // This check is slightly redundant due to the query, but good for safety
         if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
             records.push(logDate);
             if (log.note) {
