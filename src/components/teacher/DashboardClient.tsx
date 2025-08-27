@@ -20,7 +20,8 @@ import {
     Archive,
     GraduationCap,
     Phone,
-    BookOpen
+    BookOpen,
+    ClipboardCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -148,7 +149,7 @@ export function TeacherDashboardClient() {
 
   useEffect(() => {
     if (!teacherUser) return;
-    let hasOpenedDialog = false;
+    let hasOpenedDialog = sessionStorage.getItem('teacherNotificationDialogOpened');
 
     const runAllFetches = async () => {
         if (teacherUser.grade && teacherUser.division) {
@@ -250,7 +251,7 @@ export function TeacherDashboardClient() {
         if (!hasOpenedDialog && newMessages.length > 0) {
             setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
-            hasOpenedDialog = true;
+            sessionStorage.setItem('teacherNotificationDialogOpened', 'true');
         }
     };
 
