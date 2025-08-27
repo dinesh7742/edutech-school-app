@@ -1,6 +1,6 @@
 
 /**
- * @fileOverview A flow to get a special event for a given day.
+ * @fileOverview A flow to get a list of special events for a given day.
  */
 'use server';
 
@@ -12,10 +12,14 @@ const DailySpecialInputSchema = z.object({
 });
 export type DailySpecialInput = z.infer<typeof DailySpecialInputSchema>;
 
-const DailySpecialOutputSchema = z.object({
+const DailySpecialEventSchema = z.object({
   eventName: z.string().describe('A short, catchy name for the event.'),
   description: z.string().describe('A one or two sentence, engaging description of the event.'),
   type: z.enum(['Historical', 'Science', 'Arts', 'Anniversary', 'Other']).describe('The category of the event.'),
+});
+
+const DailySpecialOutputSchema = z.object({
+    events: z.array(DailySpecialEventSchema).describe("An array of up to 5 significant events for the given date.")
 });
 export type DailySpecialOutput = z.infer<typeof DailySpecialOutputSchema>;
 
@@ -28,16 +32,18 @@ const dailySpecialPrompt = ai.definePrompt({
   input: { schema: DailySpecialInputSchema },
   output: { schema: DailySpecialOutputSchema },
   prompt: `
-    You are a fascinating almanac. For the given date, {{{date}}}, find one interesting and significant event that occurred on that day in history.
+    You are a fascinating almanac. For the given date, {{{date}}}, find up to 5 interesting and significant events that occurred on that day in history.
     
-    Strongly prioritize events, discoveries, and anniversaries related to India. If a significant Indian event is available for the date, please choose that one. Otherwise, you can select a globally relevant event.
+    Strongly prioritize events, discoveries, and anniversaries related to India. If significant Indian events are available for the date, please choose those. Otherwise, you can select globally relevant events.
     
     Focus on globally relevant events, scientific discoveries, famous birthdays or death anniversaries, or major cultural moments.
-    Avoid obscure or trivial events. The event should be something a student would find interesting.
+    Avoid obscure or trivial events. The events should be something a student would find interesting.
 
-    Provide a short, catchy eventName for the event.
+    For each event, provide a short, catchy eventName.
     The description should be concise and engaging, limited to one or two sentences.
-    Categorize the event into one of the following types: Historical, Science, Arts, Anniversary, Other.
+    Categorize each event into one of the following types: Historical, Science, Arts, Anniversary, Other.
+
+    Return the list of events in the 'events' array.
   `,
 });
 

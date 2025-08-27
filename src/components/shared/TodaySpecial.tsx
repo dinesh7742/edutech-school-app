@@ -1,14 +1,17 @@
 
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2 } from 'lucide-react';
+import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getDailySpecial, type DailySpecialOutput } from '@/ai/flows/get-daily-special';
 import { format } from 'date-fns';
+import { Button } from '../ui/button';
 
-const eventIcons: Record<DailySpecialOutput['type'], React.ElementType> = {
+type DailyEvent = DailySpecialOutput['events'][0];
+
+const eventIcons: Record<DailyEvent['type'], React.ElementType> = {
   Historical: Landmark,
   Science: FlaskConical,
   Arts: BookOpen,
@@ -16,7 +19,7 @@ const eventIcons: Record<DailySpecialOutput['type'], React.ElementType> = {
   Other: Sparkles,
 };
 
-const eventColors: Record<DailySpecialOutput['type'], string> = {
+const eventColors: Record<DailyEvent['type'], string> = {
   Historical: "bg-blue-500",
   Science: "bg-green-500",
   Arts: "bg-purple-500",
@@ -24,11 +27,28 @@ const eventColors: Record<DailySpecialOutput['type'], string> = {
   Other: "bg-gray-500",
 };
 
-
 export function TodaySpecial() {
   const [currentDate, setCurrentDate] = useState<Date | null>(null);
-  const [dailyEvent, setDailyEvent] = useState<DailySpecialOutput | null>(null);
+  const [dailyEvents, setDailyEvents] = useState<DailyEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextEvent = useCallback(() => {
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % (dailyEvents.length || 1));
+  }, [dailyEvents.length]);
+
+  const prevEvent = () => {
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + dailyEvents.length) % (dailyEvents.length || 1));
+  };
+  
+  useEffect(() => {
+      if (dailyEvents.length > 1) {
+          const intervalId = setInterval(() => {
+              nextEvent();
+          }, 5000); // Change slide every 5 seconds
+          return () => clearInterval(intervalId);
+      }
+  }, [dailyEvents.length, nextEvent]);
 
   useEffect(() => {
     const now = new Date();
@@ -39,11 +59,15 @@ export function TodaySpecial() {
     const fetchEvent = async () => {
       setIsLoading(true);
       try {
-        const event = await getDailySpecial({ date: todayString });
-        setDailyEvent(event);
+        const result = await getDailySpecial({ date: todayString });
+        if (result && result.events && result.events.length > 0) {
+            setDailyEvents(result.events);
+        } else {
+            setDailyEvents([]);
+        }
       } catch (error) {
         console.error("Error fetching daily special event:", error);
-        setDailyEvent(null); // Set to null on error
+        setDailyEvents([]); // Set to empty array on error
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +93,8 @@ export function TodaySpecial() {
     day: 'numeric',
   });
   
-  const EventIcon = dailyEvent ? eventIcons[dailyEvent.type] : Sparkles;
+  const currentEvent = dailyEvents[currentIndex];
+  const EventIcon = currentEvent ? eventIcons[currentEvent.type] : Sparkles;
 
   return (
     <Card className="shadow-2xl rounded-2xl bg-gradient-to-br from-card to-background/50 text-card-foreground my-6 overflow-hidden border-2 border-primary/20">
@@ -80,21 +105,21 @@ export function TodaySpecial() {
         </CardTitle>
         <p className="text-lg text-muted-foreground pt-1">{formattedDate}</p>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-6 relative">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[120px] text-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <p className="mt-4 text-muted-foreground">Finding something interesting for today...</p>
           </div>
-        ) : dailyEvent ? (
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            <div className={`flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-white ${eventColors[dailyEvent.type]}`}>
+        ) : dailyEvents.length > 0 && currentEvent ? (
+          <div className="flex flex-col sm:flex-row items-center gap-6 min-h-[120px]">
+            <div className={`flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-white ${eventColors[currentEvent.type]}`}>
                <EventIcon className="h-10 w-10" />
             </div>
-            <div className="text-center sm:text-left">
-              <Badge variant="secondary" className="mb-2">{dailyEvent.type}</Badge>
-              <h3 className="text-xl font-bold text-foreground">{dailyEvent.eventName}</h3>
-              <p className="text-base text-muted-foreground mt-1">{dailyEvent.description}</p>
+            <div className="text-center sm:text-left flex-grow">
+              <Badge variant="secondary" className="mb-2">{currentEvent.type}</Badge>
+              <h3 className="text-xl font-bold text-foreground">{currentEvent.eventName}</h3>
+              <p className="text-base text-muted-foreground mt-1">{currentEvent.description}</p>
             </div>
           </div>
         ) : (
@@ -102,6 +127,23 @@ export function TodaySpecial() {
             <p>No special event could be loaded for today. It's a great day to make your own history!</p>
           </div>
         )}
+
+        {dailyEvents.length > 1 && (
+            <>
+            <Button variant="ghost" size="icon" onClick={prevEvent} className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full">
+                <ChevronLeft className="h-6 w-6"/>
+            </Button>
+            <Button variant="ghost" size="icon" onClick={nextEvent} className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full">
+                <ChevronRight className="h-6 w-6"/>
+            </Button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+                {dailyEvents.map((_, index) => (
+                    <button key={index} onClick={() => setCurrentIndex(index)} className={`h-2 w-2 rounded-full transition-colors ${index === currentIndex ? 'bg-primary' : 'bg-muted'}`}/>
+                ))}
+            </div>
+            </>
+        )}
+
       </CardContent>
     </Card>
   );
