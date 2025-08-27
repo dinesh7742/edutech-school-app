@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, Edit
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -22,7 +22,6 @@ import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
 import { format } from 'date-fns';
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { MessageSquareWarning } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,7 +100,11 @@ export function StudentDashboardClient() {
     const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
       if (!snapshot.empty) {
         const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
-        setNotificationMessages(current => [...current, ...newNotifications]);
+        setNotificationMessages(current => {
+            const existingIds = new Set(current.map(n => n.id));
+            const filteredNew = newNotifications.filter(n => !existingIds.has(n.id));
+            return [...current, ...filteredNew];
+        });
         if (!isNotificationDialogOpen) {
           setIsNotificationDialogOpen(true);
         }
@@ -262,7 +265,7 @@ export function StudentDashboardClient() {
 
   const quickActionLinks = [
     { id: "results", title: "Results", link: "/student/results", icon: Award },
-    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
+    { id: "exams", title: "Online Exams", link: "/student/exams", icon: FileText },
     { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
     { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
     { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
@@ -318,23 +321,23 @@ export function StudentDashboardClient() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
-            <Card key={card.id} className={cn("shadow-lg rounded-2xl overflow-hidden group text-black", card.gradient)}>
+            <Card key={card.id} className={cn("shadow-lg rounded-2xl overflow-hidden group", card.gradient)}>
                 <CardHeader className="p-4">
                   <CardTitle className="flex justify-between items-center text-xl">
-                    <span className="flex items-center gap-2 font-bold">
-                       {card.title === "Live Classes" ? (
+                    <span className="flex items-center gap-2 font-bold text-black">
+                       {card.id === "notices" ? (
                          <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
                            {card.title}
                          </span>
-                       ) : card.title === "Circulars" ? (
+                       ) : card.id === "homework" ? (
                          <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
                            {card.title}
                          </span>
-                       ) : card.title === "Notice Board" ? (
+                       ) : card.id === "circulars" ? (
                          <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
                            {card.title}
                          </span>
-                       ) : card.title === "Homework" ? (
+                       ) : card.id === "liveClasses" ? (
                          <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
                            {card.title}
                          </span>
@@ -352,10 +355,10 @@ export function StudentDashboardClient() {
                       <card.icon className="h-12 w-12 text-blue-800" />
                   </div>
                   <div className="flex-grow text-center sm:text-left">
-                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold">No new {card.id.toLowerCase()} found.</p> :
+                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold text-black">No new {card.id.toLowerCase()} found.</p> :
                       <div className="space-y-1">
-                          <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
-                          {card.contentData.description && <p className="text-sm opacity-90 line-clamp-2 font-semibold">{card.contentData.description}</p>}
+                          <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
+                          {card.contentData.description && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
                           {(card.id === "homework") && (
                           <div className="pt-2">
                               {!isLatestHomeworkCompleted ? (
