@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning, Edit
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -265,7 +265,7 @@ export function StudentDashboardClient() {
 
   const quickActionLinks = [
     { id: "results", title: "Results", link: "/student/results", icon: Award },
-    { id: "exams", title: "Online Exams", link: "/student/exams", icon: FileText },
+    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
     { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
     { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
     { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
@@ -285,6 +285,14 @@ export function StudentDashboardClient() {
         default: return "नई अधिसूचना";
     }
   }
+
+  const isRecent = (timestamp: Timestamp | any) => {
+    if (!(timestamp instanceof Timestamp)) return false;
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    return timestamp.toDate() > oneDayAgo;
+  };
+
 
   return (
     <>
@@ -324,26 +332,11 @@ export function StudentDashboardClient() {
             <Card key={card.id} className={cn("shadow-lg rounded-2xl overflow-hidden group", card.gradient)}>
                 <CardHeader className="p-4">
                   <CardTitle className="flex justify-between items-center text-xl">
-                    <span className="flex items-center gap-2 font-bold text-black">
-                       {card.id === "notices" ? (
-                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
-                           {card.title}
-                         </span>
-                       ) : card.id === "homework" ? (
-                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
-                           {card.title}
-                         </span>
-                       ) : card.id === "circulars" ? (
-                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
-                           {card.title}
-                         </span>
-                       ) : card.id === "liveClasses" ? (
-                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
-                           {card.title}
-                         </span>
-                       ) : (
-                         card.title
-                       )}
+                    <span className={cn(
+                        "flex items-center gap-2 font-bold text-black",
+                        (card.id === "notices" || card.id === "homework" || card.id === "circulars" || card.id === "liveClasses") && "border-2 border-black rounded-md px-3 py-1 bg-white/20"
+                    )}>
+                       {card.title}
                     </span>
                     <Button asChild variant="ghost" size="sm" className="text-black hover:bg-black/20 hover:text-white">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
@@ -354,11 +347,21 @@ export function StudentDashboardClient() {
                   <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-white/20 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
                       <card.icon className="h-12 w-12 text-blue-800" />
                   </div>
-                  <div className="flex-grow text-center sm:text-left">
-                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold text-black">No new {card.id.toLowerCase()} found.</p> :
+                  <div className="flex-grow text-center sm:text-left w-full">
+                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold text-black">No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
                       <div className="space-y-1">
-                          <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
-                          {card.contentData.description && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
+                          {card.id === 'homework' ? (
+                              <div className="border-2 border-black rounded-md p-3 bg-white/20 text-black">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
+                                  {isRecent(card.contentData.timestamp) && <Badge variant="destructive">New</Badge>}
+                                </div>
+                                <p className="text-sm opacity-90 font-semibold">Subject: {card.contentData.subject}</p>
+                              </div>
+                          ) : (
+                             <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
+                          )}
+                          {card.contentData.description && card.id !== 'homework' && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
                           {(card.id === "homework") && (
                           <div className="pt-2">
                               {!isLatestHomeworkCompleted ? (
