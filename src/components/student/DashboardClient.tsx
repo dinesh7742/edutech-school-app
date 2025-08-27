@@ -121,13 +121,16 @@ export function StudentDashboardClient() {
     const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
       const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
       
-      setNotificationMessages(current => {
-          const existingIds = new Set(current.map(n => n.id));
-          const filteredNew = newNotifications.filter(n => !existingIds.has(n.id));
-          return [...current, ...filteredNew];
+      const combinedNotifications = [...notificationMessages];
+      const existingIds = new Set(combinedNotifications.map(n => n.id));
+      newNotifications.forEach(n => {
+          if (!existingIds.has(n.id)) {
+              combinedNotifications.push(n);
+          }
       });
-
-      if (!hasOpenedDialog) {
+      setNotificationMessages(combinedNotifications);
+      
+      if (!hasOpenedDialog && newNotifications.length > 0) {
         setIsNotificationDialogOpen(true);
         sessionStorage.setItem('studentNotificationDialogOpened', 'true');
       }
@@ -400,12 +403,15 @@ export function StudentDashboardClient() {
             <Card key={card.id} className={cn("shadow-lg rounded-2xl overflow-hidden group", card.gradient)}>
                 <CardHeader className="p-4">
                   <CardTitle className="flex justify-between items-center text-xl">
-                    <span className={cn(
+                    <div className={cn(
                         "flex items-center gap-2 font-bold text-black",
                         (card.id === "notices" || card.id === "homework" || card.id === "circulars" || card.id === "liveClasses") && "border-2 border-black rounded-md px-3 py-1 bg-white/20"
                     )}>
-                       {card.title}
-                    </span>
+                       <span>{card.title}</span>
+                       {card.contentData && isRecent(card.contentData.timestamp) && (
+                         <Image src="https://i.postimg.cc/L8yC5XJ8/new-blinking-gif.gif" alt="New" width={40} height={20} unoptimized />
+                       )}
+                    </div>
                     <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                     </Button>
@@ -422,7 +428,6 @@ export function StudentDashboardClient() {
                               <div className="border-2 border-black rounded-md p-3 bg-white/20 text-black">
                                 <div className="flex items-center gap-2 mb-1">
                                   <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
-                                  {isRecent(card.contentData.timestamp) && <Badge variant="destructive">New</Badge>}
                                 </div>
                                 <p className="text-sm opacity-90 font-semibold">Subject: {card.contentData.subject}</p>
                               </div>
