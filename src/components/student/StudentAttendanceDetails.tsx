@@ -122,7 +122,8 @@ export function StudentAttendanceDetails() {
   return (
     <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden bg-background">
       <div className="bg-cyan-500 text-white p-4 text-center relative">
-        <h2 className="text-xl font-bold">{format(currentDate, "MMMM yyyy")}</h2>
+        <h2 className="text-xl font-bold">{user?.displayName}, your attendance is here!</h2>
+        <p className="text-sm opacity-90">{format(currentDate, "MMMM yyyy")}</p>
         <div className="absolute bottom-0 left-0 right-0 h-4 bg-background" style={{ borderTopLeftRadius: '100%', borderTopRightRadius: '100%' }}></div>
       </div>
 
