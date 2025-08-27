@@ -237,7 +237,7 @@ export function StudentDashboardClient() {
       contentData: latestContent.liveClass, 
       icon: Video, 
       buttonText: "View All",
-      gradient: "from-yellow-400 to-orange-500",
+      gradient: "from-cyan-400 to-blue-500",
     }
   ];
 
@@ -319,7 +319,7 @@ export function StudentDashboardClient() {
                     </span>
                   )}
                 </div>
-                <p className="font-bold text-sm text-black">{link.title}</p>
+                <p className="font-bold text-black">{link.title}</p>
               </Card>
             </Link>
           ))}
