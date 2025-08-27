@@ -93,10 +93,12 @@ export default function StudentLiveClassesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-        <Video className="h-8 w-8" />
-        Live Classes
-      </h1>
+      <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
+        <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+            <Video className="h-8 w-8" />
+            Live Classes
+        </h1>
+      </div>
       {filteredLiveClasses.length === 0 ? (
          <p className="text-muted-foreground text-center py-8">No live classes scheduled or announced for you at the moment.</p>
       ) : (

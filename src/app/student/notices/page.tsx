@@ -109,10 +109,12 @@ export default function StudentNoticesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-        <Bell className="h-8 w-8" />
-        Notices for You
-      </h1>
+       <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
+        <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+            <Bell className="h-8 w-8" />
+            Notices for You
+        </h1>
+       </div>
       {filteredNotices.length === 0 ? (
         <p className="text-muted-foreground text-center py-8">No relevant notices available at the moment.</p>
       ) : (
@@ -137,4 +139,3 @@ export default function StudentNoticesPage() {
     </div>
   );
 }
-

@@ -156,10 +156,12 @@ export default function StudentHomeworkPage() {
       <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
       
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-          <ClipboardList className="h-8 w-8" />
-          Homework for Grade {user?.grade}{user?.division}
-        </h1>
+        <div className="border-2 border-primary/20 rounded-lg p-4 bg-primary/5">
+            <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
+                <ClipboardList className="h-8 w-8" />
+                Homework for Grade {user?.grade}{user?.division}
+            </h1>
+        </div>
         {filteredHomework.length === 0 ? (
            <p className="text-muted-foreground text-center py-8">No homework assigned to your class at the moment.</p>
         ) : (
