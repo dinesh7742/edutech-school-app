@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning, Edit
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, Edit
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -22,6 +22,7 @@ import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
 import { format } from 'date-fns';
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { MessageSquareWarning } from "lucide-react";
 
 interface LatestContent {
   notice: Notice | null;
@@ -91,7 +92,7 @@ export function StudentDashboardClient() {
       snapshot.docs.forEach(docSnap => {
         const notif = { id: docSnap.id, ...(docSnap.data() as AppNotification) };
         toast({
-          title: `New Notification: ${notif.type}`,
+          title: `New ${notif.type.replace('New', '')}`,
           description: notif.message,
           action: notif.link ? <Link href={notif.link}><Button variant="outline" size="sm">View</Button></Link> : undefined,
         });

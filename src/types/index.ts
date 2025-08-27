@@ -365,10 +365,12 @@ export interface NotificationMessage {
   hindi: string;
 }
 
+export type NotificationType = 'NewHomework' | 'NewNotice' | 'NewCircular' | 'NewLiveClass' | 'Absent';
+
 export interface AppNotification {
     id: string;
     recipientUid: string;
-    type: 'Absent' | 'NewHomework' | 'NewNotice' | 'NewCircular' | 'NewLiveClass';
+    type: NotificationType;
     message: string;
     link: string;
     timestamp: Timestamp | FieldValue;

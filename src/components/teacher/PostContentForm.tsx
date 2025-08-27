@@ -15,10 +15,10 @@ import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, UploadCloud, X, FileText, ClipboardList, BookOpen, Image as ImageIcon, Video, Trash2, FileIcon, Film, ImagePlus, ClipboardCheck, Link, Award } from "lucide-react";
-import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, Timestamp, doc, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Image from "next/image";
-import type { Notice, Homework, HomeworkAttachment, Exam, StudentProfile } from "@/types";
+import type { Notice, Homework, HomeworkAttachment, Exam, StudentProfile, NotificationType } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -112,6 +112,36 @@ const progressCardSchema = z.object({
   // file will be handled by state, not RHF
 });
 type ProgressCardFormValues = z.infer<typeof progressCardSchema>;
+
+const createNotificationsForStudents = async (
+  studentUids: string[], 
+  type: NotificationType, 
+  message: string, 
+  link: string
+) => {
+  const notificationsRef = collection(db, "notifications");
+  const batch = writeBatch(db);
+
+  studentUids.forEach(uid => {
+    const newNotifRef = doc(notificationsRef);
+    batch.set(newNotifRef, {
+      recipientUid: uid,
+      type: type,
+      message: message,
+      link: link,
+      timestamp: serverTimestamp(),
+      isRead: false
+    });
+  });
+
+  try {
+    await batch.commit();
+  } catch (error) {
+    console.error("Error creating notifications:", error);
+    // Optionally toast an error message to the teacher
+  }
+};
+
 
 function PostContentFormLogic() {
   const { user } = useAuth();
@@ -359,6 +389,13 @@ function PostContentFormLogic() {
         postedByName: user.displayName || user.email || "Teacher",
         timestamp: serverTimestamp(),
       };
+      
+      let notificationType: NotificationType | null = null;
+      let notificationLink = "";
+      let notificationMessage = "";
+      let notificationGrade = data.grade;
+      let notificationDivision = data.division;
+
 
       if (type === "progressCard") {
           collectionName = "progressCards";
@@ -388,6 +425,11 @@ function PostContentFormLogic() {
             return;
         }
         collectionName = type === "homework" ? "homework" : "exams";
+        notificationType = "NewHomework";
+        notificationLink = "/student/homework";
+        notificationMessage = `New homework posted for ${data.subject}`;
+        notificationGrade = user.grade;
+        notificationDivision = user.division;
 
         documentData = {
           ...documentData,
@@ -496,16 +538,25 @@ function PostContentFormLogic() {
          switch (type) {
             case "notice":
               collectionName = "notices";
+              notificationType = "NewNotice";
+              notificationLink = "/student/notices";
+              notificationMessage = `New Notice: ${data.title}`;
               documentData.grade = data.grade || null;
               documentData.division = data.division || null;
               break;
             case "circular":
               collectionName = "circulars";
+              notificationType = "NewCircular";
+              notificationLink = "/student/circulars";
+              notificationMessage = `New Circular: ${data.title}`;
               documentData.grade = data.grade || null;
               documentData.division = data.division || null;
               break;
             case "liveClass":
               collectionName = "liveClasses";
+              notificationType = "NewLiveClass";
+              notificationLink = "/student/live-classes";
+              notificationMessage = `Live class scheduled for ${data.subject}`;
               documentData.grade = data.grade || null;
               documentData.division = data.division || null;
               break;
@@ -518,6 +569,21 @@ function PostContentFormLogic() {
 
 
       await addDoc(collection(db, collectionName), documentData);
+
+      if (notificationType && (notificationGrade || notificationDivision)) {
+          const studentQueryConstraints = [];
+          if (notificationGrade) studentQueryConstraints.push(where("grade", "==", notificationGrade));
+          if (notificationDivision) studentQueryConstraints.push(where("division", "==", notificationDivision));
+          
+          const studentsQuery = query(collection(db, "studentProfiles"), ...studentQueryConstraints);
+          const studentsSnapshot = await getDocs(studentsQuery);
+          const studentUids = studentsSnapshot.docs.map(doc => doc.id);
+          
+          if (studentUids.length > 0) {
+              await createNotificationsForStudents(studentUids, notificationType, notificationMessage, notificationLink);
+          }
+      }
+
 
       toast({ title: `${type.charAt(0).toUpperCase() + type.slice(1)} Posted Successfully` });
 
