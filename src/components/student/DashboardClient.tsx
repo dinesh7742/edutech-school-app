@@ -23,6 +23,15 @@ import { format } from 'date-fns';
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { MessageSquareWarning } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface LatestContent {
   notice: Notice | null;
@@ -48,6 +57,9 @@ export function StudentDashboardClient() {
   
   const [birthdayStudent, setBirthdayStudent] = useState<StudentProfile | null>(null);
   const [showBirthdayPopup, setShowBirthdayPopup] = useState(false);
+
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
+  const [notificationMessages, setNotificationMessages] = useState<AppNotification[]>([]);
   
   useEffect(() => {
     if (!user?.uid) {
@@ -79,30 +91,20 @@ export function StudentDashboardClient() {
 
     checkBirthday();
     
+    // Listen for new notifications
     const notificationsRef = collection(db, "notifications");
     const notificationsQuery = query(
       notificationsRef,
       where("recipientUid", "==", user.uid),
       where("isRead", "==", false)
     );
-    const unsubscribeNotifications = onSnapshot(notificationsQuery, async (snapshot) => {
-      if (snapshot.empty) return;
-
-      const batch = writeBatch(db);
-      snapshot.docs.forEach(docSnap => {
-        const notif = { id: docSnap.id, ...(docSnap.data() as AppNotification) };
-        toast({
-          title: `New ${notif.type.replace('New', '')}`,
-          description: notif.message,
-          action: notif.link ? <Link href={notif.link}><Button variant="outline" size="sm">View</Button></Link> : undefined,
-        });
-        batch.update(doc(db, 'notifications', notif.id), { isRead: true });
-      });
-
-      try {
-        await batch.commit();
-      } catch (error) {
-        console.error("Error marking notifications as read: ", error);
+    const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
+        setNotificationMessages(current => [...current, ...newNotifications]);
+        if (!isNotificationDialogOpen) {
+          setIsNotificationDialogOpen(true);
+        }
       }
     });
     
@@ -177,7 +179,23 @@ export function StudentDashboardClient() {
     return () => {
         unsubscribeNotifications();
     };
-  }, [user, toast]);
+  }, [user, toast, isNotificationDialogOpen]);
+
+  const markNotificationsAsRead = async () => {
+    if (notificationMessages.length === 0) return;
+
+    const batch = writeBatch(db);
+    notificationMessages.forEach(notif => {
+      const notifRef = doc(db, 'notifications', notif.id);
+      batch.update(notifRef, { isRead: true });
+    });
+    try {
+      await batch.commit();
+      setNotificationMessages([]);
+    } catch (error) {
+      console.error("Error marking notifications as read: ", error);
+    }
+  };
   
   const closeBirthdayPopup = () => {
     if (birthdayStudent) {
@@ -255,8 +273,42 @@ export function StudentDashboardClient() {
     { id: "school", title: "About School", link: "/student/about-school", icon: School },
   ];
 
+  const getHindiMessage = (notification: AppNotification) => {
+    switch(notification.type) {
+        case "NewNotice": return `नई सूचना: ${notification.message.replace('New Notice: ', '')}`;
+        case "NewHomework": return `नया होमवर्क: ${notification.message.replace('New homework posted for ', '')}`;
+        case "NewCircular": return `नया परिपत्र: ${notification.message.replace('New Circular: ', '')}`;
+        case "NewLiveClass": return `नई लाइव क्लास: ${notification.message.replace('Live class scheduled for ', '')}`;
+        default: return "नई अधिसूचना";
+    }
+  }
+
   return (
     <>
+      <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>New Updates / नई सूचनाएं</AlertDialogTitle>
+            <AlertDialogDescription>
+                You have new items. Click to view.
+                <br />
+                आपके लिए नई वस्तुएं हैं। देखने के लिए क्लिक करें।
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
+            {notificationMessages.map((msg, index) => (
+                <Link key={index} href={msg.link} onClick={() => { setIsNotificationDialogOpen(false); markNotificationsAsRead(); }} className="block p-3 border rounded-md hover:bg-muted transition-colors">
+                    <p className="font-semibold">{msg.message}</p>
+                    <p className="text-sm text-muted-foreground">{getHindiMessage(msg)}</p>
+                </Link>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {setIsNotificationDialogOpen(false); markNotificationsAsRead(); }}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {showBirthdayPopup && birthdayStudent && <BirthdayPopup student={birthdayStudent} onClose={closeBirthdayPopup} />}
       <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
       <div className="space-y-8">

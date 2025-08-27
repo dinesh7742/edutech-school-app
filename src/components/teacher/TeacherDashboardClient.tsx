@@ -148,7 +148,7 @@ export function TeacherDashboardClient() {
 
   useEffect(() => {
     if (!teacherUser) return;
-    let hasOpenedDialog = false;
+    let hasOpenedDialog = sessionStorage.getItem('teacherNotificationDialogOpened');
 
     const runAllFetches = async () => {
         if (teacherUser.grade && teacherUser.division) {
@@ -159,11 +159,12 @@ export function TeacherDashboardClient() {
                 const q = query(
                     profilesCollectionRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division),
-                    orderBy("firstName")
+                    where("division", "==", teacherUser.division)
                 );
                 const querySnapshot = await getDocs(q);
-                setStudentsInClass(querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile)));
+                const studentList = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+                studentList.sort((a,b) => (a.firstName || "").localeCompare(b.firstName || ""));
+                setStudentsInClass(studentList);
             } catch (err: any) {
                 console.error("Error fetching students for teacher's class:", err);
                 setStudentCountError("Failed to fetch student data.");
@@ -199,13 +200,12 @@ export function TeacherDashboardClient() {
                 const q = query(
                     submissionsRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division),
-                    orderBy("completedAt", "desc"),
-                    limit(5)
+                    where("division", "==", teacherUser.division)
                 );
                 const querySnapshot = await getDocs(q);
                 const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
-                setRecentSubmissions(fetchedSubmissions);
+                fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
+                setRecentSubmissions(fetchedSubmissions.slice(0, 5));
             } catch (err) {
                 console.error("Error fetching recent homework submissions:", err);
             } finally {
@@ -250,7 +250,7 @@ export function TeacherDashboardClient() {
         if (!hasOpenedDialog && newMessages.length > 0) {
             setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
-            hasOpenedDialog = true;
+            sessionStorage.setItem('teacherNotificationDialogOpened', 'true');
         }
     };
 
