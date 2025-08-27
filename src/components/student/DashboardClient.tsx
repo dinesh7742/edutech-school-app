@@ -244,7 +244,7 @@ export function StudentDashboardClient() {
     { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
     { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
     { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
-    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: GalleryHorizontal },
+    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
     { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact },
     { id: "profile", title: "My Profile", link: "/student/profile", icon: Users },
     { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages },
@@ -263,19 +263,19 @@ export function StudentDashboardClient() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {quickActionLinks.map(link => (
             <Link key={link.id} href={link.link}>
-              <Card className="text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 bg-gradient-to-br from-yellow-300 to-orange-400 text-primary-foreground">
-                <div className="relative">
-                  <link.icon className="h-10 w-10 mb-2 text-white" />
+               <Card className="text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group">
+                <div className="relative mb-2">
+                  <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary transition-colors duration-300">
+                    <link.icon className="h-8 w-8 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
+                  </div>
                   {link.hasNotification && (
-                    <>
-                     <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
+                    <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                     </span>
-                    </>
                   )}
                 </div>
-                <p className="font-semibold text-white">{link.title}</p>
+                <p className="font-semibold text-sm text-foreground">{link.title}</p>
               </Card>
             </Link>
           ))}
@@ -283,23 +283,23 @@ export function StudentDashboardClient() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
-            <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-br from-yellow-300 to-orange-400 p-4">
-                  <CardTitle className="text-white flex justify-between items-center text-xl">
+            <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden group">
+                <CardHeader className="bg-muted/30 p-4">
+                  <CardTitle className="text-primary flex justify-between items-center text-xl">
                     <span className="flex items-center gap-2">
                        {card.icon && <card.icon className="h-6 w-6" />} 
                        {card.title}
                     </span>
-                    <Button asChild variant="link" size="sm" className="text-white">
+                    <Button asChild variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                     </Button>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 flex items-center gap-4 min-h-[150px]">
-                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center">
-                      <Image src={card.imageSrc} alt={card.title} width={96} height={96} data-ai-hint={card.imageHint} />
+                <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
+                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-primary/5 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
+                      <Image src={card.imageSrc} alt={card.title} width={80} height={80} data-ai-hint={card.imageHint} className="object-contain"/>
                   </div>
-                  <div className="flex-grow">
+                  <div className="flex-grow text-center sm:text-left">
                       {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div> : !card.contentData ? <p className="text-muted-foreground text-center">No new {card.id.toLowerCase()} found.</p> :
                       <div className="space-y-1">
                           <h3 className="font-semibold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>

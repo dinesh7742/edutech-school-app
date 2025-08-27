@@ -10,12 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { 
     Loader2, 
     ClipboardList, 
-    BookOpen, 
-    Video, 
-    ClipboardCheck, 
-    MailOpen, 
-    AlertTriangle, 
-    FileSignature, 
     Users, 
     Download, 
     ListChecks, 
@@ -23,12 +17,10 @@ import {
     BarChart3, 
     MessageSquareWarning, 
     MessageSquare, 
-    Archive, 
-    Upload,
+    Archive,
     GraduationCap,
     Phone,
-    FileText,
-    Image as ImageIconLucide
+    BookOpen
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -207,12 +199,13 @@ export function TeacherDashboardClient() {
                 const q = query(
                     submissionsRef,
                     where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division)
+                    where("division", "==", teacherUser.division),
+                    orderBy("completedAt", "desc"),
+                    limit(5)
                 );
                 const querySnapshot = await getDocs(q);
                 const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
-                fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
-                setRecentSubmissions(fetchedSubmissions.slice(0, 5));
+                setRecentSubmissions(fetchedSubmissions);
             } catch (err) {
                 console.error("Error fetching recent homework submissions:", err);
             } finally {
@@ -377,7 +370,7 @@ export function TeacherDashboardClient() {
     { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
     { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
     { id: "markAttendance", title: "Mark Attendance", description: getAttendanceCardDescription(), link: "/teacher/mark-attendance", buttonText: "Mark Attendance", icon: ListChecks, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "manageSubmissions", title: "Manage Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
+    { id: "manageSubmissions", title: "Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
     { id: "studentChats", title: "Student Chats", description: "Communicate directly with students and parents.", link: "/teacher/chat", buttonText: "Open Chats", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-teal-600 hover:bg-teal-700" },
     { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-red-600 hover:bg-red-700" },
     { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-orange-500 hover:bg-orange-600" },
