@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, GalleryHorizontal, Edit, Image as ImageIcon
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, GalleryHorizontal, Edit, Image as ImageIcon, School
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -21,6 +21,7 @@ import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
 import { format } from 'date-fns';
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 interface LatestContent {
   notice: Notice | null;
@@ -116,13 +117,16 @@ export function StudentDashboardClient() {
       
 
       try {
-        const relevantGrade = user.grade;
-        const relevantDivision = user.division;
+        if (!user.grade || !user.division) {
+          console.warn("User is missing grade or division, skipping content fetch.");
+          setLoadingContent(false);
+          return;
+        }
 
-        const noticeQuery = query(collection(db, "notices"), where('grade', 'in', [null, '', relevantGrade]));
-        const homeworkQuery = query(collection(db, "homework"), where("grade", "==", relevantGrade), where("division", "==", relevantDivision));
-        const circularQuery = query(collection(db, "circulars"), where('grade', 'in', [null, '', relevantGrade]));
-        const liveClassQuery = query(collection(db, "liveClasses"), where('grade', 'in', [null, '', relevantGrade]));
+        const noticeQuery = query(collection(db, "notices"), where('grade', 'in', [null, '', user.grade]));
+        const homeworkQuery = query(collection(db, "homework"), where("grade", "==", user.grade), where("division", "==", user.division));
+        const circularQuery = query(collection(db, "circulars"), where('grade', 'in', [null, '', user.grade]));
+        const liveClassQuery = query(collection(db, "liveClasses"), where('grade', 'in', [null, '', user.grade]));
 
         const [noticeSnap, homeworkSnap, circularSnap, liveClassSnap] = await Promise.all([
             getDocs(noticeQuery),
@@ -157,17 +161,19 @@ export function StudentDashboardClient() {
 
     fetchDashboardData();
     
-    const chatId = `group_chat_${user.grade}_${user.division}`;
-    const chatDocRef = doc(db, "chats", chatId);
-    const unsubscribeChat = onSnapshot(chatDocRef, (chatDoc) => {
-        if(chatDoc.exists()) {
-            const messages = (chatDoc.data().messages || []) as ChatMessage[];
-            setHasUnreadMessages(messages.some(msg => msg.senderId !== user.uid && !msg.readBy?.includes(user.uid || '')));
-        }
-    });
+    if (user.grade && user.division) {
+      const chatId = `group_chat_${user.grade}_${user.division}`;
+      const chatDocRef = doc(db, "chats", chatId);
+      const unsubscribeChat = onSnapshot(chatDocRef, (chatDoc) => {
+          if(chatDoc.exists()) {
+              const messages = (chatDoc.data().messages || []) as ChatMessage[];
+              setHasUnreadMessages(messages.some(msg => msg.senderId !== user.uid && !msg.readBy?.includes(user.uid || '')));
+          }
+      });
+      return () => unsubscribeChat();
+    }
     
     return () => {
-        unsubscribeChat();
         unsubscribeNotifications();
     };
   }, [user, toast]);
@@ -240,15 +246,16 @@ export function StudentDashboardClient() {
   ];
 
   const quickActionLinks = [
-    { id: "results", title: "Results", link: "/student/results", icon: Award },
-    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
-    { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
-    { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
-    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
-    { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact },
-    { id: "profile", title: "My Profile", link: "/student/profile", icon: Users },
-    { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages },
-    { id: "conduct", title: "Parent Notifications", link: "/student/conduct-record", icon: MessageSquare, hasNotification: pendingNotificationCount > 0 },
+    { id: "results", title: "Results", link: "/student/results", icon: Award, gradient: "from-blue-500 to-indigo-600" },
+    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit, gradient: "from-green-500 to-teal-600" },
+    { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature, gradient: "from-purple-500 to-pink-600" },
+    { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen, gradient: "from-orange-500 to-red-600" },
+    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon, gradient: "from-yellow-400 to-amber-500" },
+    { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact, gradient: "from-sky-500 to-cyan-600" },
+    { id: "profile", title: "My Profile", link: "/student/profile", icon: Users, gradient: "from-rose-500 to-fuchsia-600" },
+    { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages, gradient: "from-lime-500 to-emerald-600" },
+    { id: "conduct", title: "Parent Notifications", link: "/student/conduct-record", icon: MessageSquareWarning, hasNotification: pendingNotificationCount > 0, gradient: "from-red-500 to-rose-700" },
+    { id: "school", title: "About School", link: "/student/about-school", icon: School, gradient: "from-slate-500 to-slate-700" },
   ];
 
   return (
@@ -263,19 +270,22 @@ export function StudentDashboardClient() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {quickActionLinks.map(link => (
             <Link key={link.id} href={link.link}>
-               <Card className="text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group">
+              <Card className={cn(
+                "text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group text-white",
+                link.gradient
+              )}>
                 <div className="relative mb-2">
-                  <div className="p-3 rounded-full bg-primary/10 group-hover:bg-primary transition-colors duration-300">
-                    <link.icon className="h-8 w-8 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
+                  <div className="p-3 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
+                    <link.icon className="h-8 w-8 text-white" />
                   </div>
                   {link.hasNotification && (
-                    <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                    <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/75 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-white"></span>
                     </span>
                   )}
                 </div>
-                <p className="font-semibold text-sm text-foreground">{link.title}</p>
+                <p className="font-semibold text-sm">{link.title}</p>
               </Card>
             </Link>
           ))}
@@ -287,7 +297,7 @@ export function StudentDashboardClient() {
                 <CardHeader className="bg-muted/30 p-4">
                   <CardTitle className="text-primary flex justify-between items-center text-xl">
                     <span className="flex items-center gap-2">
-                       {card.icon && <card.icon className="h-6 w-6" />} 
+                       <card.icon className="h-6 w-6" /> 
                        {card.title}
                     </span>
                     <Button asChild variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
