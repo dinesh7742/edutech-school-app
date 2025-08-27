@@ -305,9 +305,7 @@ export function StudentDashboardClient() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {quickActionLinks.map(link => (
             <Link key={link.id} href={link.link}>
-              <Card className={cn(
-                "text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group bg-gradient-to-br from-yellow-400 to-orange-500"
-              )}>
+              <Card className="text-center p-4 h-full flex flex-col items-center justify-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 group bg-gradient-to-br from-yellow-400 to-orange-500">
                 <div className="relative mb-2">
                   <div className="p-3 rounded-full bg-white/20 group-hover:bg-white/30 transition-colors duration-300">
                     <link.icon className="h-8 w-8 text-blue-800" />
