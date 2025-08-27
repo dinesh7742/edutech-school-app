@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, XCircle, MessageSquare, AlertTriangle } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp, addDoc } from "firebase/firestore";
 import type { LateArrivalApplication, RequestStatus } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -85,7 +85,7 @@ export function LateArrivalManagementTable() {
   }, [teacherUser, filterStatus]);
 
   const handleUpdateStatus = async (appId: string, newStatus: RequestStatus, teacherComment?: string) => {
-    if (!teacherUser || !appId) {
+    if (!teacherUser || !currentAppForComment) {
       toast({ title: "Error", description: "User or application ID missing.", variant: "destructive" });
       return;
     }
@@ -98,6 +98,18 @@ export function LateArrivalManagementTable() {
         reviewTimestamp: serverTimestamp(),
         teacherComments: teacherComment || null,
       });
+
+      // Create a notification for the student
+      const notificationMessage = `Your ${currentAppForComment.type} request for ${formatDateDisplay(currentAppForComment.requestDate)} has been ${newStatus}.`;
+      await addDoc(collection(db, "notifications"), {
+        recipientUid: currentAppForComment.studentUid,
+        type: 'LateArrivalStatusUpdate',
+        message: notificationMessage,
+        link: '/student/my-applications',
+        timestamp: serverTimestamp(),
+        isRead: false
+      });
+
       toast({ title: "Success", description: `Request ${newStatus.toLowerCase()}.` });
       setApplications(prevApps => prevApps.map(app => app.id === appId ? { ...app, status: newStatus, teacherComments: teacherComment } : app));
     } catch (error: any) {

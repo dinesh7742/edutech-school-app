@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, XCircle, ListFilter, MessageSquare } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp, addDoc } from "firebase/firestore";
 import type { LeaveApplication, LeaveApplicationStatus } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -88,8 +88,8 @@ export function LeaveManagementTable() {
   }, [teacherUser, filterStatus]);
 
   const handleUpdateStatus = async (appId: string, newStatus: LeaveApplicationStatus, teacherComment?: string) => {
-    if (!teacherUser || !appId) {
-      toast({ title: "Error", description: "User or application ID missing.", variant: "destructive" });
+    if (!teacherUser || !currentAppForComment) {
+      toast({ title: "Error", description: "User or application data missing.", variant: "destructive" });
       return;
     }
     try {
@@ -101,6 +101,18 @@ export function LeaveManagementTable() {
         reviewTimestamp: serverTimestamp(),
         teacherComments: teacherComment || null, 
       });
+
+      // Create a notification for the student
+      const notificationMessage = `Your leave application from ${formatDateDisplay(currentAppForComment.leaveStartDate)} to ${formatDateDisplay(currentAppForComment.leaveEndDate)} has been ${newStatus}.`;
+      await addDoc(collection(db, "notifications"), {
+        recipientUid: currentAppForComment.studentUid,
+        type: 'LeaveStatusUpdate',
+        message: notificationMessage,
+        link: '/student/my-applications',
+        timestamp: serverTimestamp(),
+        isRead: false
+      });
+
       toast({ title: "Success", description: `Application ${newStatus.toLowerCase()}.` });
       setApplications(prevApps => prevApps.map(app => app.id === appId ? { ...app, status: newStatus, teacherComments: teacherComment } : app));
     } catch (error: any) {

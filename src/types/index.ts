@@ -366,7 +366,15 @@ export interface NotificationMessage {
   hindi: string;
 }
 
-export type NotificationType = 'NewHomework' | 'NewNotice' | 'NewCircular' | 'NewLiveClass' | 'Absent';
+export type NotificationType = 
+    | 'NewHomework' 
+    | 'NewNotice' 
+    | 'NewCircular' 
+    | 'NewLiveClass' 
+    | 'Absent'
+    | 'LeaveStatusUpdate'
+    | 'LateArrivalStatusUpdate'
+    | 'OtherAppStatusUpdate';
 
 export interface AppNotification {
     id: string;

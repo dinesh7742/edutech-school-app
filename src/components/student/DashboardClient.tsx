@@ -304,8 +304,17 @@ export function StudentDashboardClient() {
         case "NewHomework": return `नया होमवर्क: ${notification.message.replace('New homework posted for ', '')}`;
         case "NewCircular": return `नया परिपत्र: ${notification.message.replace('New Circular: ', '')}`;
         case "NewLiveClass": return `नई लाइव क्लास: ${notification.message.replace('Live class scheduled for ', '')}`;
+        case "LeaveStatusUpdate": return `आपके अवकाश आवेदन का status अपडेट हो गया है।`;
+        case "LateArrivalStatusUpdate": return `आपके देर से आने/जल्दी जाने के अनुरोध का status अपडेट हो गया है।`;
+        case "OtherAppStatusUpdate": return `आपके अन्य आवेदन का status अपडेट हो गया है।`;
         default: return "नई अधिसूचना";
     }
+  }
+
+  const getNotificationMessageWithEmoji = (message: string) => {
+    if (message.toLowerCase().includes('approved')) return `${message} ✅`;
+    if (message.toLowerCase().includes('rejected')) return `${message} ❌`;
+    return message;
   }
 
   const isRecent = (timestamp: Timestamp | any) => {
@@ -339,7 +348,7 @@ export function StudentDashboardClient() {
             {notificationMessages.length > 0 ? (
                 notificationMessages.map((msg, index) => (
                     <Link key={index} href={msg.link} onClick={() => { setIsNotificationDialogOpen(false); markNotificationsAsRead(); }} className="block p-3 border rounded-md hover:bg-muted transition-colors">
-                        <p className="font-semibold">{msg.message}</p>
+                        <p className="font-semibold">{getNotificationMessageWithEmoji(msg.message)}</p>
                         <p className="text-sm text-muted-foreground">{getHindiMessage(msg)}</p>
                     </Link>
                 ))

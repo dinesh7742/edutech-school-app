@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, CheckCircle, XCircle, MessageSquare, Filter, FileSignature } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp, DocumentData, QueryConstraint } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp, DocumentData, QueryConstraint, addDoc } from "firebase/firestore";
 import type { OtherStudentApplication, RequestStatus, OtherApplicationType } from "@/types";
 import { otherApplicationTypeLabels } from "@/types";
 import { useAuth } from "@/context/AuthContext";
@@ -102,7 +102,7 @@ export function OtherApplicationsReviewTable() {
   }, [teacherUser, filterStatus, filterFormType, toast]);
 
   const handleUpdateStatus = async (appId: string, newStatus: RequestStatus, teacherComment?: string) => {
-    if (!teacherUser || !appId) {
+    if (!teacherUser || !currentAppForComment) {
       toast({ title: "Error", description: "User or application ID missing.", variant: "destructive" });
       return;
     }
@@ -115,6 +115,19 @@ export function OtherApplicationsReviewTable() {
         reviewTimestamp: serverTimestamp(),
         teacherComments: teacherComment || null,
       });
+
+      // Create a notification for the student
+      const formTitle = otherApplicationTypeLabels[currentAppForComment.formType] || 'application';
+      const notificationMessage = `Your ${formTitle} request has been ${newStatus}.`;
+      await addDoc(collection(db, "notifications"), {
+        recipientUid: currentAppForComment.studentUid,
+        type: 'OtherAppStatusUpdate',
+        message: notificationMessage,
+        link: '/student/my-applications',
+        timestamp: serverTimestamp(),
+        isRead: false
+      });
+
       toast({ title: "Success", description: `Application ${newStatus.toLowerCase()}.` });
       setApplications(prevApps => prevApps.map(app => app.id === appId ? { ...app, status: newStatus, teacherComments: teacherComment } : app));
     } catch (error: any) {
