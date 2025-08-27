@@ -376,3 +376,12 @@ export interface AppNotification {
     timestamp: Timestamp | FieldValue;
     isRead: boolean;
 }
+
+export interface SpecialAlert {
+  title: string;
+  message: string;
+  isActive: boolean;
+  postedByUid: string;
+  postedByName: string;
+  timestamp: Timestamp | FieldValue;
+}

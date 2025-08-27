@@ -1,5 +1,10 @@
 import { StudentDashboardClient } from "@/components/student/DashboardClient";
+import { Suspense } from "react";
 
 export default function StudentDashboardPage() {
-  return <StudentDashboardClient />;
+  return (
+    <Suspense>
+      <StudentDashboardClient />
+    </Suspense>
+  );
 }

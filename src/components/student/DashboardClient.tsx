@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning, Edit
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning, Edit, Megaphone
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile, SpecialAlert } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -60,6 +61,9 @@ export function StudentDashboardClient() {
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   const [notificationMessages, setNotificationMessages] = useState<AppNotification[]>([]);
   
+  const [specialAlert, setSpecialAlert] = useState<SpecialAlert | null>(null);
+  const [showSpecialAlert, setShowSpecialAlert] = useState(false);
+
   useEffect(() => {
     if (!user?.uid) {
       setLoadingContent(false);
@@ -88,12 +92,26 @@ export function StudentDashboardClient() {
         }
     };
 
+    const checkSpecialAlert = async () => {
+        const alertDocRef = doc(db, "site_config", "special_alert");
+        const alertDoc = await getDoc(alertDocRef);
+        if (alertDoc.exists()) {
+            const alertData = alertDoc.data() as SpecialAlert;
+            if (alertData.isActive) {
+                const lastDismissed = sessionStorage.getItem(`special_alert_dismissed_${alertData.timestamp?.toMillis()}`);
+                if (!lastDismissed) {
+                    setSpecialAlert(alertData);
+                    setShowSpecialAlert(true);
+                }
+            }
+        }
+    };
+
     checkBirthday();
+    checkSpecialAlert();
     
-    // Logic for the notification pop-up
     let hasOpenedDialog = sessionStorage.getItem('studentNotificationDialogOpened');
 
-    // Listen for new notifications
     const notificationsRef = collection(db, "notifications");
     const notificationsQuery = query(
       notificationsRef,
@@ -296,6 +314,13 @@ export function StudentDashboardClient() {
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
     return timestamp.toDate() > oneDayAgo;
   };
+  
+  const dismissSpecialAlert = () => {
+    if (specialAlert?.timestamp) {
+        sessionStorage.setItem(`special_alert_dismissed_${specialAlert.timestamp.toMillis()}`, 'true');
+    }
+    setShowSpecialAlert(false);
+  }
 
 
   return (
@@ -328,6 +353,23 @@ export function StudentDashboardClient() {
           </div>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => {setIsNotificationDialogOpen(false); markNotificationsAsRead(); }}>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showSpecialAlert} onOpenChange={setShowSpecialAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+                <Megaphone className="h-6 w-6 text-primary" />
+                {specialAlert?.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+                {specialAlert?.message}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={dismissSpecialAlert}>OK, Got it</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
