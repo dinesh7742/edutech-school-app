@@ -90,6 +90,9 @@ export function StudentDashboardClient() {
 
     checkBirthday();
     
+    // Logic for the notification pop-up
+    let hasOpenedDialog = sessionStorage.getItem('studentNotificationDialogOpened');
+
     // Listen for new notifications
     const notificationsRef = collection(db, "notifications");
     const notificationsQuery = query(
@@ -98,16 +101,17 @@ export function StudentDashboardClient() {
       where("isRead", "==", false)
     );
     const unsubscribeNotifications = onSnapshot(notificationsQuery, (snapshot) => {
-      if (!snapshot.empty) {
-        const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
-        setNotificationMessages(current => {
-            const existingIds = new Set(current.map(n => n.id));
-            const filteredNew = newNotifications.filter(n => !existingIds.has(n.id));
-            return [...current, ...filteredNew];
-        });
-        if (!isNotificationDialogOpen) {
-          setIsNotificationDialogOpen(true);
-        }
+      const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
+      
+      setNotificationMessages(current => {
+          const existingIds = new Set(current.map(n => n.id));
+          const filteredNew = newNotifications.filter(n => !existingIds.has(n.id));
+          return [...current, ...filteredNew];
+      });
+
+      if (!hasOpenedDialog) {
+        setIsNotificationDialogOpen(true);
+        sessionStorage.setItem('studentNotificationDialogOpened', 'true');
       }
     });
     
@@ -182,7 +186,7 @@ export function StudentDashboardClient() {
     return () => {
         unsubscribeNotifications();
     };
-  }, [user, toast, isNotificationDialogOpen]);
+  }, [user, toast]);
 
   const markNotificationsAsRead = async () => {
     if (notificationMessages.length === 0) return;
@@ -307,12 +311,20 @@ export function StudentDashboardClient() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
-            {notificationMessages.map((msg, index) => (
-                <Link key={index} href={msg.link} onClick={() => { setIsNotificationDialogOpen(false); markNotificationsAsRead(); }} className="block p-3 border rounded-md hover:bg-muted transition-colors">
-                    <p className="font-semibold">{msg.message}</p>
-                    <p className="text-sm text-muted-foreground">{getHindiMessage(msg)}</p>
-                </Link>
-            ))}
+            {notificationMessages.length > 0 ? (
+                notificationMessages.map((msg, index) => (
+                    <Link key={index} href={msg.link} onClick={() => { setIsNotificationDialogOpen(false); markNotificationsAsRead(); }} className="block p-3 border rounded-md hover:bg-muted transition-colors">
+                        <p className="font-semibold">{msg.message}</p>
+                        <p className="text-sm text-muted-foreground">{getHindiMessage(msg)}</p>
+                    </Link>
+                ))
+            ) : (
+                 <p className="text-center text-muted-foreground py-4">
+                    No new notifications right now.
+                    <br/>
+                    अभी कोई नई सूचना नहीं है।
+                 </p>
+            )}
           </div>
           <AlertDialogFooter>
             <AlertDialogAction onClick={() => {setIsNotificationDialogOpen(false); markNotificationsAsRead(); }}>OK</AlertDialogAction>

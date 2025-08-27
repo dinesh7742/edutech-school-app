@@ -248,7 +248,7 @@ export function TeacherDashboardClient() {
             console.warn("Could not check for new application submissions:", error);
         }
 
-        if (!hasOpenedDialog && newMessages.length > 0) {
+        if (!hasOpenedDialog) {
             setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
             sessionStorage.setItem('teacherNotificationDialogOpened', 'true');
@@ -401,7 +401,9 @@ export function TeacherDashboardClient() {
                 ))
             ) : (
                 <p className="text-center text-muted-foreground py-4">
-                    No new submissions or messages today. / आज कोई नया सबमिशन या संदेश नहीं है।
+                    No new submissions or messages today.
+                    <br/>
+                    आज कोई नया सबमिशन या संदेश नहीं है।
                 </p>
             )}
           </div>
