@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -268,7 +269,19 @@ export function StudentDashboardClient() {
                 <CardHeader className="p-4">
                   <CardTitle className="flex justify-between items-center text-xl">
                     <span className="flex items-center gap-2 font-bold">
-                       {card.title === "Notice Board" ? (
+                       {card.title === "Live Classes" ? (
+                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
+                           {card.title}
+                         </span>
+                       ) : card.title === "Circulars" ? (
+                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
+                           {card.title}
+                         </span>
+                       ) : card.title === "Notice Board" ? (
+                         <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
+                           {card.title}
+                         </span>
+                       ) : card.title === "Homework" ? (
                          <span className="border-2 border-black rounded-md px-3 py-1 bg-white/20">
                            {card.title}
                          </span>
