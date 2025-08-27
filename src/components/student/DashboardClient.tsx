@@ -99,11 +99,8 @@ export function StudentDashboardClient() {
         if (alertDoc.exists()) {
             const alertData = alertDoc.data() as SpecialAlert;
             if (alertData.isActive) {
-                const lastDismissed = sessionStorage.getItem(`special_alert_dismissed_${alertData.timestamp?.toMillis()}`);
-                if (!lastDismissed) {
-                    setSpecialAlert(alertData);
-                    setShowSpecialAlert(true);
-                }
+                setSpecialAlert(alertData);
+                setShowSpecialAlert(true);
             }
         }
     };
@@ -328,9 +325,6 @@ export function StudentDashboardClient() {
   };
   
   const dismissSpecialAlert = () => {
-    if (specialAlert?.timestamp) {
-        sessionStorage.setItem(`special_alert_dismissed_${specialAlert.timestamp.toMillis()}`, 'true');
-    }
     setShowSpecialAlert(false);
   }
 
