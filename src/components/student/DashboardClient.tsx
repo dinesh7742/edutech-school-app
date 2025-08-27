@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, Award, GalleryHorizontal, Edit, Image as ImageIcon, School
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, MessageSquare, MessageSquareWarning, Award, GalleryHorizontal, Edit, Image as ImageIcon, School
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
