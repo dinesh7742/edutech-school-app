@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, orderBy, getDocs, Timestamp } from "firebase/firestore";
 import type { Notice } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import Image from 'next/image';
 
 export default function StudentNoticesPage() {
   const [allNotices, setAllNotices] = useState<Notice[]>([]);
@@ -29,6 +30,7 @@ export default function StudentNoticesPage() {
             id: doc.id,
             title: data.title,
             content: data.content,
+            imageUrl: data.imageUrl,
             postedByUid: data.postedByUid,
             postedByName: data.postedByName,
             timestamp: timestamp,
@@ -130,6 +132,11 @@ export default function StudentNoticesPage() {
                 </p>
               </CardHeader>
               <CardContent>
+                {notice.imageUrl && (
+                  <div className="mb-4 relative w-full aspect-video rounded-md overflow-hidden">
+                    <Image src={notice.imageUrl} alt={notice.title} layout="fill" objectFit="cover" data-ai-hint="announcement notice"/>
+                  </div>
+                )}
                 <p className="text-sm whitespace-pre-wrap">{notice.content}</p>
               </CardContent>
             </Card>

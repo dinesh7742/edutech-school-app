@@ -22,6 +22,7 @@ export interface Notice {
   id: string;
   title: string;
   content: string;
+  imageUrl?: string; // Added imageUrl for notice images
   postedByUid: string;
   postedByName: string;
   timestamp: Timestamp | FieldValue;

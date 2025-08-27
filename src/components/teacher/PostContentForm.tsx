@@ -153,6 +153,10 @@ function PostContentFormLogic() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(tabFromUrl || "notice");
   
+  // State for notice image
+  const [noticeImagePreview, setNoticeImagePreview] = useState<string | null>(null);
+  const [selectedNoticeFile, setSelectedNoticeFile] = useState<File | null>(null);
+
   // State for progress card form
   const [studentsForProgressCard, setStudentsForProgressCard] = useState<StudentProfile[]>([]);
   const [loadingStudentsForPC, setLoadingStudentsForPC] = useState(true);
@@ -252,6 +256,30 @@ function PostContentFormLogic() {
     fetchRecentContent();
   }, [user, toast]);
 
+
+  const handleNoticeFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      if (file.size > MAX_RAW_FILE_SIZE_BYTES) {
+        toast({
+          title: "Image File Too Large",
+          description: `Please choose an image file smaller than ${MAX_RAW_FILE_SIZE_BYTES / 1024 / 1024}MB.`,
+          variant: "destructive",
+        });
+        event.target.value = "";
+        return;
+      }
+      setSelectedNoticeFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNoticeImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setSelectedNoticeFile(null);
+      setNoticeImagePreview(null);
+    }
+  };
 
   const handleTextbookCoverFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -543,6 +571,23 @@ function PostContentFormLogic() {
               notificationMessage = `New Notice: ${data.title}`;
               documentData.grade = data.grade || null;
               documentData.division = data.division || null;
+              if (selectedNoticeFile) {
+                  const noticeImageDataUri = await new Promise<string>((resolve, reject) => {
+                      const reader = new FileReader();
+                      reader.onloadend = () => resolve(reader.result as string);
+                      reader.onerror = reject;
+                      reader.readAsDataURL(selectedNoticeFile);
+                  });
+                  if (noticeImageDataUri.length > MAX_DATA_URI_SIZE_BYTES) {
+                      toast({
+                          title: "Notice Image Too Large",
+                          description: "Image is over 1MB and was not saved. Notice posted without image.",
+                          variant: "destructive",
+                      });
+                  } else {
+                      documentData.imageUrl = noticeImageDataUri;
+                  }
+              }
               break;
             case "circular":
               collectionName = "circulars";
@@ -589,6 +634,8 @@ function PostContentFormLogic() {
 
       if (type === 'notice') {
         formNotice.reset({ title: "", content: "", grade: defaultGradeDivision.grade, division: defaultGradeDivision.division });
+        setSelectedNoticeFile(null);
+        setNoticeImagePreview(null);
         setRecentNotices(prev => [{...documentData, id: 'new', timestamp: Timestamp.now()}, ...prev].slice(0,3)); // Optimistic update
       }
       if (type === 'homework') {
@@ -669,11 +716,25 @@ function PostContentFormLogic() {
       </div>
 
       {type === 'notice' ? (
+        <>
         <div>
           <Label htmlFor="noticeContent">Content *</Label>
           <Textarea id="noticeContent" {...formInstance.register("content")} rows={5} />
           {formInstance.formState.errors.content && <p className="text-sm text-destructive mt-1">{formInstance.formState.errors.content.message}</p>}
         </div>
+        <div className="space-y-2">
+            <Label htmlFor="noticeImageUpload">Attach Image (Optional)</Label>
+            <Input id="noticeImageUpload" type="file" accept="image/*" onChange={handleNoticeFileChange} className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"/>
+            {noticeImagePreview && (
+                <div className="relative group w-fit">
+                    <Image src={noticeImagePreview} alt="Notice Preview" width={120} height={120} className="rounded-md object-cover border"/>
+                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => { setSelectedNoticeFile(null); setNoticeImagePreview(null); }}>
+                        <X className="h-4 w-4"/>
+                    </Button>
+                </div>
+            )}
+        </div>
+        </>
       ) : type !== 'liveClass' ? ( 
         <div>
           <Label htmlFor={`${activeTab}Description`}>Description (Optional)</Label>
@@ -1169,7 +1230,3 @@ export function PostContentForm() {
         </Suspense>
     )
 }
-
-    
-
-    
