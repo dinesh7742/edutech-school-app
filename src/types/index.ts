@@ -381,6 +381,7 @@ export interface AppNotification {
 export interface SpecialAlert {
   title: string;
   message: string;
+  imageUrl?: string;
   isActive: boolean;
   postedByUid: string;
   postedByName: string;

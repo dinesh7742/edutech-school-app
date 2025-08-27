@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
-import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile, SpecialAlert } from "@/types";
+import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile, SpecialAlert, NotificationMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
 import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -69,6 +68,8 @@ export function StudentDashboardClient() {
       setLoadingContent(false);
       return;
     }
+    
+    let hasOpenedDialog = sessionStorage.getItem('studentNotificationDialogOpened');
 
     const checkBirthday = async () => {
         const profileDocRef = doc(db, "studentProfiles", user.uid);
@@ -110,7 +111,6 @@ export function StudentDashboardClient() {
     checkBirthday();
     checkSpecialAlert();
     
-    let hasOpenedDialog = sessionStorage.getItem('studentNotificationDialogOpened');
 
     const notificationsRef = collection(db, "notifications");
     const notificationsQuery = query(
@@ -365,7 +365,12 @@ export function StudentDashboardClient() {
                 {specialAlert?.title}
             </AlertDialogTitle>
             <AlertDialogDescription>
-                {specialAlert?.message}
+              {specialAlert?.imageUrl && (
+                <div className="my-4">
+                  <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
+                </div>
+              )}
+              <p className="whitespace-pre-wrap">{specialAlert?.message}</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -392,7 +397,7 @@ export function StudentDashboardClient() {
                     )}>
                        {card.title}
                     </span>
-                    <Button asChild variant="ghost" size="sm" className="text-black hover:bg-black/20 hover:text-white">
+                    <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                     </Button>
                   </CardTitle>
