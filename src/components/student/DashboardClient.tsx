@@ -401,13 +401,13 @@ export function StudentDashboardClient() {
                          <Image src="https://i.postimg.cc/L8yC5XJ8/new-blinking-gif.gif" alt="New" width={40} height={20} unoptimized />
                        )}
                     </div>
-                    <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
+                    <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50 animate-blinking-colors">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                     </Button>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
-                  <Link href={card.link} className="w-full h-full flex flex-col sm:flex-row items-center gap-4">
+                <CardContent className="p-4">
+                  <Link href={card.link} className="w-full h-full flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
                     <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-white/20 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
                         <card.icon className="h-12 w-12 text-blue-800" />
                     </div>
