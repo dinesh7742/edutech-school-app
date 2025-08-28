@@ -31,6 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { StudentIdCardWidget } from "./StudentIdCardWidget";
 
 interface LatestContent {
   notice: Notice | null;
@@ -43,6 +44,8 @@ export function StudentDashboardClient() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [latestContent, setLatestContent] = useState<LatestContent>({ notice: null, homework: null, circular: null, liveClass: null });
   const [loadingContent, setLoadingContent] = useState(true);
 
@@ -54,7 +57,6 @@ export function StudentDashboardClient() {
 
   const [viewingFile, setViewingFile] = useState<FileInfo | null>(null);
   
-  const [birthdayStudent, setBirthdayStudent] = useState<StudentProfile | null>(null);
   const [showBirthdayPopup, setShowBirthdayPopup] = useState(false);
 
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
@@ -66,15 +68,18 @@ export function StudentDashboardClient() {
   useEffect(() => {
     if (!user?.uid) {
       setLoadingContent(false);
+      setLoadingProfile(false);
       return;
     }
     
-    const checkBirthday = async () => {
+    const fetchProfileAndCheckBirthday = async () => {
+        setLoadingProfile(true);
         const profileDocRef = doc(db, "studentProfiles", user.uid);
         const profileDoc = await getDoc(profileDocRef);
 
         if (profileDoc.exists()) {
-            const studentData = profileDoc.data() as StudentProfile;
+            const studentData = {uid: user.uid, ...profileDoc.data()} as StudentProfile;
+            setStudentProfile(studentData);
             if (studentData.dateOfBirth) {
                 const today = format(new Date(), 'MM-dd');
                 const birthDate = format(new Date(studentData.dateOfBirth), 'MM-dd');
@@ -83,12 +88,12 @@ export function StudentDashboardClient() {
                     const lastShown = localStorage.getItem(`birthday_${studentData.uid}`);
                     const todayStr = format(new Date(), 'yyyy-MM-dd');
                     if (lastShown !== todayStr) {
-                         setBirthdayStudent(studentData);
                          setShowBirthdayPopup(true);
                     }
                 }
             }
         }
+        setLoadingProfile(false);
     };
 
     const checkSpecialAlert = async () => {
@@ -103,7 +108,7 @@ export function StudentDashboardClient() {
         }
     };
 
-    checkBirthday();
+    fetchProfileAndCheckBirthday();
     checkSpecialAlert();
     
 
@@ -220,8 +225,8 @@ export function StudentDashboardClient() {
   };
   
   const closeBirthdayPopup = () => {
-    if (birthdayStudent) {
-        localStorage.setItem(`birthday_${birthdayStudent.uid}`, format(new Date(), 'yyyy-MM-dd'));
+    if (studentProfile) {
+        localStorage.setItem(`birthday_${studentProfile.uid}`, format(new Date(), 'yyyy-MM-dd'));
     }
     setShowBirthdayPopup(false);
   };
@@ -365,25 +370,27 @@ export function StudentDashboardClient() {
                 <Megaphone className="h-6 w-6 text-primary" />
                 {specialAlert?.title}
             </AlertDialogTitle>
-            {specialAlert?.imageUrl && (
-              <div className="my-4">
-                <Image src={specialAlert.imageUrl} alt={specialAlert.title || 'Alert Image'} width={400} height={250} className="rounded-md object-contain mx-auto" />
-              </div>
-            )}
-            <AlertDialogDescription>
-              {specialAlert?.message}
-            </AlertDialogDescription>
+            
           </AlertDialogHeader>
+          <div className="my-4 space-y-4">
+              {specialAlert?.imageUrl && (
+                <div className="relative w-full aspect-video">
+                  <Image src={specialAlert.imageUrl} alt={specialAlert.title || 'Alert Image'} layout="fill" objectFit="contain" className="rounded-md" />
+                </div>
+              )}
+              <p className="text-sm text-muted-foreground">{specialAlert?.message}</p>
+          </div>
           <AlertDialogFooter>
             <AlertDialogAction onClick={dismissSpecialAlert}>OK, Got it</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {showBirthdayPopup && birthdayStudent && <BirthdayPopup student={birthdayStudent} onClose={closeBirthdayPopup} />}
+      {showBirthdayPopup && studentProfile && <BirthdayPopup student={studentProfile} onClose={closeBirthdayPopup} />}
       <FileViewer fileInfo={viewingFile} onOpenChange={(isOpen) => !isOpen && setViewingFile(null)} />
       <div className="space-y-8">
         <WelcomeMessage />
+        <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
         <StudentAttendanceDetails />
         <TodaySpecial />
 
