@@ -8,6 +8,7 @@ import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2
 import { getDailySpecial, type DailySpecialOutput } from '@/ai/flows/get-daily-special';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
 
 type DailyEvent = DailySpecialOutput['events'][0];
 
@@ -20,11 +21,11 @@ const eventIcons: Record<DailyEvent['type'], React.ElementType> = {
 };
 
 const eventColors: Record<DailyEvent['type'], string> = {
-  Historical: "bg-blue-500",
-  Science: "bg-green-500",
-  Arts: "bg-purple-500",
-  Anniversary: "bg-pink-500",
-  Other: "bg-gray-500",
+  Historical: "bg-blue-500/10 text-blue-800 dark:text-blue-200 border-blue-500/20",
+  Science: "bg-green-500/10 text-green-800 dark:text-green-200 border-green-500/20",
+  Arts: "bg-purple-500/10 text-purple-800 dark:text-purple-200 border-purple-500/20",
+  Anniversary: "bg-pink-500/10 text-pink-800 dark:text-pink-200 border-pink-500/20",
+  Other: "bg-gray-500/10 text-gray-800 dark:text-gray-200 border-gray-500/20",
 };
 
 export function TodaySpecial() {
@@ -95,6 +96,7 @@ export function TodaySpecial() {
   
   const currentEvent = dailyEvents[currentIndex];
   const EventIcon = currentEvent ? eventIcons[currentEvent.type] : Sparkles;
+  const eventFrameColor = currentEvent ? eventColors[currentEvent.type] : eventColors['Other'];
 
   return (
     <Card className="shadow-2xl rounded-2xl bg-gradient-to-br from-card to-background/50 text-card-foreground my-6 overflow-hidden border-2 border-primary/20">
@@ -112,14 +114,14 @@ export function TodaySpecial() {
             <p className="mt-4 text-muted-foreground">Finding something interesting for today...</p>
           </div>
         ) : dailyEvents.length > 0 && currentEvent ? (
-          <div className="flex flex-col sm:flex-row items-center gap-6 min-h-[120px]">
-            <div className={`flex-shrink-0 w-20 h-20 rounded-full flex items-center justify-center text-white ${eventColors[currentEvent.type]}`}>
+          <div className={cn("flex flex-col sm:flex-row items-center gap-6 min-h-[120px] p-4 rounded-lg border-2", eventFrameColor)}>
+            <div className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center bg-white/50">
                <EventIcon className="h-10 w-10" />
             </div>
             <div className="text-center sm:text-left flex-grow">
               <Badge variant="secondary" className="mb-2">{currentEvent.type}</Badge>
-              <h3 className="text-xl font-bold text-foreground">{currentEvent.eventName}</h3>
-              <p className="text-base text-muted-foreground mt-1">{currentEvent.description}</p>
+              <h3 className="text-xl font-bold">{currentEvent.eventName}</h3>
+              <p className="text-base mt-1">{currentEvent.description}</p>
             </div>
           </div>
         ) : (
