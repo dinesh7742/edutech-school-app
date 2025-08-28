@@ -114,4 +114,8 @@ body {
     @apply text-primary hover:text-accent; 
     text-decoration-line: underline;
   }
+  /* This will apply Times New Roman to all card components */
+  .card {
+    font-family: "Times New Roman", Times, serif;
+  }
 }
