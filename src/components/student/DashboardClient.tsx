@@ -365,13 +365,13 @@ export function StudentDashboardClient() {
                 <Megaphone className="h-6 w-6 text-primary" />
                 {specialAlert?.title}
             </AlertDialogTitle>
+            {specialAlert?.imageUrl && (
+              <div className="my-4">
+                <Image src={specialAlert.imageUrl} alt={specialAlert.title || 'Alert Image'} width={400} height={250} className="rounded-md object-contain mx-auto" />
+              </div>
+            )}
             <AlertDialogDescription>
-              {specialAlert?.imageUrl && (
-                <div className="my-4">
-                  <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
-                </div>
-              )}
-              <p>{specialAlert?.message}</p>
+              {specialAlert?.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -390,61 +390,61 @@ export function StudentDashboardClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
             <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden group bg-gradient-to-br from-yellow-400 to-orange-500">
-                <CardHeader className="p-4">
-                  <CardTitle className="flex justify-between items-center text-xl">
-                    <div className={cn(
-                        "flex items-center gap-2 font-bold text-black",
-                        (card.id === "notices" || card.id === "homework" || card.id === "circulars" || card.id === "liveClasses") && "border-2 border-black rounded-md px-3 py-1 bg-white/20"
-                    )}>
-                       <span>{card.title}</span>
-                       {card.contentData && isRecent(card.contentData.timestamp) && (
-                         <Image src="https://i.postimg.cc/L8yC5XJ8/new-blinking-gif.gif" alt="New" width={40} height={20} unoptimized />
-                       )}
-                    </div>
-                    <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
-                      <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
-                    </Button>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <Link href={card.link} className="w-full h-full flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
-                    <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-white/20 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
-                        <card.icon className="h-12 w-12 text-blue-800" />
-                    </div>
-                    <div className="flex-grow text-center sm:text-left w-full">
-                        {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold text-black">No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
-                        <div className="space-y-1">
-                            {card.id === 'homework' ? (
-                                <div className="border-2 border-black rounded-md p-3 bg-white/20 text-black">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
-                                     {(card.contentData as Homework).documentLink && (
-                                      <LinkIcon className="h-4 w-4 text-blue-800 shrink-0" />
-                                    )}
-                                    {(card.contentData as Homework).attachments && (card.contentData as Homework).attachments!.length > 0 && (
-                                      <FileText className="h-4 w-4 text-blue-800 shrink-0" />
-                                    )}
-                                  </div>
-                                  <p className="text-sm opacity-90 font-semibold">Subject: {card.contentData.subject}</p>
+              <CardHeader className="p-4">
+                <CardTitle className="flex justify-between items-center text-xl">
+                  <div className={cn(
+                      "flex items-center gap-2 font-bold text-black",
+                      "border-2 border-black rounded-md px-3 py-1 bg-white/20"
+                  )}>
+                     <span>{card.title}</span>
+                     {card.contentData && isRecent(card.contentData.timestamp) && (
+                       <Image src="https://i.postimg.cc/L8yC5XJ8/new-blinking-gif.gif" alt="New" width={40} height={20} unoptimized />
+                     )}
+                  </div>
+                  <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
+                    <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <Link href={card.link} className="w-full h-full flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
+                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-white/20 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
+                      <card.icon className="h-12 w-12 text-blue-800" />
+                  </div>
+                  <div className="flex-grow text-center sm:text-left w-full">
+                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold text-black">No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
+                      <div className="space-y-1">
+                          {card.id === 'homework' ? (
+                              <div className="border-2 border-black rounded-md p-3 bg-white/20 text-black">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
+                                   {(card.contentData as Homework).documentLink && (
+                                    <LinkIcon className="h-4 w-4 text-blue-800 shrink-0" />
+                                  )}
+                                  {(card.contentData as Homework).attachments && (card.contentData as Homework).attachments!.length > 0 && (
+                                    <FileText className="h-4 w-4 text-blue-800 shrink-0" />
+                                  )}
                                 </div>
-                            ) : (
-                               <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
-                            )}
-                            {card.contentData.description && card.id !== 'homework' && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
-                            {(card.id === "homework") && (
-                            <div className="pt-2">
-                                {!isLatestHomeworkCompleted ? (
-                                <Button size="sm" onClick={handleMarkHomeworkCompleted} disabled={completingHomework} variant="secondary">
-                                    {completingHomework ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />} Mark as Completed
-                                </Button>
-                                ) : <Badge variant="accent"><CheckCircle className="mr-2 h-4 w-4"/>Completed</Badge>}
-                            </div>
-                            )}
-                        </div>
-                        }
-                    </div>
-                  </Link>
-                </CardContent>
+                                <p className="text-sm opacity-90 font-semibold">Subject: {card.contentData.subject}</p>
+                              </div>
+                          ) : (
+                             <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
+                          )}
+                          {card.contentData.description && card.id !== 'homework' && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
+                          {(card.id === "homework") && (
+                          <div className="pt-2">
+                              {!isLatestHomeworkCompleted ? (
+                              <Button size="sm" onClick={handleMarkHomeworkCompleted} disabled={completingHomework} variant="secondary">
+                                  {completingHomework ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />} Mark as Completed
+                              </Button>
+                              ) : <Badge variant="accent"><CheckCircle className="mr-2 h-4 w-4"/>Completed</Badge>}
+                          </div>
+                          )}
+                      </div>
+                      }
+                  </div>
+                </Link>
+              </CardContent>
             </Card>
           ))}
         </div>
