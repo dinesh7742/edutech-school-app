@@ -118,7 +118,7 @@ export default {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'spin-slow': 'spin-slow 3s linear infinite',
-        'blinking-colors': 'blinking-colors 12s infinite',
+        'blinking-colors': 'blinking-colors 20s infinite',
   		},
       backgroundImage: {
         'grid-pattern': "radial-gradient(circle, hsl(var(--primary) / 0.05) 1px, transparent 1px)",
