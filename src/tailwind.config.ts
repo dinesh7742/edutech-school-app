@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -107,18 +108,11 @@ export default {
             transform: 'rotate(360deg)'
           }
         },
-        'blinking-colors': {
-          '0%, 100%': { backgroundColor: 'hsl(var(--primary))' },
-          '25%': { backgroundColor: 'hsl(var(--secondary))' },
-          '50%': { backgroundColor: 'hsl(var(--accent))' },
-          '75%': { backgroundColor: 'hsl(var(--chart-4))' },
-        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'spin-slow': 'spin-slow 3s linear infinite',
-        'blinking-colors': 'blinking-colors 20s infinite',
   		},
       backgroundImage: {
         'grid-pattern': "radial-gradient(circle, hsl(var(--primary) / 0.05) 1px, transparent 1px)",

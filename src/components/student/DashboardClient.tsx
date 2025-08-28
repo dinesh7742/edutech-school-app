@@ -365,14 +365,14 @@ export function StudentDashboardClient() {
                 <Megaphone className="h-6 w-6 text-primary" />
                 {specialAlert?.title}
             </AlertDialogTitle>
-            <div className="whitespace-pre-wrap pt-2">
+            <AlertDialogDescription>
               {specialAlert?.imageUrl && (
                 <div className="my-4">
                   <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
                 </div>
               )}
               <p>{specialAlert?.message}</p>
-            </div>
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction onClick={dismissSpecialAlert}>OK, Got it</AlertDialogAction>
@@ -401,7 +401,7 @@ export function StudentDashboardClient() {
                          <Image src="https://i.postimg.cc/L8yC5XJ8/new-blinking-gif.gif" alt="New" width={40} height={20} unoptimized />
                        )}
                     </div>
-                    <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50 animate-blinking-colors">
+                    <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
                       <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                     </Button>
                   </CardTitle>
