@@ -4,12 +4,11 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, X, Cake, Sparkles } from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, X, Cake, Sparkles, Trophy, Share2 } from 'lucide-react';
 import type { StudentProfile } from '@/types';
 import { getBirthdayWish } from '@/ai/flows/get-birthday-wish';
 import Confetti from 'react-confetti';
+import { useToast } from "@/hooks/use-toast";
 
 interface BirthdayPopupProps {
   student: StudentProfile;
@@ -20,6 +19,7 @@ export function BirthdayPopup({ student, onClose }: BirthdayPopupProps) {
   const [wish, setWish] = useState<string>("");
   const [loadingWish, setLoadingWish] = useState(true);
   const [showConfetti, setShowConfetti] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const generateWish = async () => {
@@ -29,7 +29,7 @@ export function BirthdayPopup({ student, onClose }: BirthdayPopupProps) {
         setWish(result.wish);
       } catch (error) {
         console.error("Error generating birthday wish:", error);
-        setWish(`Happy Birthday, ${student.firstName}! Wishing you a day as special as you are.`);
+        setWish(`Wishing you a day as special as you are, filled with joy and laughter!`);
       } finally {
         setLoadingWish(false);
       }
@@ -39,57 +39,75 @@ export function BirthdayPopup({ student, onClose }: BirthdayPopupProps) {
   }, [student.firstName]);
   
   useEffect(() => {
-    // Start confetti a little after the dialog opens
     const timer = setTimeout(() => setShowConfetti(true), 500);
     return () => clearTimeout(timer);
   }, []);
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    const firstInitial = firstName ? firstName[0] : "";
-    const lastInitial = lastName ? lastName[0] : "";
-    return `${firstInitial}${lastInitial}`.toUpperCase() || "S";
+  const handleShare = () => {
+    const shareText = `Happy Birthday ${student.firstName}! ${wish}`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Birthday Wish!',
+        text: shareText,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(shareText).then(() => {
+        toast({
+          title: "Copied to Clipboard",
+          description: "Birthday wish copied! You can now paste it to share.",
+        });
+      });
+    }
   };
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       {showConfetti && <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} numberOfPieces={400}/>}
-      <DialogContent className="max-w-md w-full p-0 overflow-hidden border-4 border-yellow-300 shadow-2xl rounded-2xl">
-        <div className="relative bg-gradient-to-br from-pink-400 to-purple-500 text-white p-6 pt-12 flex flex-col items-center text-center">
-            <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white">
+      <DialogContent className="max-w-sm w-full p-0 overflow-visible border-none bg-transparent shadow-none">
+        <div className="relative">
+            <div className="bg-background rounded-t-xl pt-10 pb-16 text-center relative">
+                <div className="absolute -top-12 left-1/2 -translate-x-1/2 h-24 w-24 rounded-full bg-background border-4 border-primary/20 flex items-center justify-center">
+                    <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+                         <Trophy className="h-12 w-12 text-primary" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="absolute top-0 left-0 w-full h-full">
+                <svg viewBox="0 0 1440 320" className="w-full h-full">
+                    <path fill="hsl(var(--primary))" fillOpacity="1" d="M0,160L120,176C240,192,480,224,720,224C960,224,1200,192,1320,176L1440,160L1440,320L1320,320C1200,320,960,320,720,320C480,320,240,320,120,320L0,320Z"></path>
+                </svg>
+            </div>
+            
+            <div className="relative bg-primary p-6 rounded-b-xl text-primary-foreground text-center">
+                 <h2 className="text-2xl font-bold">Congratulations!</h2>
+                 <h3 className="text-xl font-semibold opacity-90">Happy Birthday, {student.firstName}!</h3>
+                 
+                <div className="my-4 text-center min-h-[4rem] flex items-center justify-center">
+                    {loadingWish ? (
+                    <div className="flex items-center justify-center space-x-2 text-primary-foreground/80">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Crafting a special wish...</span>
+                    </div>
+                    ) : (
+                    <p className="text-sm opacity-80">"{wish}"</p>
+                    )}
+                </div>
+                
+                <Button onClick={handleShare} className="w-full bg-background/20 hover:bg-background/30 text-primary-foreground rounded-full">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Share
+                </Button>
+            </div>
+
+            <div
+                className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 h-0 w-0 border-x-8 border-x-transparent border-t-[10px]"
+                style={{ borderTopColor: 'hsl(var(--primary))' }}
+            />
+            
+            <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-2 right-2 h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 text-white z-10">
                 <X className="h-5 w-5" />
             </Button>
-          <Sparkles className="absolute top-4 left-4 h-8 w-8 text-yellow-300 animate-pulse" />
-          <Sparkles className="absolute top-10 right-8 h-5 w-5 text-yellow-300 animate-pulse delay-500" />
-          <Sparkles className="absolute bottom-4 left-8 h-6 w-6 text-yellow-300 animate-pulse delay-300" />
-
-          <Avatar className="h-32 w-32 border-4 border-white shadow-lg -mb-16">
-            <AvatarImage src={student.photoUrl} alt={student.firstName} />
-            <AvatarFallback className="text-4xl">{getInitials(student.firstName, student.lastName)}</AvatarFallback>
-          </Avatar>
-        </div>
-        <div className="bg-white p-6 pt-20 flex flex-col items-center text-center">
-          <h2 className="text-3xl font-bold text-primary">Happy Birthday!</h2>
-          <h3 className="text-2xl font-semibold text-secondary">{student.firstName} {student.lastName}</h3>
-          
-          <div className="my-6 text-center">
-            {loadingWish ? (
-              <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Crafting a special wish...</span>
-              </div>
-            ) : (
-              <p className="text-lg italic text-gray-700">"{wish}"</p>
-            )}
-          </div>
-          
-          <div className="flex justify-center items-end gap-4 mt-4">
-              <Image src="https://i.postimg.cc/k45Jy2CM/6016995.png" alt="Birthday Candles" width={80} height={80} data-ai-hint="birthday candles" />
-              <Image src="https://i.postimg.cc/tJ0X72R1/birthday-cake-3d-rendering-icon-illustration-free-png.png" alt="Birthday Cake" width={120} height={120} data-ai-hint="birthday cake" />
-          </div>
-
-          <Button onClick={onClose} className="mt-8">
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
