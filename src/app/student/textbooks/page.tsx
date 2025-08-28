@@ -44,15 +44,11 @@ export default function StudentTextbooksPage() {
     const fetchTextbooks = async () => {
       setLoading(true);
       setError(null); 
-      // console.log("[StudentTextbooksPage] Attempting to fetch textbooks from Firestore...");
       try {
         const textbooksCollectionRef = collection(db, "textbooks");
         // Removed orderBy from query to avoid needing a composite index. Sorting will be done client-side.
         const q = query(textbooksCollectionRef); 
-        // console.log("[StudentTextbooksPage] Executing Firestore query for textbooks:", q);
         const querySnapshot = await getDocs(q);
-        
-        // console.log(`[StudentTextbooksPage] Firestore query successful. Found ${querySnapshot.docs.length} documents.`);
         
         if (querySnapshot.empty) {
           // console.warn("[StudentTextbooksPage] No textbooks found in the 'textbooks' collection after query execution.");
@@ -60,9 +56,7 @@ export default function StudentTextbooksPage() {
 
         const fetchedTextbooks: Textbook[] = querySnapshot.docs.map(doc => {
           const data = doc.data();
-          // console.log(`[StudentTextbooksPage] Mapping document ${doc.id}:`, data);
           if (!data.title || !data.subject || !data.grade) {
-            // console.warn(`[StudentTextbooksPage] Document ${doc.id} is missing critical fields (title, subject, or grade) and will be skipped.`, data);
             return null; 
           }
           return {
@@ -89,15 +83,12 @@ export default function StudentTextbooksPage() {
         });
         
         setTextbooksList(fetchedTextbooks);
-        // console.log(`[StudentTextbooksPage] Successfully mapped and sorted ${fetchedTextbooks.length} textbooks to state:`, fetchedTextbooks);
-
       } catch (err: any) {
         console.error("[StudentTextbooksPage] Error fetching textbooks from Firestore:", err);
         setError(`Failed to load textbooks: ${err.message}. Please check the browser console for more details, especially for Firestore permission errors or missing index warnings (if orderBy is used).`);
         setTextbooksList([]); 
       } finally {
         setLoading(false);
-        // console.log("[StudentTextbooksPage] Finished fetching textbooks. Loading set to false.");
       }
     };
 

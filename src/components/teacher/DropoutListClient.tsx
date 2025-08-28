@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Loader2, UserCircle, RotateCw, Archive } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, getDocs, orderBy, doc, writeBatch, serverTimestamp, getDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, writeBatch, serverTimestamp, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import type { DroppedStudentProfile } from "@/types";

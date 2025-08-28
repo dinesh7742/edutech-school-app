@@ -2,13 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, XCircle, ListFilter, MessageSquare } from "lucide-react";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, orderBy, Timestamp, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, Timestamp, addDoc } from "firebase/firestore";
 import type { LeaveApplication, LeaveApplicationStatus } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -22,11 +21,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label"; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
+import { Label } from "@/components/ui/label";
 
 export function LeaveManagementTable() {
   const { user: teacherUser } = useAuth();
