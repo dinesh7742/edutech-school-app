@@ -125,9 +125,8 @@ export function StudentDashboardClient() {
       });
       setNotificationMessages(combinedNotifications);
       
-      if (newNotifications.length > 0 && !sessionStorage.getItem('notificationDialogOpened')) {
+      if (newNotifications.length > 0) {
         setIsNotificationDialogOpen(true);
-        sessionStorage.setItem('notificationDialogOpened', 'true');
       }
     });
     
@@ -254,7 +253,7 @@ export function StudentDashboardClient() {
       contentData: latestContent.notice, 
       icon: FileText, 
       buttonText: "View All",
-      gradient: "from-yellow-400 to-orange-500",
+      gradient: "from-yellow-500 to-orange-600",
     },
     { 
       id: "homework", 
@@ -263,7 +262,7 @@ export function StudentDashboardClient() {
       contentData: latestContent.homework, 
       icon: ClipboardList, 
       buttonText: "View All",
-      gradient: "from-yellow-400 to-orange-500",
+      gradient: "from-yellow-500 to-orange-600",
     },
     { 
       id: "circulars", 
@@ -272,7 +271,7 @@ export function StudentDashboardClient() {
       contentData: latestContent.circular, 
       icon: FileText, 
       buttonText: "View All",
-      gradient: "from-yellow-400 to-orange-500",
+      gradient: "from-yellow-500 to-orange-600",
     },
     { 
       id: "liveClasses", 
@@ -281,7 +280,7 @@ export function StudentDashboardClient() {
       contentData: latestContent.liveClass, 
       icon: Video, 
       buttonText: "View All",
-      gradient: "from-cyan-400 to-blue-500",
+      gradient: "from-yellow-500 to-orange-600",
     }
   ];
 
