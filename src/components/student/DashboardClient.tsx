@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -370,13 +369,13 @@ export function StudentDashboardClient() {
                 <Megaphone className="h-6 w-6 text-primary" />
                 {specialAlert?.title}
             </AlertDialogTitle>
-            <AlertDialogDescription>
-              {specialAlert?.imageUrl && (
-                <div className="my-4">
-                  <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
-                </div>
-              )}
-              <p className="whitespace-pre-wrap">{specialAlert?.message}</p>
+            {specialAlert?.imageUrl && (
+              <div className="my-4">
+                <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
+              </div>
+            )}
+            <AlertDialogDescription className="whitespace-pre-wrap pt-2">
+              {specialAlert?.message}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
