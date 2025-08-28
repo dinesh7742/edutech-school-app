@@ -39,7 +39,7 @@ const ReportCardToDownload = ({ report, studentProfile }: { report: ProgressRepo
   return (
     <div className="p-8 font-sans text-gray-800 bg-white" style={{ width: '210mm', minHeight: '297mm', fontFamily: 'serif' }}>
         <div className="text-center mb-6 border-b-4 border-primary pb-4">
-            <Image src={schoolInfo.logoUrl} alt="School Logo" width={90} height={90} className="mx-auto mb-2" />
+            <Image src={schoolInfo.logoUrl} alt="School Logo" width={90} height={90} className="mx-auto mb-2" data-ai-hint="school logo"/>
             <h1 className="text-4xl font-extrabold text-primary tracking-wider">{schoolInfo.name}</h1>
             <p className="text-md text-muted-foreground">{schoolInfo.address}</p>
         </div>
@@ -68,7 +68,7 @@ const ReportCardToDownload = ({ report, studentProfile }: { report: ProgressRepo
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {Object.entries(report.subjects).map(([subject, data]) => (
+                {report.subjects && Object.entries(report.subjects).map(([subject, data]) => (
                     <TableRow key={subject}>
                         <TableCell className="font-medium text-md">{subject}</TableCell>
                         <TableCell className="text-center text-md">{data.marks}</TableCell>
@@ -82,7 +82,8 @@ const ReportCardToDownload = ({ report, studentProfile }: { report: ProgressRepo
           <CardHeader><CardTitle>Overall Performance</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-4 text-xl">
              <p><span className="font-semibold">Total Marks:</span> {report.totalMarks}</p>
-             <p><span className="font-semibold">Percentage:</span> {report.percentage.toFixed(2)}%</p>
+             <p><span className="font-semibold">Percentage:</span> {report.percentage?.toFixed(2) ?? 'N/A'}%</p>
+             <p><span className="font-semibold">Final Grade:</span> {report.finalGrade}</p>
           </CardContent>
         </Card>
 
