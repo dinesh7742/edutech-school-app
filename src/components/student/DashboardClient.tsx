@@ -125,8 +125,9 @@ export function StudentDashboardClient() {
       });
       setNotificationMessages(combinedNotifications);
       
-      if (newNotifications.length > 0) {
+      if (newNotifications.length > 0 && !sessionStorage.getItem('notificationDialogOpened')) {
         setIsNotificationDialogOpen(true);
+        sessionStorage.setItem('notificationDialogOpened', 'true');
       }
     });
     
@@ -370,12 +371,12 @@ export function StudentDashboardClient() {
                 {specialAlert?.title}
             </AlertDialogTitle>
             <div className="whitespace-pre-wrap pt-2">
-                {specialAlert?.imageUrl && (
-                  <div className="my-4">
-                    <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
-                  </div>
-                )}
-                <p>{specialAlert?.message}</p>
+              {specialAlert?.imageUrl && (
+                <div className="my-4">
+                  <Image src={specialAlert.imageUrl} alt={specialAlert.title} width={400} height={250} className="rounded-md object-contain mx-auto" />
+                </div>
+              )}
+              <p>{specialAlert?.message}</p>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
