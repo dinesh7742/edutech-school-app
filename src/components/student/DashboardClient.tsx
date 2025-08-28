@@ -253,7 +253,6 @@ export function StudentDashboardClient() {
       contentData: latestContent.notice, 
       icon: FileText, 
       buttonText: "View All",
-      gradient: "from-yellow-500 to-orange-600",
     },
     { 
       id: "homework", 
@@ -262,7 +261,6 @@ export function StudentDashboardClient() {
       contentData: latestContent.homework, 
       icon: ClipboardList, 
       buttonText: "View All",
-      gradient: "from-yellow-500 to-orange-600",
     },
     { 
       id: "circulars", 
@@ -271,7 +269,6 @@ export function StudentDashboardClient() {
       contentData: latestContent.circular, 
       icon: FileText, 
       buttonText: "View All",
-      gradient: "from-yellow-500 to-orange-600",
     },
     { 
       id: "liveClasses", 
@@ -280,7 +277,6 @@ export function StudentDashboardClient() {
       contentData: latestContent.liveClass, 
       icon: Video, 
       buttonText: "View All",
-      gradient: "from-yellow-500 to-orange-600",
     }
   ];
 
@@ -393,7 +389,7 @@ export function StudentDashboardClient() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
-            <Card key={card.id} className={cn("shadow-lg rounded-2xl overflow-hidden group", card.gradient)}>
+            <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden group bg-gradient-to-br from-yellow-400 to-orange-500">
                 <CardHeader className="p-4">
                   <CardTitle className="flex justify-between items-center text-xl">
                     <div className={cn(
