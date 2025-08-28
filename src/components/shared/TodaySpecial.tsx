@@ -4,7 +4,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
 import { getDailySpecial, type DailySpecialOutput } from '@/ai/flows/get-daily-special';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
@@ -108,6 +108,12 @@ export function TodaySpecial() {
         <p className="text-lg text-muted-foreground pt-1">{formattedDate}</p>
       </CardHeader>
       <CardContent className="p-6 relative">
+        <div className="mb-4 text-center">
+            <h3 className="inline-flex items-center gap-2 rounded-full bg-secondary text-secondary-foreground px-4 py-2 text-lg font-semibold">
+                <Pin className="h-5 w-5"/>
+                Special Event of the Day
+            </h3>
+        </div>
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[120px] text-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
