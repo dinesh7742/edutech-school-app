@@ -404,3 +404,5 @@ export interface SpecialAlert {
   postedByName: string;
   timestamp: Timestamp | FieldValue;
 }
+
+export type CombinedStudentData = StudentProfile & AppUser;

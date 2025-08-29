@@ -32,7 +32,7 @@ const sidebarNavItems = [
     title: "Institute",
     icon: Building,
     subItems: [
-      { title: "Manage Users", href: "/teacher/student-data", icon: Users },
+      { title: "Manage Users", href: "/admin/manage-users", icon: Users },
       { title: "Manage Content", href: "/teacher/post-content", icon: ClipboardList },
     ],
   },
@@ -108,7 +108,7 @@ export function AdminSidebar() {
                 </AccordionItem>
               ) : (
                 <Link
-                  key={item.title}
+                  key={item.href}
                   href={item.href || "#"}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium transition-colors",

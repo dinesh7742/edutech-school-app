@@ -112,7 +112,7 @@ export function AdminDashboardClient() {
         const [teachersSnap, studentsSnap, staffSnap] = await Promise.all([
           getDocs(teachersQuery),
           getDocs(studentsQuery),
-          getDocs(staffQuery),
+          getDocs(staffSnap),
         ]);
 
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
@@ -159,6 +159,33 @@ export function AdminDashboardClient() {
       ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
       : name.substring(0, 2).toUpperCase();
   };
+
+  const statCards = [
+    {
+      title: "Total Students",
+      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.students,
+      icon: GraduationCap,
+      color: "bg-green-100 dark:bg-green-900/50",
+      iconColor: "text-green-500",
+      link: "/admin/manage-users",
+    },
+    {
+      title: "Total Staffs",
+      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.staff,
+      icon: Users,
+      color: "bg-blue-100 dark:bg-blue-900/50",
+      iconColor: "text-blue-500",
+      link: "#", // Add link later
+    },
+    {
+      title: "Total Vehicle",
+      value: "10",
+      icon: Bus,
+      color: "bg-yellow-100 dark:bg-yellow-900/50",
+      iconColor: "text-yellow-500",
+      link: "#",
+    }
+  ];
 
   return (
     <div className="space-y-6">
@@ -253,42 +280,20 @@ export function AdminDashboardClient() {
         </Card>
 
         <div className="space-y-6">
-            <Card className={cn("shadow-sm", "bg-green-100 dark:bg-green-900/50")}>
-                <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Students</p>
-                    <p className="text-3xl font-bold">{loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.students}</p>
-                    <Link href="/admin/manage-users" className="text-xs text-primary hover:underline">See Details &gt;</Link>
-                </div>
-                <div className={cn("p-3 rounded-full", "bg-green-100 dark:bg-green-900/50")}>
-                    <GraduationCap className={cn("h-6 w-6", "text-green-500")} />
-                </div>
-                </CardContent>
-            </Card>
-            <Card className={cn("shadow-sm", "bg-blue-100 dark:bg-blue-900/50")}>
-                <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Staffs</p>
-                    <p className="text-3xl font-bold">{loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.staff}</p>
-                    <Link href="#" className="text-xs text-primary hover:underline">See Details &gt;</Link>
-                </div>
-                <div className={cn("p-3 rounded-full", "bg-blue-100 dark:bg-blue-900/50")}>
-                    <Users className={cn("h-6 w-6", "text-blue-500")} />
-                </div>
-                </CardContent>
-            </Card>
-            <Card className={cn("shadow-sm", "bg-yellow-100 dark:bg-yellow-900/50")}>
-                <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Vehicle</p>
-                    <p className="text-3xl font-bold">10</p>
-                    <Link href="#" className="text-xs text-primary hover:underline">See Details &gt;</Link>
-                </div>
-                <div className={cn("p-3 rounded-full", "bg-yellow-100 dark:bg-yellow-900/50")}>
-                    <Bus className={cn("h-6 w-6", "text-yellow-500")} />
-                </div>
-                </CardContent>
-            </Card>
+            {statCards.map((card) => (
+                <Card key={card.title} className={cn("shadow-sm", card.color)}>
+                    <CardContent className="p-4 flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
+                        <p className="text-3xl font-bold">{card.value}</p>
+                        <Link href={card.link} className="text-xs text-primary hover:underline">See Details &gt;</Link>
+                    </div>
+                    <div className={cn("p-3 rounded-full", card.color)}>
+                        <card.icon className={cn("h-6 w-6", card.iconColor)} />
+                    </div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
       </div>
       
