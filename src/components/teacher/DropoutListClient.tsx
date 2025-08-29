@@ -11,7 +11,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, writeBatch, serverTimestamp, getDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import type { DroppedStudentProfile } from "@/types";
+import type { DroppedStudentProfile, Timestamp } from "@/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,8 +54,12 @@ export function DropoutListClient() {
           ...doc.data()
         } as DroppedStudentProfile));
 
-        // Sort client-side by first name
-        fetchedProfiles.sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+        // Sort client-side by deletion date
+        fetchedProfiles.sort((a, b) => {
+          const timeA = (a.deletedAt as Timestamp)?.toDate()?.getTime() || 0;
+          const timeB = (b.deletedAt as Timestamp)?.toDate()?.getTime() || 0;
+          return timeB - timeA;
+        });
         
         setDroppedStudents(fetchedProfiles);
         setFilteredStudents(fetchedProfiles);
