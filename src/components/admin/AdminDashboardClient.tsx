@@ -73,12 +73,6 @@ const schoolInfo = {
   estd: 1982
 };
 
-const billingsData = [
-  { date: "Nov 1, 2024", opening: 47000, collection: 52000, expenses: 12000, closing: 87000 },
-  { date: "Oct 1, 2024", opening: 49000, collection: 5500, expenses: 7500, closing: 47000 },
-  { date: "Sep 1, 2024", opening: 40000, collection: 17000, expenses: 8000, closing: 49000 },
-];
-
 const chartData = [
     { name: 'Passed', value: 783, fill: 'hsl(var(--chart-1))' },
     { name: 'Failed', value: 119, fill: 'hsl(var(--chart-2))' },
@@ -92,12 +86,18 @@ interface TeacherWithClassStats extends AppUser {
   }
 }
 
+interface GradeStats {
+    [grade: string]: number;
+}
+
+
 export function AdminDashboardClient() {
   const { user, signOut } = useAuth();
   const [teachers, setTeachers] = useState<TeacherWithClassStats[]>([]);
   const [stats, setStats] = useState({
     students: 0,
     staff: 0,
+    gradeStats: {} as GradeStats,
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
@@ -117,6 +117,7 @@ export function AdminDashboardClient() {
 
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
         const studentCountsByClass: Record<string, { total: number; boys: number; girls: number }> = {};
+        const gradeStats: GradeStats = {};
 
         studentsData.forEach(student => {
           const classId = `${student.grade}-${student.division}`;
@@ -126,6 +127,10 @@ export function AdminDashboardClient() {
           studentCountsByClass[classId].total++;
           if (student.gender === 'Male') studentCountsByClass[classId].boys++;
           if (student.gender === 'Female') studentCountsByClass[classId].girls++;
+          
+          if (student.grade) {
+              gradeStats[student.grade] = (gradeStats[student.grade] || 0) + 1;
+          }
         });
 
         const teachersData: TeacherWithClassStats[] = teachersSnap.docs.map(doc => {
@@ -141,6 +146,7 @@ export function AdminDashboardClient() {
         setStats({
           students: studentsSnap.size,
           staff: staffSnap.size,
+          gradeStats,
         });
 
       } catch (error) {
@@ -300,31 +306,31 @@ export function AdminDashboardClient() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Landmark className="h-5 w-5 text-primary"/>Bills & Payment</CardTitle>
+            <CardTitle className="flex items-center gap-2"><BarChart className="h-5 w-5 text-primary"/>Student Statistics</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Opening</TableHead>
-                        <TableHead>Collection</TableHead>
-                        <TableHead>Expenses</TableHead>
-                        <TableHead>Closing</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {billingsData.map((row) => (
-                        <TableRow key={row.date}>
-                            <TableCell>{row.date}</TableCell>
-                            <TableCell>{row.opening.toLocaleString()}</TableCell>
-                            <TableCell>{row.collection.toLocaleString()}</TableCell>
-                            <TableCell>{row.expenses.toLocaleString()}</TableCell>
-                            <TableCell>{row.closing.toLocaleString()}</TableCell>
+             {loadingStats ? (
+                <div className="flex justify-center items-center h-48"><Loader2 className="h-8 w-8 animate-spin"/></div>
+             ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            {Array.from({ length: 8 }, (_, i) => i + 1).map(grade => (
+                                <TableHead key={grade} className="text-center">Grade {grade}</TableHead>
+                            ))}
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow>
+                           {Array.from({ length: 8 }, (_, i) => i + 1).map(grade => (
+                                <TableCell key={grade} className="text-center font-bold text-lg">
+                                    {stats.gradeStats[grade] || 0}
+                                </TableCell>
+                            ))}
+                        </TableRow>
+                    </TableBody>
+                </Table>
+             )}
           </CardContent>
         </Card>
         <Card className="shadow-sm">
