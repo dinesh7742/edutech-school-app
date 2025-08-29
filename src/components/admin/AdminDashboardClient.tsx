@@ -237,7 +237,7 @@ export function AdminDashboardClient() {
         </div>
       </div>
 
-      <Card className="overflow-hidden bg-gradient-to-r from-blue-500 to-yellow-400 text-white">
+      <Card className="overflow-hidden bg-gradient-to-r from-blue-500 to-yellow-400 text-white border border-border">
         <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
             <div className="space-y-2">
                 <h2 className="text-3xl font-bold">{schoolInfo.name} (Estd: {schoolInfo.estd})</h2>
@@ -253,7 +253,7 @@ export function AdminDashboardClient() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card) => (
-            <Card key={card.title} className={cn("shadow-sm", card.color)}>
+            <Card key={card.title} className={cn("shadow-sm border border-border", card.color)}>
                 <CardContent className="p-4 flex flex-col justify-between h-full">
                     <div className="flex items-start justify-between">
                         <div className="space-y-1">
@@ -275,7 +275,7 @@ export function AdminDashboardClient() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-sm">
+        <Card className="lg:col-span-2 shadow-sm border border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><BarChart className="h-5 w-5 text-primary"/>Student Statistics</CardTitle>
           </CardHeader>
@@ -304,7 +304,7 @@ export function AdminDashboardClient() {
              )}
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="shadow-sm border border-border">
             <CardHeader>
                 <CardTitle>Exam Results</CardTitle>
                 <CardDescription>The Terminal Examination 2024</CardDescription>
