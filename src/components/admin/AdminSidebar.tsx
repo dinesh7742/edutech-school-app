@@ -33,6 +33,7 @@ const sidebarNavItems = [
     icon: Building,
     subItems: [
       { title: "Manage Users", href: "/admin/manage-users", icon: Users },
+      { title: "Manage Staff", href: "/admin/manage-staff", icon: Users },
       { title: "Manage Content", href: "/teacher/post-content", icon: ClipboardList },
     ],
   },

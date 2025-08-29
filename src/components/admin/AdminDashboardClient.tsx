@@ -145,7 +145,7 @@ export function AdminDashboardClient() {
         setTeachers(teachersData);
         setStats({
           students: studentsSnap.size,
-          staff: staffSnap.size,
+          staff: teachersSnap.size + staffSnap.size,
           gradeStats,
         });
 
@@ -176,12 +176,12 @@ export function AdminDashboardClient() {
       link: "/admin/manage-users",
     },
     {
-      title: "Total Staffs",
+      title: "Total Staff",
       value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.staff,
       icon: Users,
       color: "bg-blue-100 dark:bg-blue-900/50",
       iconColor: "text-blue-500",
-      link: "#", // Add link later
+      link: "/admin/manage-staff",
     },
     {
       title: "Total Vehicle",
