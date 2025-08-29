@@ -26,6 +26,7 @@ import {
   Landmark,
   Loader2,
   ArrowRight,
+  UserCheck,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -61,8 +62,9 @@ import {
   } from "@/components/ui/chart"
 import { PieChart, Pie, Cell } from "recharts";
 import { cn } from "@/lib/utils";
-import type { AppUser, StudentProfile } from "@/types";
+import type { AppUser, StudentProfile, LeaveApplication } from "@/types";
 import { TeacherIdCard } from "@/components/teacher/TeacherIdCard";
+import { format, parseISO } from "date-fns";
 
 
 const schoolInfo = {
@@ -99,6 +101,7 @@ export function AdminDashboardClient() {
     students: 0,
     staff: 0,
     teachers: 0,
+    teachersOnLeave: 0,
     gradeStats: {} as GradeStats,
   });
   const [loadingStats, setLoadingStats] = useState(true);
@@ -111,11 +114,25 @@ export function AdminDashboardClient() {
         const studentsQuery = query(collection(db, "studentProfiles"));
         const staffQuery = query(collection(db, "staff"));
 
-        const [teachersSnap, studentsSnap, staffSnap] = await Promise.all([
+        const today = format(new Date(), "yyyy-MM-dd");
+        const leaveQuery = query(
+          collection(db, "leaveApplications"),
+          where("status", "==", "Approved"),
+          where("leaveStartDate", "<=", today)
+        );
+
+        const [teachersSnap, studentsSnap, staffSnap, leaveSnap] = await Promise.all([
           getDocs(teachersQuery),
           getDocs(studentsQuery),
           getDocs(staffQuery),
+          getDocs(leaveQuery),
         ]);
+
+        // Filter leave applications on the client-side for the end date
+        const todaysLeaveApps = leaveSnap.docs.filter(doc => {
+            const data = doc.data() as LeaveApplication;
+            return today <= data.leaveEndDate;
+        });
 
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
         const studentCountsByClass: Record<string, { total: number; boys: number; girls: number }> = {};
@@ -149,6 +166,7 @@ export function AdminDashboardClient() {
           students: studentsSnap.size,
           staff: teachersSnap.size + staffSnap.size,
           teachers: teachersSnap.size,
+          teachersOnLeave: todaysLeaveApps.length,
           gradeStats,
         });
 
@@ -195,12 +213,12 @@ export function AdminDashboardClient() {
       link: "/admin/manage-staff",
     },
     {
-      title: "Total Vehicle",
-      value: "10",
-      icon: Bus,
+      title: "Teachers on Leave Today",
+      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.teachersOnLeave,
+      icon: UserCheck,
       color: "bg-yellow-100 dark:bg-yellow-900/50",
       iconColor: "text-yellow-500",
-      link: "#",
+      link: "/teacher/leave-applications",
     }
   ];
 
