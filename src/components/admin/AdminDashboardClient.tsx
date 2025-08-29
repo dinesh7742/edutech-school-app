@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -23,12 +23,11 @@ import {
   Mail,
   Phone,
   BarChart,
-  ArrowRight,
   Landmark,
   Loader2,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getCountFromServer, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -36,6 +35,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import {
   Table,
@@ -54,6 +60,8 @@ import {
   } from "@/components/ui/chart"
 import { PieChart, Pie, Cell } from "recharts";
 import { cn } from "@/lib/utils";
+import type { AppUser, StudentProfile } from "@/types";
+import { TeacherIdCard } from "@/components/teacher/TeacherIdCard";
 
 
 const schoolInfo = {
@@ -76,81 +84,84 @@ const chartData = [
     { name: 'Failed', value: 119, fill: 'hsl(var(--chart-2))' },
 ]
 
+interface TeacherWithClassStats extends AppUser {
+  classStats: {
+    total: number;
+    boys: number;
+    girls: number;
+  }
+}
+
 export function AdminDashboardClient() {
   const { user, signOut } = useAuth();
+  const [teachers, setTeachers] = useState<TeacherWithClassStats[]>([]);
   const [stats, setStats] = useState({
-    teachers: 0,
     students: 0,
     staff: 0,
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchStatsAndTeachers = async () => {
       setLoadingStats(true);
       try {
         const teachersQuery = query(collection(db, "users"), where("role", "==", "teacher"));
-        const studentsQuery = query(collection(db, "users"), where("role", "==", "student"));
+        const studentsQuery = query(collection(db, "studentProfiles"));
         const staffQuery = query(collection(db, "staff"));
 
         const [teachersSnap, studentsSnap, staffSnap] = await Promise.all([
-          getCountFromServer(teachersQuery),
-          getCountFromServer(studentsQuery),
-          getCountFromServer(staffQuery),
+          getDocs(teachersQuery),
+          getDocs(studentsQuery),
+          getDocs(staffQuery),
         ]);
 
-        setStats({
-          teachers: teachersSnap.data().count,
-          students: studentsSnap.data().count,
-          staff: staffSnap.data().count,
+        const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
+        const studentCountsByClass: Record<string, { total: number; boys: number; girls: number }> = {};
+
+        studentsData.forEach(student => {
+          const classId = `${student.grade}-${student.division}`;
+          if (!studentCountsByClass[classId]) {
+            studentCountsByClass[classId] = { total: 0, boys: 0, girls: 0 };
+          }
+          studentCountsByClass[classId].total++;
+          if (student.gender === 'Male') studentCountsByClass[classId].boys++;
+          if (student.gender === 'Female') studentCountsByClass[classId].girls++;
         });
+
+        const teachersData: TeacherWithClassStats[] = teachersSnap.docs.map(doc => {
+          const teacher = doc.data() as AppUser;
+          const classId = `${teacher.grade}-${teacher.division}`;
+          return {
+            ...teacher,
+            classStats: studentCountsByClass[classId] || { total: 0, boys: 0, girls: 0 }
+          };
+        });
+
+        setTeachers(teachersData);
+        setStats({
+          students: studentsSnap.size,
+          staff: staffSnap.size,
+        });
+
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Error fetching dashboard data:", error);
       } finally {
         setLoadingStats(false);
       }
     };
-    fetchStats();
+    fetchStatsAndTeachers();
   }, []);
-
-  const statCards = [
-    {
-      title: "Total Teachers",
-      count: stats.teachers,
-      icon: User,
-      color: "bg-orange-100 dark:bg-orange-900/50",
-      iconColor: "text-orange-500",
-      link: "#",
-    },
-    {
-      title: "Total Students",
-      count: stats.students,
-      icon: GraduationCap,
-      color: "bg-green-100 dark:bg-green-900/50",
-      iconColor: "text-green-500",
-      link: "/admin/manage-users",
-    },
-    {
-      title: "Total Staffs",
-      count: stats.staff,
-      icon: Users,
-      color: "bg-blue-100 dark:bg-blue-900/50",
-      iconColor: "text-blue-500",
-      link: "#",
-    },
-    {
-      title: "Total Vehicle",
-      count: 10, // Static data
-      icon: Bus,
-      color: "bg-yellow-100 dark:bg-yellow-900/50",
-      iconColor: "text-yellow-500",
-      link: "#",
-    },
-  ];
+  
+  const getInitials = (name?: string | null) => {
+    if (!name) return "?";
+    const parts = name.split(" ");
+    return parts.length > 1
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+      : name.substring(0, 2).toUpperCase();
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">
           Welcome to {schoolInfo.name}
@@ -182,7 +193,6 @@ export function AdminDashboardClient() {
         </div>
       </div>
 
-      {/* School Info Banner */}
       <Card className="overflow-hidden bg-gradient-to-r from-blue-500 to-yellow-400 text-white">
         <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
             <div className="space-y-2">
@@ -196,26 +206,92 @@ export function AdminDashboardClient() {
             </div>
         </CardContent>
       </Card>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <Card className="shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-orange-500"/>All Teachers ({teachers.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingStats ? (
+              <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin"/></div>
+            ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {teachers.map(teacher => (
+                <Dialog key={teacher.uid}>
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-orange-100/50 dark:bg-orange-900/30">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={teacher.photoURL ?? undefined} />
+                        <AvatarFallback>{getInitials(teacher.displayName)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <DialogTrigger asChild>
+                          <Button variant="link" className="p-0 h-auto text-base font-semibold text-foreground hover:underline">
+                            {teacher.displayName}
+                          </Button>
+                        </DialogTrigger>
+                        <p className="text-xs text-muted-foreground">Class: {teacher.grade}-{teacher.division}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">{teacher.classStats.total}</p>
+                      <p className="text-xs text-muted-foreground">Students ({teacher.classStats.boys}B, {teacher.classStats.girls}G)</p>
+                    </div>
+                  </div>
+                  <DialogContent className="max-w-md">
+                     <DialogHeader>
+                      <DialogTitle>Teacher I-Card</DialogTitle>
+                     </DialogHeader>
+                     <TeacherIdCard teacher={teacher} />
+                  </DialogContent>
+                </Dialog>
+              ))}
+            </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card) => (
-          <Card key={card.title} className={cn("shadow-sm", card.color)}>
-            <CardContent className="p-4 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
-                <p className="text-3xl font-bold">{loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : card.count}</p>
-                <Link href={card.link} className="text-xs text-primary hover:underline">See Details &gt;</Link>
-              </div>
-              <div className={cn("p-3 rounded-full", card.color)}>
-                <card.icon className={cn("h-6 w-6", card.iconColor)} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <div className="space-y-6">
+            <Card className={cn("shadow-sm", "bg-green-100 dark:bg-green-900/50")}>
+                <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Students</p>
+                    <p className="text-3xl font-bold">{loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.students}</p>
+                    <Link href="/admin/manage-users" className="text-xs text-primary hover:underline">See Details &gt;</Link>
+                </div>
+                <div className={cn("p-3 rounded-full", "bg-green-100 dark:bg-green-900/50")}>
+                    <GraduationCap className={cn("h-6 w-6", "text-green-500")} />
+                </div>
+                </CardContent>
+            </Card>
+            <Card className={cn("shadow-sm", "bg-blue-100 dark:bg-blue-900/50")}>
+                <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Staffs</p>
+                    <p className="text-3xl font-bold">{loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.staff}</p>
+                    <Link href="#" className="text-xs text-primary hover:underline">See Details &gt;</Link>
+                </div>
+                <div className={cn("p-3 rounded-full", "bg-blue-100 dark:bg-blue-900/50")}>
+                    <Users className={cn("h-6 w-6", "text-blue-500")} />
+                </div>
+                </CardContent>
+            </Card>
+            <Card className={cn("shadow-sm", "bg-yellow-100 dark:bg-yellow-900/50")}>
+                <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Vehicle</p>
+                    <p className="text-3xl font-bold">10</p>
+                    <Link href="#" className="text-xs text-primary hover:underline">See Details &gt;</Link>
+                </div>
+                <div className={cn("p-3 rounded-full", "bg-yellow-100 dark:bg-yellow-900/50")}>
+                    <Bus className={cn("h-6 w-6", "text-yellow-500")} />
+                </div>
+                </CardContent>
+            </Card>
+        </div>
       </div>
       
-      {/* Bills & Payment and Exam Results */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 shadow-sm">
           <CardHeader>
