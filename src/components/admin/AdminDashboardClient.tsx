@@ -97,6 +97,7 @@ export function AdminDashboardClient() {
   const [stats, setStats] = useState({
     students: 0,
     staff: 0,
+    teachers: 0,
     gradeStats: {} as GradeStats,
   });
   const [loadingStats, setLoadingStats] = useState(true);
@@ -146,6 +147,7 @@ export function AdminDashboardClient() {
         setStats({
           students: studentsSnap.size,
           staff: teachersSnap.size + staffSnap.size,
+          teachers: teachersSnap.size,
           gradeStats,
         });
 
@@ -174,6 +176,14 @@ export function AdminDashboardClient() {
       color: "bg-green-100 dark:bg-green-900/50",
       iconColor: "text-green-500",
       link: "/admin/manage-users",
+    },
+     {
+      title: "Total Teachers",
+      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.teachers,
+      icon: User,
+      color: "bg-orange-100 dark:bg-orange-900/50",
+      iconColor: "text-orange-500",
+      link: "/admin/manage-staff",
     },
     {
       title: "Total Staff",
@@ -240,67 +250,21 @@ export function AdminDashboardClient() {
         </CardContent>
       </Card>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><User className="h-5 w-5 text-orange-500"/>All Teachers ({teachers.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingStats ? (
-              <div className="flex justify-center items-center h-full"><Loader2 className="h-6 w-6 animate-spin"/></div>
-            ) : (
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {teachers.map(teacher => (
-                <Dialog key={teacher.uid}>
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-orange-100/50 dark:bg-orange-900/30">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={teacher.photoURL ?? undefined} />
-                        <AvatarFallback>{getInitials(teacher.displayName)}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <DialogTrigger asChild>
-                          <Button variant="link" className="p-0 h-auto text-base font-semibold text-foreground hover:underline">
-                            {teacher.displayName}
-                          </Button>
-                        </DialogTrigger>
-                        <p className="text-xs text-muted-foreground">Class: {teacher.grade}-{teacher.division}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold">{teacher.classStats.total}</p>
-                      <p className="text-xs text-muted-foreground">Students ({teacher.classStats.boys}B, {teacher.classStats.girls}G)</p>
-                    </div>
-                  </div>
-                  <DialogContent className="max-w-md">
-                     <DialogHeader>
-                      <DialogTitle>Teacher I-Card</DialogTitle>
-                     </DialogHeader>
-                     <TeacherIdCard teacher={teacher} />
-                  </DialogContent>
-                </Dialog>
-              ))}
-            </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-            {statCards.map((card) => (
-                <Card key={card.title} className={cn("shadow-sm", card.color)}>
-                    <CardContent className="p-4 flex items-center justify-between">
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
-                        <p className="text-3xl font-bold">{card.value}</p>
-                        <Link href={card.link} className="text-xs text-primary hover:underline">See Details &gt;</Link>
-                    </div>
-                    <div className={cn("p-3 rounded-full", card.color)}>
-                        <card.icon className={cn("h-6 w-6", card.iconColor)} />
-                    </div>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((card) => (
+            <Card key={card.title} className={cn("shadow-sm", card.color)}>
+                <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
+                    <p className="text-3xl font-bold">{card.value}</p>
+                    <Link href={card.link} className="text-xs text-primary hover:underline">See Details &gt;</Link>
+                </div>
+                <div className={cn("p-3 rounded-full", card.color)}>
+                    <card.icon className={cn("h-6 w-6", card.iconColor)} />
+                </div>
+                </CardContent>
+            </Card>
+        ))}
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
