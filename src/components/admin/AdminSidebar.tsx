@@ -108,7 +108,7 @@ export function AdminSidebar() {
                 </AccordionItem>
               ) : (
                 <Link
-                  key={item.href}
+                  key={item.title}
                   href={item.href || "#"}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-base font-medium transition-colors",
