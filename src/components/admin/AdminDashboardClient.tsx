@@ -25,6 +25,7 @@ import {
   BarChart,
   ArrowRight,
   Landmark,
+  Loader2,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getCountFromServer, query, where } from "firebase/firestore";
@@ -52,6 +53,7 @@ import {
     ChartLegendContent,
   } from "@/components/ui/chart"
 import { PieChart, Pie, Cell } from "recharts";
+import { cn } from "@/lib/utils";
 
 
 const schoolInfo = {
