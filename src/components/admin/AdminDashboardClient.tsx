@@ -25,6 +25,7 @@ import {
   BarChart,
   Landmark,
   Loader2,
+  ArrowRight,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, where } from "firebase/firestore";
@@ -253,15 +254,21 @@ export function AdminDashboardClient() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((card) => (
             <Card key={card.title} className={cn("shadow-sm", card.color)}>
-                <CardContent className="p-4 flex items-center justify-between">
-                <div>
-                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
-                    <p className="text-3xl font-bold">{card.value}</p>
-                    <Link href={card.link} className="text-xs text-primary hover:underline">See Details &gt;</Link>
-                </div>
-                <div className={cn("p-3 rounded-full", card.color)}>
-                    <card.icon className={cn("h-6 w-6", card.iconColor)} />
-                </div>
+                <CardContent className="p-4 flex flex-col justify-between h-full">
+                    <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
+                            <p className="text-3xl font-bold">{card.value}</p>
+                        </div>
+                        <div className={cn("p-3 rounded-full flex-shrink-0", card.color)}>
+                            <card.icon className={cn("h-6 w-6", card.iconColor)} />
+                        </div>
+                    </div>
+                    <Button asChild variant="outline" size="sm" className="mt-4 w-full bg-background/50 border-primary/20 hover:bg-background/80">
+                        <Link href={card.link} >
+                            See Details <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
                 </CardContent>
             </Card>
         ))}
