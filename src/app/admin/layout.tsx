@@ -2,10 +2,9 @@
 "use client";
 
 import type React from "react";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { useRequireAuth } from "@/hooks/useRequireAuth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
 
 export default function AdminLayout({
   children,
@@ -16,8 +15,14 @@ export default function AdminLayout({
 
   if (loading || !user) {
      return (
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
+      <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="w-64 bg-white dark:bg-gray-800 p-4 space-y-4">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+        </div>
         <main className="container flex-grow py-8 px-4 md:px-6">
           <div className="space-y-6">
             <Skeleton className="h-12 w-1/2" />
@@ -28,18 +33,16 @@ export default function AdminLayout({
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+      <AdminSidebar />
+      <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
         {children}
       </main>
-      <Footer />
     </div>
   );
 }

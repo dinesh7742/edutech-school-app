@@ -18,6 +18,15 @@ export interface AppUser extends FirebaseUser {
   address?: string;
 }
 
+export interface Staff {
+    uid: string;
+    name: string;
+    role: string; // e.g., 'Accountant', 'Librarian', 'Security'
+    contactNumber?: string;
+    email?: string;
+    joiningDate?: string;
+}
+
 export interface Notice {
   id: string;
   title: string;
