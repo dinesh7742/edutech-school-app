@@ -112,7 +112,7 @@ export function AdminDashboardClient() {
         const [teachersSnap, studentsSnap, staffSnap] = await Promise.all([
           getDocs(teachersQuery),
           getDocs(studentsQuery),
-          getDocs(staffSnap),
+          getDocs(staffQuery),
         ]);
 
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
