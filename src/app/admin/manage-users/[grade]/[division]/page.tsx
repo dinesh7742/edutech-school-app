@@ -2,6 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -35,17 +36,12 @@ import { useToast } from "@/hooks/use-toast";
 import { GradeDivisionSelector } from "@/components/auth/GradeDivisionSelector";
 import { Label } from "@/components/ui/label";
 
-interface StudentListPageProps {
-  params: {
-    grade: string;
-    division: string;
-  };
-}
-
-export default function StudentListPage({ params }: StudentListPageProps) {
+export default function StudentListPage() {
   const { user: adminUser } = useAuth();
   const { toast } = useToast();
-  const { grade, division } = params;
+  const params = useParams();
+  const grade = params.grade as string;
+  const division = params.division as string;
 
   const [students, setStudents] = useState<CombinedStudentData[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<CombinedStudentData[]>([]);
@@ -67,6 +63,8 @@ export default function StudentListPage({ params }: StudentListPageProps) {
   const [newDivision, setNewDivision] = useState("");
 
   useEffect(() => {
+    if (!grade || !division) return;
+
     const fetchStudentData = async () => {
       setLoading(true);
       setError(null);
