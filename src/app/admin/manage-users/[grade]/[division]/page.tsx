@@ -92,13 +92,20 @@ export default function StudentListPage({ params }: StudentListPageProps) {
             return;
         }
 
-        const profilesCollectionRef = collection(db, "studentProfiles");
-        const profilesQuery = query(profilesCollectionRef, where('__name__', 'in', studentUids));
-        const profilesSnapshot = await getDocs(profilesQuery);
+        // Chunking the UIDs to avoid Firestore's 30-item limit for 'in' queries
         const profileMap = new Map();
-        profilesSnapshot.forEach(doc => {
-          profileMap.set(doc.id, { uid: doc.id, ...doc.data() });
-        });
+        const profilesCollectionRef = collection(db, "studentProfiles");
+
+        for (let i = 0; i < studentUids.length; i += 30) {
+            const chunk = studentUids.slice(i, i + 30);
+            if (chunk.length > 0) {
+                const profilesQuery = query(profilesCollectionRef, where('__name__', 'in', chunk));
+                const profilesSnapshot = await getDocs(profilesQuery);
+                profilesSnapshot.forEach(doc => {
+                    profileMap.set(doc.id, { uid: doc.id, ...doc.data() });
+                });
+            }
+        }
         
         const combinedData = studentUids.map(uid => {
             const user = userMap.get(uid);
