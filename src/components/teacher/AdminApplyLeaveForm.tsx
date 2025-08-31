@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CalendarIcon, Send } from "lucide-react";
-import { collection, addDoc, serverTimestamp, doc, getDocs, query } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { LeaveApplication, LeaveType, AppUser } from "@/types";
 import { leaveTypes } from "@/types";
