@@ -95,7 +95,7 @@ interface GradeStats {
 
 
 export function AdminDashboardClient() {
-  const { user, signOut } = useAuth();
+  const { user, signOutUser } = useAuth();
   const [teachers, setTeachers] = useState<TeacherWithClassStats[]>([]);
   const [stats, setStats] = useState({
     students: 0,
@@ -248,7 +248,7 @@ export function AdminDashboardClient() {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={signOut}>
+              <DropdownMenuItem onSelect={signOutUser}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign Out
               </DropdownMenuItem>
