@@ -20,7 +20,10 @@ import {
     Archive,
     GraduationCap,
     Phone,
-    BookOpen
+    BookOpen,
+    Megaphone,
+    ClipboardCheck,
+    MailPlus
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -40,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { TeacherLeaveApplication } from "./TeacherLeaveApplication";
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -247,7 +251,7 @@ export function TeacherDashboardClient() {
             console.warn("Could not check for new application submissions:", error);
         }
 
-        if (!hasOpenedDialog && newMessages.length > 0) {
+        if (!hasOpenedDialog) {
             setNotificationMessages(newMessages);
             setIsNotificationDialogOpen(true);
             sessionStorage.setItem('teacherNotificationDialogOpened', 'true');
@@ -341,28 +345,9 @@ export function TeacherDashboardClient() {
       )
     },
     {
-      id: "recentSubmissions",
-      title: "Recent Homework Submissions",
-      content: loadingSubmissions ? (
-         <div className="flex items-center justify-center space-x-2 h-full">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="text-muted-foreground">Loading...</span>
-        </div>
-      ) : recentSubmissions.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
-      ) : (
-        <div className="w-full h-full max-h-[400px] overflow-y-auto p-2">
-            <ul className="space-y-2 text-xs text-left">
-              {recentSubmissions.map((sub) => (
-                <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
-                  <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
-                  <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
-                  <p className="text-muted-foreground">Completed: {sub.completedAt ? format((sub.completedAt as Timestamp).toDate(), "PP pp") : "N/A"}</p>
-                </li>
-              ))}
-            </ul>
-        </div>
-      )
+      id: "leaveApplication",
+      title: "My Leave Application",
+      content: <TeacherLeaveApplication />
     },
   ];
 
@@ -375,6 +360,7 @@ export function TeacherDashboardClient() {
     { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-red-600 hover:bg-red-700" },
     { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-orange-500 hover:bg-orange-600" },
     { id: "dropoutBox", title: "Dropout Box", description: "View and manage students removed from active lists.", link: "/teacher/dropout-list", buttonText: "Manage Dropouts", icon: Archive, className: "bg-slate-600 hover:bg-slate-700" },
+    { id: "specialAlert", title: "Special Alert", description: "Post a temporary, site-wide alert pop-up for all students.", link: "/teacher/special-alert", buttonText: "Manage Alert", icon: Megaphone, className: "bg-yellow-500 hover:bg-yellow-600" },
     { id: "downloadData", title: "Download Class Data", description: "Download an Excel sheet of student data for your class.", action: handleDownloadStudentData, buttonText: "Download Excel", loading: isDownloadingStudentData, disabled: !teacherUser?.grade || !teacherUser?.division, disabledText: "Update profile with grade/division to enable.", icon: Download, className: "bg-indigo-600 hover:bg-indigo-700" },
   ];
 
@@ -426,7 +412,7 @@ export function TeacherDashboardClient() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {mainActionItems.map((item) => (
               <Card key={item.id} className="shadow-lg rounded-lg text-center flex flex-col transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
                   <CardHeader className="p-4 bg-primary text-primary-foreground">
