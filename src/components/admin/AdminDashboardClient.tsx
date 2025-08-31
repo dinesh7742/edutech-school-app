@@ -115,11 +115,12 @@ export function AdminDashboardClient() {
         const staffQuery = query(collection(db, "staff"));
 
         const today = format(new Date(), "yyyy-MM-dd");
+        // Updated query to fetch all approved leave applications
         const leaveQuery = query(
           collection(db, "leaveApplications"),
-          where("status", "==", "Approved"),
-          where("leaveStartDate", "<=", today)
+          where("status", "==", "Approved")
         );
+
 
         const [teachersSnap, studentsSnap, staffSnap, leaveSnap] = await Promise.all([
           getDocs(teachersQuery),
@@ -128,10 +129,11 @@ export function AdminDashboardClient() {
           getDocs(leaveQuery),
         ]);
 
-        // Filter leave applications on the client-side for the end date
+        // Filter leave applications on the client-side for the date
         const todaysLeaveApps = leaveSnap.docs.filter(doc => {
             const data = doc.data() as LeaveApplication;
-            return today <= data.leaveEndDate;
+            // A leave is active if today is between start and end date (inclusive)
+            return data.leaveStartDate <= today && today <= data.leaveEndDate;
         });
 
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
