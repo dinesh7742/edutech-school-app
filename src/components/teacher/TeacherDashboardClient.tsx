@@ -159,13 +159,17 @@ export function TeacherDashboardClient() {
             setStudentCountError(null);
             try {
                 const profilesCollectionRef = collection(db, "studentProfiles");
+                // Simplified query by removing division filter to avoid composite index requirement
                 const q = query(
                     profilesCollectionRef,
-                    where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division)
+                    where("grade", "==", teacherUser.grade)
                 );
                 const querySnapshot = await getDocs(q);
-                const studentList = querySnapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile));
+                // Client-side filtering for division
+                const studentList = querySnapshot.docs
+                    .map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile))
+                    .filter(student => student.division === teacherUser.division);
+
                 studentList.sort((a,b) => (a.firstName || "").localeCompare(b.firstName || ""));
                 setStudentsInClass(studentList);
             } catch (err: any) {
@@ -200,13 +204,17 @@ export function TeacherDashboardClient() {
             setLoadingSubmissions(true);
             try {
                 const submissionsRef = collection(db, "homeworkSubmissions");
+                // Simplified query by removing division filter
                 const q = query(
                     submissionsRef,
-                    where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division)
+                    where("grade", "==", teacherUser.grade)
                 );
                 const querySnapshot = await getDocs(q);
-                const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
+                // Client-side filtering for division
+                const fetchedSubmissions = querySnapshot.docs
+                    .map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
+                    .filter(sub => sub.division === teacherUser.division);
+
                 fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
                 setRecentSubmissions(fetchedSubmissions.slice(0, 5));
             } catch (err) {
