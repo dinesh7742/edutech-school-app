@@ -401,16 +401,7 @@ export function TeacherDashboardClient() {
           </Card>
           
           <div className="space-y-6">
-            <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-                <CardHeader className="p-4 bg-primary text-primary-foreground">
-                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">My Leave Application</CardTitle>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-                  <div className="w-full">
-                    <TeacherLeaveApplication />
-                  </div>
-                </CardContent>
-            </Card>
+            <TeacherLeaveApplication />
 
             <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
                 <CardHeader className="p-4 bg-primary text-primary-foreground">
