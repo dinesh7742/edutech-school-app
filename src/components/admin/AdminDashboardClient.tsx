@@ -110,30 +110,26 @@ export function AdminDashboardClient() {
     const fetchStatsAndTeachers = async () => {
       setLoadingStats(true);
       try {
-        const teachersQuery = query(collection(db, "users"), where("role", "==", "teacher"));
+        const usersQuery = query(collection(db, "users"));
         const studentsQuery = query(collection(db, "studentProfiles"));
         const staffQuery = query(collection(db, "staff"));
+        const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Approved"));
 
-        const today = format(new Date(), "yyyy-MM-dd");
-        // Updated query to fetch all approved leave applications
-        const leaveQuery = query(
-          collection(db, "leaveApplications"),
-          where("status", "==", "Approved")
-        );
-
-
-        const [teachersSnap, studentsSnap, staffSnap, leaveSnap] = await Promise.all([
-          getDocs(teachersQuery),
+        const [usersSnap, studentsSnap, staffSnap, leaveSnap] = await Promise.all([
+          getDocs(usersQuery),
           getDocs(studentsQuery),
           getDocs(staffQuery),
           getDocs(leaveQuery),
         ]);
+        
+        const allUsers = usersSnap.docs.map(doc => doc.data() as AppUser);
+        const teacherUids = new Set(allUsers.filter(u => u.role === 'teacher').map(t => t.uid));
 
-        // Filter leave applications on the client-side for the date
+        const today = format(new Date(), "yyyy-MM-dd");
         const todaysLeaveApps = leaveSnap.docs.filter(doc => {
             const data = doc.data() as LeaveApplication;
-            // A leave is active if today is between start and end date (inclusive)
-            return data.leaveStartDate <= today && today <= data.leaveEndDate;
+            // Filter for teachers' leave applications active today
+            return teacherUids.has(data.studentUid) && data.leaveStartDate <= today && today <= data.leaveEndDate;
         });
 
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
@@ -153,9 +149,9 @@ export function AdminDashboardClient() {
               gradeStats[student.grade] = (gradeStats[student.grade] || 0) + 1;
           }
         });
-
-        const teachersData: TeacherWithClassStats[] = teachersSnap.docs.map(doc => {
-          const teacher = doc.data() as AppUser;
+        
+        const teachersDataRaw = allUsers.filter(u => u.role === 'teacher');
+        const teachersData: TeacherWithClassStats[] = teachersDataRaw.map(teacher => {
           const classId = `${teacher.grade}-${teacher.division}`;
           return {
             ...teacher,
@@ -166,8 +162,8 @@ export function AdminDashboardClient() {
         setTeachers(teachersData);
         setStats({
           students: studentsSnap.size,
-          staff: teachersSnap.size + staffSnap.size,
-          teachers: teachersSnap.size,
+          staff: teachersDataRaw.length + staffSnap.size,
+          teachers: teachersDataRaw.length,
           teachersOnLeave: todaysLeaveApps.length,
           gradeStats,
         });
@@ -347,3 +343,4 @@ export function AdminDashboardClient() {
     </div>
   );
 }
+
