@@ -288,72 +288,6 @@ export function TeacherDashboardClient() {
   
   const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
   
-  const quickStatsItems = [
-    {
-      id: "teacherInfoAndStudentCount",
-      title: `Teacher's Corner & Class ${teacherUser?.grade || 'N/A'}-${teacherUser?.division || ''}`,
-      content: loadingStudents ? (
-        <div className="flex items-center justify-center space-x-2 h-full">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          <span className="text-muted-foreground">Loading...</span>
-        </div>
-      ) : studentCountError ? (
-         <p className="text-xs text-destructive text-center">{studentCountError}</p>
-      ) : (
-        <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
-            <div className="text-center border-b-2 border-primary pb-2">
-                <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
-                <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
-            </div>
-            <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
-                <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
-                    <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
-                    <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
-                </Avatar>
-                <div className="text-left space-y-2 flex-grow">
-                    <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
-                    <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <GraduationCap className="h-4 w-4 text-primary" />
-                        <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
-                    </div>
-                     <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <BookOpen className="h-4 w-4 text-primary" />
-                        <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
-                    </div>
-                     <div className="flex items-center text-sm text-muted-foreground gap-2">
-                        <Phone className="h-4 w-4 text-primary" />
-                        <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
-                 <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
-                 <div className="mt-2 flex w-full justify-around items-center">
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">{totalStudents}</p>
-                        <p className="text-xs font-medium text-muted-foreground">Total Students</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
-                        <p className="text-xs font-medium text-muted-foreground">Boys</p>
-                    </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
-                        <p className="text-xs font-medium text-muted-foreground">Girls</p>
-                    </div>
-                 </div>
-            </div>
-        </div>
-      )
-    },
-    {
-      id: "leaveApplication",
-      title: "My Leave Application",
-      content: <TeacherLeaveApplication />
-    },
-  ];
-
   const mainActionItems = [
     { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
     { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
@@ -402,17 +336,112 @@ export function TeacherDashboardClient() {
       <div className="space-y-8">
         <WelcomeMessage />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {quickStatsItems.map((item) => (
-            <Card key={item.id} className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-              <CardHeader className="p-4 bg-primary text-primary-foreground">
-                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">{item.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> {item.content} </div>
-              </CardContent>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+            <CardHeader className="p-4 bg-primary text-primary-foreground">
+                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">Teacher's Corner & Class {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+              <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[400px]"> 
+                {loadingStudents ? (
+                  <div className="flex items-center justify-center space-x-2 h-full">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="text-muted-foreground">Loading...</span>
+                  </div>
+                ) : studentCountError ? (
+                  <p className="text-xs text-destructive text-center">{studentCountError}</p>
+                ) : (
+                  <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
+                      <div className="text-center border-b-2 border-primary pb-2">
+                          <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
+                          <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
+                      </div>
+                      <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
+                          <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
+                              <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
+                              <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
+                          </Avatar>
+                          <div className="text-left space-y-2 flex-grow">
+                              <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
+                              <div className="flex items-center text-sm text-muted-foreground gap-2">
+                                  <GraduationCap className="h-4 w-4 text-primary" />
+                                  <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground gap-2">
+                                  <BookOpen className="h-4 w-4 text-primary" />
+                                  <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground gap-2">
+                                  <Phone className="h-4 w-4 text-primary" />
+                                  <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
+                          <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
+                          <div className="mt-2 flex w-full justify-around items-center">
+                              <div className="text-center">
+                                  <p className="text-2xl font-bold text-primary">{totalStudents}</p>
+                                  <p className="text-xs font-medium text-muted-foreground">Total Students</p>
+                              </div>
+                              <div className="text-center">
+                                  <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
+                                  <p className="text-xs font-medium text-muted-foreground">Boys</p>
+                              </div>
+                              <div className="text-center">
+                                  <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
+                                  <p className="text-xs font-medium text-muted-foreground">Girls</p>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <div className="space-y-6">
+            <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+                <CardHeader className="p-4 bg-primary text-primary-foreground">
+                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">My Leave Application</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+                  <div className="w-full">
+                    <TeacherLeaveApplication />
+                  </div>
+                </CardContent>
             </Card>
-          ))}
+
+            <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+                <CardHeader className="p-4 bg-primary text-primary-foreground">
+                    <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">Recent Homework Submissions</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
+                  <div className="flex-grow flex flex-col justify-center items-center w-full min-h-[200px]">
+                    {loadingSubmissions ? (
+                      <div className="flex items-center justify-center space-x-2 h-full">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        <span className="text-muted-foreground">Loading...</span>
+                      </div>
+                    ) : recentSubmissions.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
+                    ) : (
+                      <div className="w-full h-full max-h-[250px] overflow-y-auto p-2">
+                          <ul className="space-y-2 text-xs text-left">
+                            {recentSubmissions.map((sub) => (
+                              <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
+                                <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
+                                <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
+                                <p className="text-muted-foreground">Completed: {sub.completedAt ? format((sub.completedAt as Timestamp).toDate(), "PP pp") : "N/A"}</p>
+                              </li>
+                            ))}
+                          </ul>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+            </Card>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
