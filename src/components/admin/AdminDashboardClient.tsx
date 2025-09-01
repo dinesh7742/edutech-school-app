@@ -101,7 +101,6 @@ export function AdminDashboardClient() {
     students: 0,
     staff: 0,
     teachers: 0,
-    teachersOnLeave: 0,
     gradeStats: {} as GradeStats,
   });
   const [loadingStats, setLoadingStats] = useState(true);
@@ -113,25 +112,16 @@ export function AdminDashboardClient() {
         const usersQuery = query(collection(db, "users"));
         const studentsQuery = query(collection(db, "studentProfiles"));
         const staffQuery = query(collection(db, "staff"));
-        const leaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Approved"));
 
-        const [usersSnap, studentsSnap, staffSnap, leaveSnap] = await Promise.all([
+        const [usersSnap, studentsSnap, staffSnap] = await Promise.all([
           getDocs(usersQuery),
           getDocs(studentsQuery),
           getDocs(staffQuery),
-          getDocs(leaveQuery),
         ]);
         
         const allUsers = usersSnap.docs.map(doc => doc.data() as AppUser);
-        const teacherUids = new Set(allUsers.filter(u => u.role === 'teacher').map(t => t.uid));
-
-        const today = format(new Date(), "yyyy-MM-dd");
-        const todaysLeaveApps = leaveSnap.docs.filter(doc => {
-            const data = doc.data() as LeaveApplication;
-            // Filter for teachers' leave applications active today
-            return teacherUids.has(data.studentUid) && data.leaveStartDate <= today && today <= data.leaveEndDate;
-        });
-
+        const teachersDataRaw = allUsers.filter(u => u.role === 'teacher');
+        
         const studentsData = studentsSnap.docs.map(doc => doc.data() as StudentProfile);
         const studentCountsByClass: Record<string, { total: number; boys: number; girls: number }> = {};
         const gradeStats: GradeStats = {};
@@ -150,7 +140,6 @@ export function AdminDashboardClient() {
           }
         });
         
-        const teachersDataRaw = allUsers.filter(u => u.role === 'teacher');
         const teachersData: TeacherWithClassStats[] = teachersDataRaw.map(teacher => {
           const classId = `${teacher.grade}-${teacher.division}`;
           return {
@@ -164,7 +153,6 @@ export function AdminDashboardClient() {
           students: studentsSnap.size,
           staff: teachersDataRaw.length + staffSnap.size,
           teachers: teachersDataRaw.length,
-          teachersOnLeave: todaysLeaveApps.length,
           gradeStats,
         });
 
@@ -210,13 +198,14 @@ export function AdminDashboardClient() {
       iconColor: "text-blue-500",
       link: "/admin/manage-staff",
     },
+    // Placeholder for a 4th card if needed in future
     {
-      title: "Teachers on Leave Today",
-      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : stats.teachersOnLeave,
-      icon: UserCheck,
+      title: "Transportation",
+      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : "12",
+      icon: Bus,
       color: "bg-yellow-100 dark:bg-yellow-900/50",
       iconColor: "text-yellow-500",
-      link: "/teacher/leave-applications",
+      link: "#",
     }
   ];
 
@@ -343,4 +332,3 @@ export function AdminDashboardClient() {
     </div>
   );
 }
-

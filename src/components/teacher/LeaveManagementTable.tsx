@@ -5,10 +5,10 @@ import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, XCircle, PlusCircle } from "lucide-react";
+import { Loader2, CheckCircle, XCircle } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, doc, updateDoc, serverTimestamp, Timestamp, addDoc } from "firebase/firestore";
-import type { LeaveApplication, LeaveApplicationStatus, LeaveType } from "@/types";
+import type { LeaveApplication, LeaveApplicationStatus } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from "date-fns";
@@ -21,13 +21,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; 
 import { Label } from "@/components/ui/label";
-import { AdminApplyLeaveForm } from "./AdminApplyLeaveForm";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export function LeaveManagementTable() {
   const { user: teacherUser } = useAuth();
@@ -41,8 +38,6 @@ export function LeaveManagementTable() {
   const [currentAppForComment, setCurrentAppForComment] = useState<LeaveApplication | null>(null);
   const [comment, setComment] = useState("");
   const [actionToConfirm, setActionToConfirm] = useState<"Approved" | "Rejected" | null>(null);
-  const [showAdminApplyLeaveDialog, setShowAdminApplyLeaveDialog] = useState(false);
-
 
   const fetchApplications = async () => {
       if (!teacherUser) {
@@ -178,37 +173,19 @@ export function LeaveManagementTable() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 pt-2">
-        <div className="flex items-center gap-2">
-            <Label htmlFor="statusFilterLeave" className="text-sm font-medium shrink-0">Filter by Status:</Label>
-            <Select onValueChange={(value) => setFilterStatus(value as LeaveApplicationStatus | "All")} defaultValue="Pending">
-              <SelectTrigger id="statusFilterLeave" className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="Approved">Approved</SelectItem>
-                <SelectItem value="Rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-        </div>
-         <Dialog open={showAdminApplyLeaveDialog} onOpenChange={setShowAdminApplyLeaveDialog}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Apply on Behalf
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>Apply Leave on Behalf of a Teacher</DialogTitle>
-                </DialogHeader>
-                <AdminApplyLeaveForm onSuccess={() => {
-                  setShowAdminApplyLeaveDialog(false);
-                  fetchApplications(); // Refresh list after successful submission
-                }} />
-            </DialogContent>
-        </Dialog>
+      <div className="flex items-center gap-2 pt-2">
+          <Label htmlFor="statusFilterLeave" className="text-sm font-medium shrink-0">Filter by Status:</Label>
+          <Select onValueChange={(value) => setFilterStatus(value as LeaveApplicationStatus | "All")} defaultValue="Pending">
+            <SelectTrigger id="statusFilterLeave" className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Select status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
       </div>
       {applications.length === 0 ? (
         <p className="text-center text-muted-foreground py-6">No {filterStatus !== "All" ? filterStatus.toLowerCase() : ""} leave applications found.</p>
@@ -218,7 +195,6 @@ export function LeaveManagementTable() {
             <TableHeader>
               <TableRow>
                 <TableHead>Applicant</TableHead>
-                <TableHead>Type</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
                 <TableHead>Reason</TableHead>
@@ -231,9 +207,6 @@ export function LeaveManagementTable() {
               {applications.map((app) => (
                 <TableRow key={app.id}>
                   <TableCell>{app.studentName}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{app.leaveType || 'General'}</Badge>
-                  </TableCell>
                   <TableCell>{formatDateDisplay(app.leaveStartDate)}</TableCell>
                   <TableCell>{formatDateDisplay(app.leaveEndDate)}</TableCell>
                   <TableCell className="max-w-xs truncate hover:whitespace-normal">{app.reason}</TableCell>

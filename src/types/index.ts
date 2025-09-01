@@ -177,9 +177,6 @@ export interface DailyAttendanceLog {
 }
 
 export type LeaveApplicationStatus = "Pending" | "Approved" | "Rejected";
-export type LeaveType = "CL" | "HPL" | "Long Leave" | "LWP" | "Half Day";
-
-export const leaveTypes: LeaveType[] = ["CL", "HPL", "Long Leave", "LWP", "Half Day"];
 
 export interface LeaveApplication {
   id?: string;
@@ -187,7 +184,7 @@ export interface LeaveApplication {
   studentName: string; // Can be teacher name
   grade: string;
   division: string;
-  leaveType?: LeaveType; // New field
+  leaveType?: string;
   leaveStartDate: string;
   leaveEndDate: string;
   reason: string;
@@ -197,20 +194,6 @@ export interface LeaveApplication {
   reviewedByTeacherName?: string;
   reviewTimestamp?: Timestamp | FieldValue;
   teacherComments?: string;
-}
-
-export interface TeacherLeaveBalance {
-    id: string; // Typically year_teacherUid
-    teacherUid: string;
-    year: number;
-    privilegedLeave: {
-        total: number;
-        used: number;
-    };
-    casualLeave: {
-        used: number;
-    };
-    lastUpdated: Timestamp | FieldValue;
 }
 
 export interface SchoolForm {

@@ -42,7 +42,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { TeacherLeaveApplication } from "./TeacherLeaveApplication";
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -426,8 +425,6 @@ export function TeacherDashboardClient() {
               </CardContent>
           </Card>
         </div>
-
-        <TeacherLeaveApplication />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {mainActionItems.map((item) => (
