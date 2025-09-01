@@ -159,13 +159,11 @@ export function TeacherDashboardClient() {
             setStudentCountError(null);
             try {
                 const profilesCollectionRef = collection(db, "studentProfiles");
-                // Simplified query by removing division filter to avoid composite index requirement
                 const q = query(
                     profilesCollectionRef,
                     where("grade", "==", teacherUser.grade)
                 );
                 const querySnapshot = await getDocs(q);
-                // Client-side filtering for division
                 const studentList = querySnapshot.docs
                     .map(doc => ({ uid: doc.id, ...doc.data() } as StudentProfile))
                     .filter(student => student.division === teacherUser.division);
@@ -204,13 +202,11 @@ export function TeacherDashboardClient() {
             setLoadingSubmissions(true);
             try {
                 const submissionsRef = collection(db, "homeworkSubmissions");
-                // Simplified query by removing division filter
                 const q = query(
                     submissionsRef,
                     where("grade", "==", teacherUser.grade)
                 );
                 const querySnapshot = await getDocs(q);
-                // Client-side filtering for division
                 const fetchedSubmissions = querySnapshot.docs
                     .map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
                     .filter(sub => sub.division === teacherUser.division);
