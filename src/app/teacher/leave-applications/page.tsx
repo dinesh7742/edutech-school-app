@@ -1,12 +1,12 @@
 
-
 "use client"; 
 
 import { LeaveManagementTable } from "@/components/teacher/LeaveManagementTable";
 import { LateArrivalManagementTable } from "@/components/teacher/LateArrivalManagementTable";
 import { OtherApplicationsReviewTable } from "@/components/teacher/OtherApplicationsReviewTable";
+import { TeacherLeaveManagementTable } from "@/components/teacher/TeacherLeaveManagementTable"; // New Import
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MailOpen, AlertTriangle, FileSignature, ClipboardCheck } from "lucide-react";
+import { MailOpen, AlertTriangle, FileSignature, ClipboardCheck, UserCheck } from "lucide-react"; // Added UserCheck
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AllSubmissionsReviewPage() {
@@ -20,10 +20,13 @@ export default function AllSubmissionsReviewPage() {
         Manage and process various applications submitted by students and staff. Review each category below.
       </CardDescription>
 
-      <Tabs defaultValue="leave" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="leave">
-            <MailOpen className="mr-2 h-4 w-4" /> Leave Applications
+      <Tabs defaultValue="teacher-leave" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="teacher-leave">
+            <UserCheck className="mr-2 h-4 w-4" /> Teacher Leave
+          </TabsTrigger>
+          <TabsTrigger value="student-leave">
+            <MailOpen className="mr-2 h-4 w-4" /> Student Leave
           </TabsTrigger>
           <TabsTrigger value="late-arrival">
             <AlertTriangle className="mr-2 h-4 w-4" /> Late Arrivals
@@ -32,17 +35,31 @@ export default function AllSubmissionsReviewPage() {
             <FileSignature className="mr-2 h-4 w-4" /> Other Requests
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="leave">
+        
+        <TabsContent value="teacher-leave">
           <Card className="shadow-xl">
             <CardHeader>
-              <CardTitle>Leave Applications</CardTitle>
-              <CardDescription>Review and process leave requests from students and staff.</CardDescription>
+              <CardTitle>Teacher Leave Applications</CardTitle>
+              <CardDescription>Review and process leave requests from teachers.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TeacherLeaveManagementTable />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="student-leave">
+          <Card className="shadow-xl">
+            <CardHeader>
+              <CardTitle>Student Leave Applications</CardTitle>
+              <CardDescription>Review and process leave requests from students.</CardDescription>
             </CardHeader>
             <CardContent>
               <LeaveManagementTable />
             </CardContent>
           </Card>
         </TabsContent>
+        
         <TabsContent value="late-arrival">
            <Card className="shadow-xl">
             <CardHeader>
@@ -54,6 +71,7 @@ export default function AllSubmissionsReviewPage() {
             </CardContent>
           </Card>
         </TabsContent>
+
         <TabsContent value="other">
            <Card className="shadow-xl">
             <CardHeader>

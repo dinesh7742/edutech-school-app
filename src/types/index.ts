@@ -196,6 +196,34 @@ export interface LeaveApplication {
   teacherComments?: string;
 }
 
+export const teacherLeaveTypes = ["CL", "HPL", "Long Leave", "LWP", "Half Day"] as const;
+export type TeacherLeaveType = typeof teacherLeaveTypes[number];
+
+export interface TeacherLeaveApplication {
+  id?: string;
+  teacherId: string;
+  teacherName: string;
+  leaveType: TeacherLeaveType;
+  fromDate: string;
+  toDate: string;
+  reason: string;
+  status: "Pending" | "Approved" | "Rejected";
+  appliedBy: "Teacher" | "Admin";
+  appliedByUid: string;
+  timestamp: Timestamp | FieldValue;
+  reviewTimestamp?: Timestamp | FieldValue;
+  reviewedByUid?: string;
+  adminComments?: string;
+}
+
+export interface TeacherLeaveBalance {
+  uid: string;
+  year: number;
+  totalCL: number;
+  usedCL: number;
+}
+
+
 export interface SchoolForm {
   id: string;
   title: string;
@@ -384,7 +412,8 @@ export type NotificationType =
     | 'Absent'
     | 'LeaveStatusUpdate'
     | 'LateArrivalStatusUpdate'
-    | 'OtherAppStatusUpdate';
+    | 'OtherAppStatusUpdate'
+    | 'TeacherLeaveUpdate'; // New type for teacher leave notifications
 
 export interface AppNotification {
     id: string;

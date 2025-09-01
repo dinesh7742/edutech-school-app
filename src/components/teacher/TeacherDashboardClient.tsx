@@ -28,7 +28,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, orderBy, limit, Timestamp, getCountFromServer, doc, getDoc, onSnapshot } from "firebase/firestore";
-import type { StudentProfile, HomeworkSubmission, ChatMessage, NotificationMessage } from "@/types";
+import type { StudentProfile, HomeworkSubmission, ChatMessage, NotificationMessage, AppNotification } from "@/types";
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -42,6 +42,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { TeacherLeaveForm } from "./TeacherLeaveForm";
 
 export function TeacherDashboardClient() {
   const { user: teacherUser } = useAuth();
@@ -66,7 +67,7 @@ export function TeacherDashboardClient() {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
-  const [notificationMessages, setNotificationMessages] = useState<NotificationMessage[]>([]);
+  const [notificationMessages, setNotificationMessages] = useState<AppNotification[]>([]);
 
   const { totalStudents, maleStudents, femaleStudents } = useMemo(() => {
     const total = studentsInClass.length;
@@ -151,6 +152,13 @@ export function TeacherDashboardClient() {
   useEffect(() => {
     if (!teacherUser) return;
     let hasOpenedDialog = sessionStorage.getItem('teacherNotificationDialogOpened');
+    const notificationListenerUnsubscribe = onSnapshot(query(collection(db, "notifications"), where("recipientUid", "==", teacherUser.uid), where("isRead", "==", false)), (snapshot) => {
+        if (!snapshot.empty) {
+          const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
+          setNotificationMessages(newNotifications);
+          setIsNotificationDialogOpen(true);
+        }
+    });
 
     const runAllFetches = async () => {
         if (teacherUser.grade && teacherUser.division) {
@@ -250,8 +258,8 @@ export function TeacherDashboardClient() {
         }
 
         if (!hasOpenedDialog) {
-            setNotificationMessages(newMessages);
-            setIsNotificationDialogOpen(true);
+            // setNotificationMessages(newMessages); // This is now handled by the realtime listener
+            // setIsNotificationDialogOpen(true);
             sessionStorage.setItem('teacherNotificationDialogOpened', 'true');
         }
     };
@@ -259,7 +267,7 @@ export function TeacherDashboardClient() {
     runAllFetches();
 
     const chatsQuery = query(collection(db, "chats"), where("participants", "array-contains", teacherUser.uid));
-    const unsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+    const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
         let unreadFound = false;
         snapshot.forEach(chatDoc => {
             const messages = (chatDoc.data().messages || []) as ChatMessage[];
@@ -270,7 +278,10 @@ export function TeacherDashboardClient() {
         setHasUnreadMessages(unreadFound);
     });
 
-    return () => unsubscribe();
+    return () => {
+        unsubscribeChats();
+        notificationListenerUnsubscribe();
+    }
   }, [teacherUser, toast]);
 
   const getAttendanceCardDescription = () => {
@@ -301,25 +312,17 @@ export function TeacherDashboardClient() {
       <AlertDialog open={isNotificationDialogOpen} onOpenChange={setIsNotificationDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Today's Notifications / आज की सूचनाएं</AlertDialogTitle>
-            <AlertDialogDescription>
-                Here are your new items requiring attention. Click to review.
-                <br />
-                यहां आपके ध्यान देने योग्य नई वस्तुएं हैं। समीक्षा के लिए क्लिक करें।
-            </AlertDialogDescription>
+            <AlertDialogTitle>You have new notifications!</AlertDialogTitle>
           </AlertDialogHeader>
           <div className="my-4 space-y-3 max-h-60 overflow-y-auto">
             {notificationMessages.length > 0 ? (
                 notificationMessages.map((msg, index) => (
                     <Link key={index} href={msg.link} onClick={() => setIsNotificationDialogOpen(false)} className="block p-3 border rounded-md hover:bg-muted transition-colors">
-                        <p className="font-semibold">{msg.english}</p>
-                        <p className="text-sm text-muted-foreground">{msg.hindi}</p>
+                        <p className="font-semibold">{msg.message}</p>
                     </Link>
                 ))
             ) : (
-                <p className="text-center text-muted-foreground py-4">
-                    No new submissions or messages today. / आज कोई नया सबमिशन या संदेश नहीं है।
-                </p>
+                <p className="text-center text-muted-foreground py-4">No new notifications.</p>
             )}
           </div>
           <AlertDialogFooter>
@@ -331,100 +334,75 @@ export function TeacherDashboardClient() {
       <div className="space-y-8">
         <WelcomeMessage />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-            <CardHeader className="p-4 bg-primary text-primary-foreground">
-                <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">Teacher's Corner & Class {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-              <div className="flex-grow flex flex-col justify-center items-center w-full"> 
-                {loadingStudents ? (
-                  <div className="flex items-center justify-center space-x-2 h-full">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    <span className="text-muted-foreground">Loading...</span>
-                  </div>
-                ) : studentCountError ? (
-                  <p className="text-xs text-destructive text-center">{studentCountError}</p>
-                ) : (
-                  <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
-                      <div className="text-center border-b-2 border-primary pb-2">
-                          <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
-                          <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
-                      </div>
-                      <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
-                          <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
-                              <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
-                              <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
-                          </Avatar>
-                          <div className="text-left space-y-2 flex-grow">
-                              <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
-                              <div className="flex items-center text-sm text-muted-foreground gap-2">
-                                  <GraduationCap className="h-4 w-4 text-primary" />
-                                  <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
-                              </div>
-                              <div className="flex items-center text-sm text-muted-foreground gap-2">
-                                  <BookOpen className="h-4 w-4 text-primary" />
-                                  <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
-                              </div>
-                              <div className="flex items-center text-sm text-muted-foreground gap-2">
-                                  <Phone className="h-4 w-4 text-primary" />
-                                  <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
-                              </div>
-                          </div>
-                      </div>
-                      <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
-                          <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
-                          <div className="mt-2 flex w-full justify-around items-center">
-                              <div className="text-center">
-                                  <p className="text-2xl font-bold text-primary">{totalStudents}</p>
-                                  <p className="text-xs font-medium text-muted-foreground">Total Students</p>
-                              </div>
-                              <div className="text-center">
-                                  <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
-                                  <p className="text-xs font-medium text-muted-foreground">Boys</p>
-                              </div>
-                              <div className="text-center">
-                                  <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
-                                  <p className="text-xs font-medium text-muted-foreground">Girls</p>
-                              </div>
-                          </div>
-                      </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
               <CardHeader className="p-4 bg-primary text-primary-foreground">
-                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">Recent Homework Submissions</CardTitle>
+                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">Teacher's Corner & Class {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-                <div className="flex-grow flex flex-col justify-center items-center w-full">
-                  {loadingSubmissions ? (
+                <div className="flex-grow flex flex-col justify-center items-center w-full"> 
+                  {loadingStudents ? (
                     <div className="flex items-center justify-center space-x-2 h-full">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       <span className="text-muted-foreground">Loading...</span>
                     </div>
-                  ) : recentSubmissions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center h-full flex items-center justify-center">No recent submissions for your class.</p>
+                  ) : studentCountError ? (
+                    <p className="text-xs text-destructive text-center">{studentCountError}</p>
                   ) : (
-                    <div className="w-full h-full max-h-[350px] overflow-y-auto p-2">
-                        <ul className="space-y-2 text-xs text-left">
-                          {recentSubmissions.map((sub) => (
-                            <li key={sub.id} className="p-2 border rounded-md shadow-sm bg-background">
-                              <p className="font-semibold truncate text-sm text-foreground">{sub.homeworkTitle}</p>
-                              <p className="text-muted-foreground"><span className="font-medium text-foreground">{sub.studentName}</span> submitted.</p>
-                              <p className="text-muted-foreground">Completed: {sub.completedAt ? format((sub.completedAt as Timestamp).toDate(), "PP pp") : "N/A"}</p>
-                            </li>
-                          ))}
-                        </ul>
+                    <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
+                        <div className="text-center border-b-2 border-primary pb-2">
+                            <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
+                            <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
+                        </div>
+                        <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
+                            <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
+                                <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
+                                <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
+                            </Avatar>
+                            <div className="text-left space-y-2 flex-grow">
+                                <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
+                                <div className="flex items-center text-sm text-muted-foreground gap-2">
+                                    <GraduationCap className="h-4 w-4 text-primary" />
+                                    <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
+                                </div>
+                                <div className="flex items-center text-sm text-muted-foreground gap-2">
+                                    <BookOpen className="h-4 w-4 text-primary" />
+                                    <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
+                                </div>
+                                <div className="flex items-center text-sm text-muted-foreground gap-2">
+                                    <Phone className="h-4 w-4 text-primary" />
+                                    <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
+                            <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
+                            <div className="mt-2 flex w-full justify-around items-center">
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-primary">{totalStudents}</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Total Students</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Boys</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
+                                    <p className="text-xs font-medium text-muted-foreground">Girls</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                   )}
                 </div>
               </CardContent>
           </Card>
+
+          <Card className="lg:col-span-1 shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-indigo-200 to-purple-200">
+            <TeacherLeaveForm />
+          </Card>
         </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {mainActionItems.map((item) => (
