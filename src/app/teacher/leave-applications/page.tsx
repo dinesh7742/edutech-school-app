@@ -1,13 +1,27 @@
-
 "use client"; 
 
-import { LeaveManagementTable } from "@/components/teacher/LeaveManagementTable";
-import { LateArrivalManagementTable } from "@/components/teacher/LateArrivalManagementTable";
-import { OtherApplicationsReviewTable } from "@/components/teacher/OtherApplicationsReviewTable";
-import { TeacherLeaveManagementTable } from "@/components/teacher/TeacherLeaveManagementTable"; // New Import
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MailOpen, AlertTriangle, FileSignature, ClipboardCheck, UserCheck } from "lucide-react"; // Added UserCheck
+import { MailOpen, AlertTriangle, FileSignature, ClipboardCheck, UserCheck, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import dynamic from 'next/dynamic';
+
+const LeaveManagementTable = dynamic(
+  () => import('@/components/teacher/LeaveManagementTable').then(mod => mod.LeaveManagementTable),
+  { loading: () => <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin" /></div> }
+);
+const LateArrivalManagementTable = dynamic(
+  () => import('@/components/teacher/LateArrivalManagementTable').then(mod => mod.LateArrivalManagementTable),
+  { loading: () => <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin" /></div> }
+);
+const OtherApplicationsReviewTable = dynamic(
+  () => import('@/components/teacher/OtherApplicationsReviewTable').then(mod => mod.OtherApplicationsReviewTable),
+  { loading: () => <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin" /></div> }
+);
+const TeacherLeaveManagementTable = dynamic(
+  () => import('@/components/teacher/TeacherLeaveManagementTable').then(mod => mod.TeacherLeaveManagementTable),
+  { loading: () => <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin" /></div> }
+);
+
 
 export default function AllSubmissionsReviewPage() {
   return (
