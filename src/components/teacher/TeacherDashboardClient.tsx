@@ -53,8 +53,6 @@ export function TeacherDashboardClient() {
   const [studentCountError, setStudentCountError] = useState<string | null>(null);
 
   const [isDownloadingStudentData, setIsDownloadingStudentData] = useState(false);
-  const [recentSubmissions, setRecentSubmissions] = useState<HomeworkSubmission[]>([]);
-  const [loadingSubmissions, setLoadingSubmissions] = useState(true);
 
   const [pendingLeaveCount, setPendingLeaveCount] = useState(0);
   const [pendingLateArrivalCount, setPendingLateArrivalCount] = useState(0);
@@ -151,7 +149,6 @@ export function TeacherDashboardClient() {
 
   useEffect(() => {
     if (!teacherUser) return;
-    let hasOpenedDialog = sessionStorage.getItem('teacherNotificationDialogOpened');
     const notificationListenerUnsubscribe = onSnapshot(query(collection(db, "notifications"), where("recipientUid", "==", teacherUser.uid), where("isRead", "==", false)), (snapshot) => {
         if (!snapshot.empty) {
           const newNotifications = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() as AppNotification) }));
@@ -204,26 +201,6 @@ export function TeacherDashboardClient() {
         }
 
         if (teacherUser.grade && teacherUser.division) {
-            setLoadingSubmissions(true);
-            try {
-                const submissionsRef = collection(db, "homeworkSubmissions");
-                const q = query(
-                    submissionsRef,
-                    where("grade", "==", teacherUser.grade),
-                    where("division", "==", teacherUser.division)
-                );
-                const querySnapshot = await getDocs(q);
-                const fetchedSubmissions = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as HomeworkSubmission))
-                fetchedSubmissions.sort((a,b) => (b.completedAt as Timestamp).toMillis() - (a.completedAt as Timestamp).toMillis());
-                setRecentSubmissions(fetchedSubmissions.slice(0, 5));
-            } catch (err) {
-                console.error("Error fetching recent homework submissions:", err);
-            } finally {
-                setLoadingSubmissions(false);
-            }
-        }
-
-        if (teacherUser.grade && teacherUser.division) {
             setLoadingTodaysAttendanceStatus(true);
             try {
                 const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -236,31 +213,6 @@ export function TeacherDashboardClient() {
             } finally {
                 setLoadingTodaysAttendanceStatus(false);
             }
-        }
-
-        const newMessages: NotificationMessage[] = [];
-        const twentyFourHoursAgo = Timestamp.fromDate(new Date(Date.now() - 24 * 60 * 60 * 1000));
-        
-        const checkNewCollection = async (collectionName: string, link: string, engMsg: string, hindiMsg: string, dateField = "applicationTimestamp") => {
-            const q = query(collection(db, collectionName), where("status", "==", "Pending"), where(dateField, ">=", twentyFourHoursAgo));
-            const snapshot = await getCountFromServer(q);
-            if (snapshot.data().count > 0) {
-                newMessages.push({ link, english: `${engMsg} (${snapshot.data().count} new)`, hindi: `${hindiMsg} (${snapshot.data().count} नई)` });
-            }
-        };
-
-        try {
-            await checkNewCollection("leaveApplications", "/teacher/leave-applications", "New Leave Applications received.", "नए अवकाश आवेदन प्राप्त हुए हैं।");
-            await checkNewCollection("lateArrivalRequests", "/teacher/leave-applications", "New Late Arrival requests received.", "देर से आने के नए अनुरोध प्राप्त हुए हैं।");
-            await checkNewCollection("otherStudentApplications", "/teacher/leave-applications", "New Other Applications received.", "अन्य नए आवेदन प्राप्त हुए हैं।");
-        } catch (error) {
-            console.warn("Could not check for new application submissions:", error);
-        }
-
-        if (!hasOpenedDialog) {
-            // setNotificationMessages(newMessages); // This is now handled by the realtime listener
-            // setIsNotificationDialogOpen(true);
-            sessionStorage.setItem('teacherNotificationDialogOpened', 'true');
         }
     };
 
@@ -333,76 +285,10 @@ export function TeacherDashboardClient() {
 
       <div className="space-y-8">
         <WelcomeMessage />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400">
-              <CardHeader className="p-4 bg-primary text-primary-foreground">
-                  <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">Teacher's Corner & Class {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col flex-grow items-center justify-between p-2 space-y-3">
-                <div className="flex-grow flex flex-col justify-center items-center w-full"> 
-                  {loadingStudents ? (
-                    <div className="flex items-center justify-center space-x-2 h-full">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="text-muted-foreground">Loading...</span>
-                    </div>
-                  ) : studentCountError ? (
-                    <p className="text-xs text-destructive text-center">{studentCountError}</p>
-                  ) : (
-                    <div className="w-full h-full flex flex-col p-4 rounded-lg bg-white text-black shadow-lg border border-gray-200">
-                        <div className="text-center border-b-2 border-primary pb-2">
-                            <h3 className="text-xl font-bold text-primary">TEACHER IDENTITY CARD</h3>
-                            <p className="text-xs text-muted-foreground">PM SHRI MPS VARSHA NAGAR</p>
-                        </div>
-                        <div className="flex-grow flex flex-col md:flex-row items-center gap-6 mt-4">
-                            <Avatar className="h-32 w-32 rounded-md border-4 border-primary/20 shadow-md">
-                                <AvatarImage src={teacherUser?.photoURL || undefined} alt={teacherUser?.displayName || 'Teacher'} className="rounded-md" />
-                                <AvatarFallback className="text-4xl rounded-md bg-muted">{getInitials(teacherUser?.displayName)}</AvatarFallback>
-                            </Avatar>
-                            <div className="text-left space-y-2 flex-grow">
-                                <p className="text-2xl font-bold text-foreground">{teacherUser?.displayName}</p>
-                                <div className="flex items-center text-sm text-muted-foreground gap-2">
-                                    <GraduationCap className="h-4 w-4 text-primary" />
-                                    <span>{teacherUser?.educationQualification || 'Qualification not set'}</span>
-                                </div>
-                                <div className="flex items-center text-sm text-muted-foreground gap-2">
-                                    <BookOpen className="h-4 w-4 text-primary" />
-                                    <span>Teaches: {teacherUser?.subjectTaught || 'Not specified'}</span>
-                                </div>
-                                <div className="flex items-center text-sm text-muted-foreground gap-2">
-                                    <Phone className="h-4 w-4 text-primary" />
-                                    <span>{teacherUser?.whatsAppNumber || 'Contact not set'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="w-full mt-4 pt-4 border-t-2 border-dashed">
-                            <p className="text-center text-sm text-muted-foreground font-semibold">CLASS IN-CHARGE: Grade {teacherUser?.grade || 'N/A'}-{teacherUser?.division || 'N/A'}</p>
-                            <div className="mt-2 flex w-full justify-around items-center">
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-primary">{totalStudents}</p>
-                                    <p className="text-xs font-medium text-muted-foreground">Total Students</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-blue-500">{maleStudents}</p>
-                                    <p className="text-xs font-medium text-muted-foreground">Boys</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-2xl font-bold text-pink-500">{femaleStudents}</p>
-                                    <p className="text-xs font-medium text-muted-foreground">Girls</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-          </Card>
-
-          <Card className="lg:col-span-1 shadow-lg rounded-lg flex flex-col text-center transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-indigo-200 to-purple-200">
+        
+        <Card className="shadow-lg rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-indigo-200 to-purple-200">
             <TeacherLeaveForm />
-          </Card>
-        </div>
-
+        </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {mainActionItems.map((item) => (

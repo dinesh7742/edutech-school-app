@@ -27,9 +27,10 @@ import {
   Loader2,
   ArrowRight,
   UserCheck,
+  MailOpen,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, getCountFromServer } from "firebase/firestore";
 import Image from "next/image";
 import {
   DropdownMenu,
@@ -104,6 +105,8 @@ export function AdminDashboardClient() {
     gradeStats: {} as GradeStats,
   });
   const [loadingStats, setLoadingStats] = useState(true);
+  const [pendingTeacherLeaveCount, setPendingTeacherLeaveCount] = useState(0);
+  const [pendingStudentLeaveCount, setPendingStudentLeaveCount] = useState(0);
 
   useEffect(() => {
     const fetchStatsAndTeachers = async () => {
@@ -113,12 +116,20 @@ export function AdminDashboardClient() {
         const studentsQuery = query(collection(db, "studentProfiles"));
         const staffQuery = query(collection(db, "staff"));
 
-        const [usersSnap, studentsSnap, staffSnap] = await Promise.all([
+        const studentLeaveQuery = query(collection(db, "leaveApplications"), where("status", "==", "Pending"));
+        const teacherLeaveQuery = query(collection(db, "teacherLeaves"), where("status", "==", "Pending"));
+
+        const [usersSnap, studentsSnap, staffSnap, studentLeaveSnap, teacherLeaveSnap] = await Promise.all([
           getDocs(usersQuery),
           getDocs(studentsQuery),
           getDocs(staffQuery),
+          getCountFromServer(studentLeaveQuery),
+          getCountFromServer(teacherLeaveQuery),
         ]);
         
+        setPendingStudentLeaveCount(studentLeaveSnap.data().count);
+        setPendingTeacherLeaveCount(teacherLeaveSnap.data().count);
+
         const allUsers = usersSnap.docs.map(doc => doc.data() as AppUser);
         const teachersDataRaw = allUsers.filter(u => u.role === 'teacher');
         
@@ -172,6 +183,8 @@ export function AdminDashboardClient() {
       ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
       : name.substring(0, 2).toUpperCase();
   };
+  
+  const totalPendingLeaves = pendingStudentLeaveCount + pendingTeacherLeaveCount;
 
   const statCards = [
     {
@@ -198,14 +211,14 @@ export function AdminDashboardClient() {
       iconColor: "text-blue-500",
       link: "/admin/manage-staff",
     },
-    // Placeholder for a 4th card if needed in future
     {
-      title: "Transportation",
-      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : "12",
-      icon: Bus,
+      title: "Leave Applications",
+      value: loadingStats ? <Loader2 className="h-6 w-6 animate-spin"/> : totalPendingLeaves,
+      icon: MailOpen,
       color: "bg-yellow-100 dark:bg-yellow-900/50",
       iconColor: "text-yellow-500",
-      link: "#",
+      link: "/teacher/leave-applications",
+      description: `${pendingTeacherLeaveCount} Teacher / ${pendingStudentLeaveCount} Student`
     }
   ];
 
@@ -264,6 +277,7 @@ export function AdminDashboardClient() {
                         <div className="space-y-1">
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{card.title}</p>
                             <p className="text-3xl font-bold">{card.value}</p>
+                            {card.description && <p className="text-xs text-gray-600 dark:text-gray-300">{card.description}</p>}
                         </div>
                         <div className={cn("p-3 rounded-full flex-shrink-0", card.color)}>
                             <card.icon className={cn("h-6 w-6", card.iconColor)} />
