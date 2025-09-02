@@ -1,9 +1,11 @@
+
 "use client"; 
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { MailOpen, AlertTriangle, FileSignature, ClipboardCheck, UserCheck, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import dynamic from 'next/dynamic';
+import { useAuth } from "@/context/AuthContext";
 
 const LeaveManagementTable = dynamic(
   () => import('@/components/teacher/LeaveManagementTable').then(mod => mod.LeaveManagementTable),
@@ -24,6 +26,9 @@ const TeacherLeaveManagementTable = dynamic(
 
 
 export default function AllSubmissionsReviewPage() {
+  const { role } = useAuth();
+  const isAdmin = role === 'admin';
+
   return (
     <div className="py-4 space-y-8">
       <div className="flex items-center gap-3">
@@ -34,11 +39,13 @@ export default function AllSubmissionsReviewPage() {
         Manage and process various applications submitted by students and staff. Review each category below.
       </CardDescription>
 
-      <Tabs defaultValue="teacher-leave" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="teacher-leave">
-            <UserCheck className="mr-2 h-4 w-4" /> Teacher Leave
-          </TabsTrigger>
+      <Tabs defaultValue={isAdmin ? "teacher-leave" : "student-leave"} className="w-full">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+          {isAdmin && (
+            <TabsTrigger value="teacher-leave">
+              <UserCheck className="mr-2 h-4 w-4" /> Teacher Leave
+            </TabsTrigger>
+          )}
           <TabsTrigger value="student-leave">
             <MailOpen className="mr-2 h-4 w-4" /> Student Leave
           </TabsTrigger>
@@ -50,17 +57,19 @@ export default function AllSubmissionsReviewPage() {
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="teacher-leave">
-          <Card className="shadow-xl">
-            <CardHeader>
-              <CardTitle>Teacher Leave Applications</CardTitle>
-              <CardDescription>Review and process leave requests from teachers.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <TeacherLeaveManagementTable />
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="teacher-leave">
+            <Card className="shadow-xl">
+              <CardHeader>
+                <CardTitle>Teacher Leave Applications</CardTitle>
+                <CardDescription>Review and process leave requests from teachers.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <TeacherLeaveManagementTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="student-leave">
           <Card className="shadow-xl">
