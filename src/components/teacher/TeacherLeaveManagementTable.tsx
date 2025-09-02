@@ -83,6 +83,24 @@ export function TeacherLeaveManagementTable() {
 
         const appData = appDoc.data() as TeacherLeaveApplication;
 
+        if (newStatus === "Approved" && appData.leaveType === "CL") {
+            const leaveDuration = differenceInCalendarDays(parseISO(appData.toDate), parseISO(appData.fromDate)) + 1;
+            const leaveYear = getYear(parseISO(appData.fromDate));
+            const balanceDocId = `${appData.teacherId}_${leaveYear}`;
+            const balanceDocRef = doc(db, "teacherLeaveBalances", balanceDocId);
+            
+            const balanceDoc = await transaction.get(balanceDocRef);
+            
+            if (balanceDoc.exists()) {
+                const currentBalance = balanceDoc.data() as TeacherLeaveBalance;
+                transaction.update(balanceDocRef, { usedCL: currentBalance.usedCL + leaveDuration });
+            } else {
+                const newBalance: TeacherLeaveBalance = { uid: appData.teacherId, year: leaveYear, totalCL: 15, usedCL: leaveDuration };
+                transaction.set(balanceDocRef, newBalance);
+            }
+        }
+
+        // All writes happen after all reads.
         transaction.update(appDocRef, {
           status: newStatus,
           reviewedByUid: adminUser.uid,
@@ -90,23 +108,6 @@ export function TeacherLeaveManagementTable() {
           adminComments: adminComment || null,
         });
 
-        if (newStatus === "Approved" && appData.leaveType === "CL") {
-          const leaveDuration = differenceInCalendarDays(parseISO(appData.toDate), parseISO(appData.fromDate)) + 1;
-          const leaveYear = getYear(parseISO(appData.fromDate));
-          const balanceDocId = `${appData.teacherId}_${leaveYear}`;
-          const balanceDocRef = doc(db, "teacherLeaveBalances", balanceDocId);
-          
-          const balanceDoc = await transaction.get(balanceDocRef);
-          if (balanceDoc.exists()) {
-            const currentBalance = balanceDoc.data() as TeacherLeaveBalance;
-            transaction.update(balanceDocRef, { usedCL: currentBalance.usedCL + leaveDuration });
-          } else {
-            // Create balance if it doesn't exist for that year
-            const newBalance: TeacherLeaveBalance = { uid: appData.teacherId, year: leaveYear, totalCL: 15, usedCL: leaveDuration };
-            transaction.set(balanceDocRef, newBalance);
-          }
-        }
-        
         // Send notification to the teacher
         const notificationMessage = `Your ${appData.leaveType} leave from ${formatDateDisplay(appData.fromDate)} has been ${newStatus}.`;
         const notificationRef = doc(collection(db, "notifications"));
@@ -114,7 +115,7 @@ export function TeacherLeaveManagementTable() {
           recipientUid: appData.teacherId,
           type: 'TeacherLeaveUpdate',
           message: notificationMessage,
-          link: '/teacher/dashboard', // Or a more specific link
+          link: '/teacher/dashboard',
           timestamp: serverTimestamp(),
           isRead: false
         });
