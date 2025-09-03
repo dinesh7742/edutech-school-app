@@ -5,12 +5,13 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Users, Download } from 'lucide-react';
+import { Loader2, Users, Download, Eye } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, query } from 'firebase/firestore';
 import type { StudentProfile } from '@/types';
 import * as XLSX from 'xlsx';
 import { useToast } from '@/hooks/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface ClassStats {
   boys: number;
@@ -96,9 +97,8 @@ export default function ManageUsersPage() {
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Class Summary");
       
-      // Auto-size columns
       const cols = Object.keys(dataForExcel[0]).map(key => ({
-        wch: Math.max(key.length, 10) // Set a minimum width for each column
+        wch: Math.max(key.length, 12)
       }));
       worksheet["!cols"] = cols;
 
@@ -112,22 +112,40 @@ export default function ManageUsersPage() {
       setIsDownloading(false);
     }
   };
+  
+  const calculateGradeTotal = (grade: string) => {
+    return divisions.reduce((acc, division) => {
+      const classKey = `${grade}-${division}`;
+      return acc + (classStats[classKey]?.total || 0);
+    }, 0);
+  };
+  
+  const calculateDivisionTotal = (division: string) => {
+      return grades.reduce((acc, grade) => {
+          const classKey = `${grade}-${division}`;
+          return acc + (classStats[classKey]?.total || 0);
+      }, 0);
+  };
+
+  const calculateGrandTotal = () => {
+    return Object.values(classStats).reduce((acc, stats) => acc + stats.total, 0);
+  }
 
   return (
     <Card className="shadow-xl">
-      <CardHeader className="flex-row justify-between items-center">
+      <CardHeader className="flex-row justify-between items-start">
         <div>
           <CardTitle className="text-3xl font-bold text-primary flex items-center gap-3">
             <Users className="h-8 w-8" />
             Manage Users - Class Summary
           </CardTitle>
           <CardDescription>
-            Download a summary of student counts for each class or click on a class link below to manage students.
+            View a summary of student counts for each class or download the detailed report.
           </CardDescription>
         </div>
         <Button onClick={handleDownloadSummary} disabled={loading || isDownloading}>
           {isDownloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Download className="mr-2 h-4 w-4" />}
-          Download Class Summary
+          Download Detailed Report
         </Button>
       </CardHeader>
       <CardContent>
@@ -137,22 +155,50 @@ export default function ManageUsersPage() {
             <p className="ml-3 text-muted-foreground">Loading class data...</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <p className="text-muted-foreground">Click any class link to view the list of students for that specific class.</p>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {grades.map(grade => (
-                <div key={grade} className="space-y-2">
-                  <h3 className="font-bold text-lg border-b pb-1">Grade {grade}</h3>
-                  <div className="flex flex-col space-y-1">
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-bold">Grade</TableHead>
                   {divisions.map(division => (
-                    <Link key={`${grade}-${division}`} href={`/admin/manage-users/${grade}/${division}`} className="text-sm p-1 rounded hover:bg-muted">
-                        Division {division}
-                    </Link>
+                    <TableHead key={division} className="text-center font-bold">Div {division}</TableHead>
                   ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+                  <TableHead className="text-center font-bold bg-primary/10">Grade Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {grades.map(grade => (
+                  <TableRow key={grade}>
+                    <TableCell className="font-semibold">Grade {grade}</TableCell>
+                    {divisions.map(division => {
+                      const classKey = `${grade}-${division}`;
+                      const stats = classStats[classKey];
+                      return (
+                        <TableCell key={classKey} className="text-center">
+                          <Link href={`/admin/manage-users/${grade}/${division}`} className="flex flex-col items-center justify-center p-1 rounded hover:bg-muted group">
+                              <span className="font-bold text-lg">{stats?.total || 0}</span>
+                              {stats && (
+                                <span className="text-xs text-muted-foreground">
+                                  B:{stats.boys} G:{stats.girls}
+                                </span>
+                              )}
+                              <Eye className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </Link>
+                        </TableCell>
+                      );
+                    })}
+                     <TableCell className="text-center font-bold text-lg bg-primary/10">{calculateGradeTotal(grade)}</TableCell>
+                  </TableRow>
+                ))}
+                 <TableRow className="bg-primary/20 hover:bg-primary/20">
+                    <TableHead className="font-bold">Division Total</TableHead>
+                    {divisions.map(division => (
+                        <TableHead key={`total-${division}`} className="text-center font-bold text-lg">{calculateDivisionTotal(division)}</TableHead>
+                    ))}
+                    <TableHead className="text-center font-extrabold text-xl">{calculateGrandTotal()}</TableHead>
+                 </TableRow>
+              </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>
