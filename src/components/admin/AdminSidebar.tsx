@@ -13,6 +13,7 @@ import {
   Wallet,
   Settings,
   School,
+  MailOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +35,7 @@ const sidebarNavItems = [
     subItems: [
       { title: "Manage Users", href: "/admin/manage-users", icon: Users },
       { title: "Manage Staff", href: "/admin/manage-staff", icon: Users },
+      { title: "Manage Submissions", href: "/admin/leave-applications", icon: MailOpen },
       { title: "Manage Content", href: "/teacher/post-content", icon: ClipboardList },
     ],
   },

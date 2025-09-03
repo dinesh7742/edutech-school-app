@@ -217,7 +217,7 @@ export function AdminDashboardClient() {
       icon: MailOpen,
       color: "bg-yellow-100 dark:bg-yellow-900/50",
       iconColor: "text-yellow-500",
-      link: "/teacher/leave-applications",
+      link: "/admin/leave-applications",
       description: `${pendingTeacherLeaveCount} Teacher / ${pendingStudentLeaveCount} Student`
     }
   ];
