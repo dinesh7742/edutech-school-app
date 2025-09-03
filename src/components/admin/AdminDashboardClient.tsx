@@ -66,6 +66,7 @@ import { cn } from "@/lib/utils";
 import type { AppUser, StudentProfile, LeaveApplication } from "@/types";
 import { TeacherIdCard } from "@/components/teacher/TeacherIdCard";
 import { format, parseISO } from "date-fns";
+import { DailyAttendanceSummary } from "./DailyAttendanceSummary";
 
 
 const schoolInfo = {
@@ -292,6 +293,8 @@ export function AdminDashboardClient() {
             </Card>
         ))}
       </div>
+
+      <DailyAttendanceSummary />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 shadow-sm border border-border">
