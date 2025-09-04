@@ -10,79 +10,95 @@ import { useAuth } from '@/context/AuthContext';
 
 const schedule = {
   Mon: [
-    { period: 1, subject: 'English', from: '12:55', to: '13:30' },
-    { period: 2, subject: 'Maths', from: '13:30', to: '14:05' },
-    { period: 3, subject: 'EVS', from: '14:05', to: '14:40' },
-    { period: 4, subject: 'Marathi', from: '14:40', to: '15:10' },
-    { period: 5, subject: 'RECESS', from: '15:10', to: '15:35' },
-    { period: 6, subject: 'Drawing', from: '15:35', to: '16:05' },
-    { period: 7, subject: 'WE', from: '16:05', to: '16:35' },
-    { period: 8, subject: 'WE', from: '16:35', to: '17:05' },
-    { period: 9, subject: 'Marathi', from: '17:05', to: '17:35' },
-    { period: 10, subject: 'Maths', from: '17:35', to: '18:05' },
+    { period: 1, subject: 'English', from: '12:55 PM', to: '01:30 PM' },
+    { period: 2, subject: 'Maths', from: '01:30 PM', to: '02:05 PM' },
+    { period: 3, subject: 'EVS', from: '02:05 PM', to: '02:40 PM' },
+    { period: 4, subject: 'Marathi', from: '02:40 PM', to: '03:10 PM' },
+    { period: 5, subject: 'RECESS', from: '03:10 PM', to: '03:35 PM' },
+    { period: 6, subject: 'Drawing', from: '03:35 PM', to: '04:05 PM' },
+    { period: 7, subject: 'WE', from: '04:05 PM', to: '04:35 PM' },
+    { period: 8, subject: 'WE', from: '04:35 PM', to: '05:05 PM' },
+    { period: 9, subject: 'Marathi', from: '05:05 PM', to: '05:35 PM' },
+    { period: 10, subject: 'Maths', from: '05:35 PM', to: '06:05 PM' },
   ],
   Tue: [
-    { period: 1, subject: 'English', from: '12:55', to: '13:30' },
-    { period: 2, subject: 'Maths', from: '13:30', to: '14:05' },
-    { period: 3, subject: 'EVS', from: '14:05', to: '14:40' },
-    { period: 4, subject: 'Marathi', from: '14:40', to: '15:10' },
-    { period: 5, subject: 'RECESS', from: '15:10', to: '15:35' },
-    { period: 6, subject: 'English', from: '15:35', to: '16:05' },
-    { period: 7, subject: 'English', from: '16:05', to: '16:35' },
-    { period: 8, subject: 'Maths', from: '16:35', to: '17:05' },
-    { period: 9, subject: 'EVS', from: '17:05', to: '17:35' },
-    { period: 10, subject: 'Intelligence', from: '17:35', to: '18:05' },
+    { period: 1, subject: 'English', from: '12:55 PM', to: '01:30 PM' },
+    { period: 2, subject: 'Maths', from: '01:30 PM', to: '02:05 PM' },
+    { period: 3, subject: 'EVS', from: '02:05 PM', to: '02:40 PM' },
+    { period: 4, subject: 'Marathi', from: '02:40 PM', to: '03:10 PM' },
+    { period: 5, subject: 'RECESS', from: '03:10 PM', to: '03:35 PM' },
+    { period: 6, subject: 'English', from: '03:35 PM', to: '04:05 PM' },
+    { period: 7, subject: 'English', from: '04:05 PM', to: '04:35 PM' },
+    { period: 8, subject: 'Maths', from: '04:35 PM', to: '05:05 PM' },
+    { period: 9, subject: 'EVS', from: '05:05 PM', to: '05:35 PM' },
+    { period: 10, subject: 'Intelligence', from: '05:35 PM', to: '06:05 PM' },
   ],
   Wed: [
-    { period: 1, subject: 'English', from: '12:55', to: '13:30' },
-    { period: 2, subject: 'Maths', from: '13:30', to: '14:05' },
-    { period: 3, subject: 'EVS', from: '14:05', to: '14:40' },
-    { period: 4, subject: 'Marathi', from: '14:40', to: '15:10' },
-    { period: 5, subject: 'RECESS', from: '15:10', to: '15:35' },
-    { period: 6, subject: 'Drawing', from: '15:35', to: '16:05' },
-    { period: 7, subject: 'WE', from: '16:05', to: '16:35' },
-    { period: 8, subject: 'Maths', from: '16:35', to: '17:05' },
-    { period: 9, subject: 'English', from: '17:05', to: '17:35' },
-    { period: 10, subject: 'PT', from: '17:35', to: '18:05' },
+    { period: 1, subject: 'English', from: '12:55 PM', to: '01:30 PM' },
+    { period: 2, subject: 'Maths', from: '01:30 PM', to: '02:05 PM' },
+    { period: 3, subject: 'EVS', from: '02:05 PM', to: '02:40 PM' },
+    { period: 4, subject: 'Marathi', from: '02:40 PM', to: '03:10 PM' },
+    { period: 5, subject: 'RECESS', from: '03:10 PM', to: '03:35 PM' },
+    { period: 6, subject: 'Drawing', from: '03:35 PM', to: '04:05 PM' },
+    { period: 7, subject: 'WE', from: '04:05 PM', to: '04:35 PM' },
+    { period: 8, subject: 'Maths', from: '04:35 PM', to: '05:05 PM' },
+    { period: 9, subject: 'English', from: '05:05 PM', to: '05:35 PM' },
+    { period: 10, subject: 'PT', from: '05:35 PM', to: '06:05 PM' },
   ],
   Thu: [
-    { period: 1, subject: 'English', from: '12:55', to: '13:30' },
-    { period: 2, subject: 'Maths', from: '13:30', to: '14:05' },
-    { period: 3, subject: 'EVS', from: '14:05', to: '14:40' },
-    { period: 4, subject: 'EVS', from: '14:40', to: '15:10' },
-    { period: 5, subject: 'RECESS', from: '15:10', to: '15:35' },
-    { period: 6, subject: 'English', from: '15:35', to: '16:05' },
-    { period: 7, subject: 'English', from: '16:05', to: '16:35' },
-    { period: 8, subject: 'EVS', from: '16:35', to: '17:05' },
-    { period: 9, subject: 'Scout', from: '17:05', to: '17:35' },
-    { period: 10, subject: 'Marathi', from: '17:35', to: '18:05' },
+    { period: 1, subject: 'English', from: '12:55 PM', to: '01:30 PM' },
+    { period: 2, subject: 'Maths', from: '01:30 PM', to: '02:05 PM' },
+    { period: 3, subject: 'EVS', from: '02:05 PM', to: '02:40 PM' },
+    { period: 4, subject: 'EVS', from: '02:40 PM', to: '03:10 PM' },
+    { period: 5, subject: 'RECESS', from: '03:10 PM', to: '03:35 PM' },
+    { period: 6, subject: 'English', from: '03:35 PM', to: '04:05 PM' },
+    { period: 7, subject: 'English', from: '04:05 PM', to: '04:35 PM' },
+    { period: 8, subject: 'EVS', from: '04:35 PM', to '05:05 PM' },
+    { period: 9, subject: 'Scout', from: '05:05 PM', to: '05:35 PM' },
+    { period: 10, subject: 'Marathi', from: '05:35 PM', to: '06:05 PM' },
   ],
   Fri: [
-    { period: 1, subject: 'English', from: '12:55', to: '13:30' },
-    { period: 2, subject: 'Maths', from: '13:30', to: '14:05' },
-    { period: 3, subject: 'EVS', from: '14:05', to: '14:40' },
-    { period: 4, subject: 'Marathi', from: '14:40', to: '15:10' },
-    { period: 5, subject: 'RECESS', from: '15:10', to: '15:35' },
-    { period: 6, subject: 'Drawing', from: '15:35', to: '16:05' },
-    { period: 7, subject: 'WE', from: '16:05', to: '16:35' },
-    { period: 8, subject: 'English', from: '16:35', to: '17:05' },
-    { period: 9, subject: 'EVS', from: '17:05', to: '17:35' },
-    { period: 10, subject: 'PT', from: '17:35', to: '18:05' },
+    { period: 1, subject: 'English', from: '12:55 PM', to: '01:30 PM' },
+    { period: 2, subject: 'Maths', from: '01:30 PM', to: '02:05 PM' },
+    { period: 3, subject: 'EVS', from: '02:05 PM', to: '02:40 PM' },
+    { period: 4, subject: 'Marathi', from: '02:40 PM', to: '03:10 PM' },
+    { period: 5, subject: 'RECESS', from: '03:10 PM', to: '03:35 PM' },
+    { period: 6, subject: 'Drawing', from: '03:35 PM', to: '04:05 PM' },
+    { period: 7, subject: 'WE', from: '04:05 PM', to: '04:35 PM' },
+    { period: 8, subject: 'English', from: '04:35 PM', to: '05:05 PM' },
+    { period: 9, subject: 'EVS', from: '05:05 PM', to: '05:35 PM' },
+    { period: 10, subject: 'PT', from: '05:35 PM', to: '06:05 PM' },
   ],
   Sat: [
-    { period: 1, subject: 'English', from: '11:45', to: '12:20' },
-    { period: 2, subject: 'Maths', from: '12:20', to: '12:50' },
-    { period: 3, subject: 'EVS', from: '12:50', to: '13:20' },
-    { period: 4, subject: 'RECESS', from: '13:20', to: '13:45' },
-    { period: 5, subject: 'Marathi', from: '13:45', to: '14:15' },
-    { period: 6, subject: 'WE', from: '14:15', to: '14:45' },
-    { period: 7, subject: 'WE', from: '14:45', to: '15:15' },
-    { period: 8, subject: 'PT', from: '15:15', to: '15:45' },
+    { period: 1, subject: 'English', from: '11:45 AM', to: '12:20 PM' },
+    { period: 2, subject: 'Maths', from: '12:20 PM', to: '12:50 PM' },
+    { period: 3, subject: 'EVS', from: '12:50 PM', to: '01:20 PM' },
+    { period: 4, subject: 'RECESS', from: '01:20 PM', to: '01:45 PM' },
+    { period: 5, subject: 'Marathi', from: '01:45 PM', to: '02:15 PM' },
+    { period: 6, subject: 'WE', from: '02:15 PM', to: '02:45 PM' },
+    { period: 7, subject: 'WE', from: '02:45 PM', to: '03:15 PM' },
+    { period: 8, subject: 'PT', from: '03:15 PM', to: '03:45 PM' },
   ],
   Sun: [],
 };
 
 type Day = keyof typeof schedule;
+
+// Helper to convert "hh:mm AM/PM" to a comparable number (e.g., 1330 for 1:30 PM)
+const timeToNumber = (timeStr: string): number => {
+  const [time, modifier] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':').map(Number);
+  
+  if (modifier === 'PM' && hours < 12) {
+    hours += 12;
+  }
+  if (modifier === 'AM' && hours === 12) { // Midnight case
+    hours = 0;
+  }
+  
+  return hours * 100 + minutes;
+};
+
 
 export function TimeTableWidget() {
   const { user } = useAuth();
@@ -97,9 +113,9 @@ export function TimeTableWidget() {
   const todaysSchedule = schedule[dayOfWeek] || [];
   
   const currentPeriodIndex = todaysSchedule.findIndex(p => {
-      const fromTime = parseInt(p.from.replace(':', ''), 10);
-      const toTime = parseInt(p.to.replace(':', ''), 10);
-      const currentTime = parseInt(now.getHours().toString().padStart(2, '0') + now.getMinutes().toString().padStart(2, '0'), 10);
+      const fromTime = timeToNumber(p.from);
+      const toTime = timeToNumber(p.to);
+      const currentTime = now.getHours() * 100 + now.getMinutes();
       return currentTime >= fromTime && currentTime < toTime;
   });
   
@@ -123,12 +139,14 @@ export function TimeTableWidget() {
               <div
                 key={index}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-md transition-all",
-                  index === currentPeriodIndex ? 'bg-primary/20 animate-blinking-colors shadow-lg scale-105' : 'bg-muted/50'
+                  "flex items-center justify-between p-3 rounded-md transition-all border-2",
+                  index === currentPeriodIndex 
+                    ? 'animate-blinking-colors shadow-lg scale-105' 
+                    : 'bg-muted/50 border-transparent'
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <Badge variant={period.subject === 'RECESS' ? 'destructive' : 'secondary'} className="w-16 justify-center text-sm">{period.from}</Badge>
+                  <Badge variant={period.subject === 'RECESS' ? 'destructive' : 'secondary'} className="w-24 justify-center text-sm">{period.from}</Badge>
                   <p className="font-semibold text-lg">{period.subject}</p>
                 </div>
                 {index === currentPeriodIndex && (
