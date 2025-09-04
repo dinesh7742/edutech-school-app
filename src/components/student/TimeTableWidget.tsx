@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -53,7 +52,7 @@ const schedule = {
     { period: 5, subject: 'RECESS', from: '03:10 PM', to: '03:35 PM' },
     { period: 6, subject: 'English', from: '03:35 PM', to: '04:05 PM' },
     { period: 7, subject: 'English', from: '04:05 PM', to: '04:35 PM' },
-    { period: 8, subject: 'EVS', from: '04:35 PM', to '05:05 PM' },
+    { period: 8, subject: 'EVS', from: '04:35 PM', to: '05:05 PM' },
     { period: 9, subject: 'Scout', from: '05:05 PM', to: '05:35 PM' },
     { period: 10, subject: 'Marathi', from: '05:35 PM', to: '06:05 PM' },
   ],
