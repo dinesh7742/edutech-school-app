@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -108,17 +109,15 @@ export default {
           }
         },
         'blinking-colors': {
-          '0%, 100%': { backgroundColor: 'hsl(var(--primary))' },
-          '25%': { backgroundColor: 'hsl(var(--secondary))' },
-          '50%': { backgroundColor: 'hsl(var(--accent))' },
-          '75%': { backgroundColor: 'hsl(var(--chart-4))' },
+          '0%, 100%': { 'background-color': 'hsl(var(--primary) / 0.2)', 'border-color': 'hsl(var(--primary))' },
+          '50%': { 'background-color': 'hsl(var(--accent))', 'border-color': 'hsl(var(--accent-foreground))' },
         },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'spin-slow': 'spin-slow 3s linear infinite',
-        'blinking-colors': 'blinking-colors 4s infinite',
+        'blinking-colors': 'blinking-colors 2s ease-in-out infinite',
   		},
       backgroundImage: {
         'grid-pattern': "radial-gradient(circle, hsl(var(--primary) / 0.05) 1px, transparent 1px)",

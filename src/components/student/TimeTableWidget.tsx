@@ -28,7 +28,7 @@ const schedule = {
     { period: 4, subject: 'Marathi', from: '14:40', to: '15:10' },
     { period: 5, subject: 'RECESS', from: '15:10', to: '15:35' },
     { period: 6, subject: 'English', from: '15:35', to: '16:05' },
-    { period: 7, subject: 'English', from: '16:05', to '16:35' },
+    { period: 7, subject: 'English', from: '16:05', to: '16:35' },
     { period: 8, subject: 'Maths', from: '16:35', to: '17:05' },
     { period: 9, subject: 'EVS', from: '17:05', to: '17:35' },
     { period: 10, subject: 'Intelligence', from: '17:35', to: '18:05' },
