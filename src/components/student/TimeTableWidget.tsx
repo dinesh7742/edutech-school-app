@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Clock } from 'lucide-react';
+import { Clock, Book, Forward } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -110,12 +110,17 @@ export function TimeTableWidget() {
 
   const dayOfWeek = now.toLocaleString('en-US', { weekday: 'short' }) as Day;
   const todaysSchedule = schedule[dayOfWeek] || [];
-  
+  const currentTime = now.getHours() * 100 + now.getMinutes();
+
   const currentPeriod = todaysSchedule.find(p => {
-      const fromTime = timeToNumber(p.from);
-      const toTime = timeToNumber(p.to);
-      const currentTime = now.getHours() * 100 + now.getMinutes();
-      return currentTime >= fromTime && currentTime < toTime;
+    const fromTime = timeToNumber(p.from);
+    const toTime = timeToNumber(p.to);
+    return currentTime >= fromTime && currentTime < toTime;
+  });
+
+  const nextPeriod = todaysSchedule.find(p => {
+    const fromTime = timeToNumber(p.from);
+    return fromTime > currentTime;
   });
 
   if (user?.grade !== '4' || user?.division !== 'A') {
@@ -147,6 +152,31 @@ export function TimeTableWidget() {
         <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/50 border border-green-500/30">
+            <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Book /> Now</h3>
+            {currentPeriod ? (
+              <>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{currentPeriod.subject}</p>
+                <p className="text-sm text-muted-foreground">{currentPeriod.from} - {currentPeriod.to}</p>
+              </>
+            ) : (
+              <p className="text-muted-foreground mt-2">No lecture currently in session.</p>
+            )}
+          </div>
+          <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/50 border border-blue-500/30">
+            <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2"><Forward /> Next</h3>
+            {nextPeriod ? (
+               <>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{nextPeriod.subject}</p>
+                <p className="text-sm text-muted-foreground">{nextPeriod.from} - {nextPeriod.to}</p>
+              </>
+            ) : (
+               <p className="text-muted-foreground mt-2">No more lectures today.</p>
+            )}
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full border-collapse border border-gray-300">
             <thead>
@@ -194,3 +224,4 @@ export function TimeTableWidget() {
     </Card>
   );
 }
+
