@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -99,6 +98,43 @@ const timeToNumber = (timeStr: string): number => {
   return hours * 100 + minutes;
 };
 
+const AnalogClock = () => {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(timerId);
+  }, []);
+
+  const secondsStyle = {
+    transform: `rotate(${time.getSeconds() * 6}deg)`
+  };
+  const minutesStyle = {
+    transform: `rotate(${time.getMinutes() * 6 + time.getSeconds() * 0.1}deg)`
+  };
+  const hoursStyle = {
+    transform: `rotate(${time.getHours() * 30 + time.getMinutes() * 0.5}deg)`
+  };
+
+  return (
+    <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
+      <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10"></div>
+      <div className="absolute top-1/2 left-1/2 w-full h-full">
+        <div className="absolute left-1/2 bottom-1/2 w-1 h-1/2 bg-primary origin-bottom" style={hoursStyle}></div>
+      </div>
+      <div className="absolute top-1/2 left-1/2 w-full h-full">
+        <div className="absolute left-1/2 bottom-1/2 w-0.5 h-1/2 bg-gray-700 origin-bottom" style={minutesStyle}></div>
+      </div>
+      <div className="absolute top-1/2 left-1/2 w-full h-full">
+        <div className="absolute left-1/2 bottom-1/2 w-0.5 h-1/2 bg-red-600 origin-bottom" style={secondsStyle}></div>
+      </div>
+    </div>
+  );
+};
+
+
 export function TimeTableWidget() {
   const { user } = useAuth();
   const [now, setNow] = useState(new Date());
@@ -145,11 +181,14 @@ export function TimeTableWidget() {
 
   return (
     <Card className="shadow-lg rounded-2xl">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-          <Clock className="h-6 w-6" /> Class Timetable
-        </CardTitle>
-        <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+      <CardHeader className="flex flex-row justify-between items-center">
+        <div>
+          <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+            <Clock className="h-6 w-6" /> Class Timetable
+          </CardTitle>
+          <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+        </div>
+        <AnalogClock />
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -224,4 +263,3 @@ export function TimeTableWidget() {
     </Card>
   );
 }
-
