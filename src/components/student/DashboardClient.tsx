@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { StudentIdCardWidget } from "./StudentIdCardWidget";
+import { TimeTableWidget } from "@/components/student/TimeTableWidget";
 
 interface LatestContent {
   notice: Notice | null;
@@ -391,6 +392,7 @@ export function StudentDashboardClient() {
       <div className="space-y-8">
         <WelcomeMessage />
         <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
+        <TimeTableWidget />
         <StudentAttendanceDetails />
         <TodaySpecial />
 

@@ -108,11 +108,16 @@ export default {
             transform: 'rotate(360deg)'
           }
         },
+        'blinking-colors': {
+          '0%, 100%': { 'background-color': 'hsl(var(--primary-foreground))', 'border-color': 'hsl(var(--primary))' },
+          '50%': { 'background-color': 'hsl(var(--accent))', 'border-color': 'hsl(var(--accent-foreground))' },
+        },
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out',
         'spin-slow': 'spin-slow 3s linear infinite',
+        'blinking-colors': 'blinking-colors 2s infinite',
   		},
       backgroundImage: {
         'grid-pattern': "radial-gradient(circle, hsl(var(--primary) / 0.05) 1px, transparent 1px)",
