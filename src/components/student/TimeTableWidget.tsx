@@ -1,8 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
@@ -82,8 +82,9 @@ const schedule = {
 };
 
 type Day = keyof typeof schedule;
+const days: Day[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const periods = Array.from({ length: 10 }, (_, i) => i + 1);
 
-// Helper to convert "hh:mm AM/PM" to a comparable number (e.g., 1330 for 1:30 PM)
 const timeToNumber = (timeStr: string): number => {
   const [time, modifier] = timeStr.split(' ');
   let [hours, minutes] = time.split(':').map(Number);
@@ -91,13 +92,12 @@ const timeToNumber = (timeStr: string): number => {
   if (modifier === 'PM' && hours < 12) {
     hours += 12;
   }
-  if (modifier === 'AM' && hours === 12) { // Midnight case
+  if (modifier === 'AM' && hours === 12) { 
     hours = 0;
   }
   
   return hours * 100 + minutes;
 };
-
 
 export function TimeTableWidget() {
   const { user } = useAuth();
@@ -111,50 +111,85 @@ export function TimeTableWidget() {
   const dayOfWeek = now.toLocaleString('en-US', { weekday: 'short' }) as Day;
   const todaysSchedule = schedule[dayOfWeek] || [];
   
-  const currentPeriodIndex = todaysSchedule.findIndex(p => {
+  const currentPeriod = todaysSchedule.find(p => {
       const fromTime = timeToNumber(p.from);
       const toTime = timeToNumber(p.to);
       const currentTime = now.getHours() * 100 + now.getMinutes();
       return currentTime >= fromTime && currentTime < toTime;
   });
-  
+
   if (user?.grade !== '4' || user?.division !== 'A') {
     return null; // Only show for Grade 4A
+  }
+  
+  if (dayOfWeek === 'Sun') {
+      return (
+        <Card className="shadow-lg rounded-2xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+              <Clock className="h-6 w-6" /> Class Timetable
+            </CardTitle>
+            <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <p className="text-center text-muted-foreground py-10 font-semibold">It's Sunday! Enjoy your day off.</p>
+          </CardContent>
+        </Card>
+      )
   }
 
   return (
     <Card className="shadow-lg rounded-2xl">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-          <Clock className="h-6 w-6" /> Today's Schedule ({dayOfWeek})
+          <Clock className="h-6 w-6" /> Class Timetable
         </CardTitle>
+        <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
       </CardHeader>
       <CardContent>
-        {todaysSchedule.length === 0 ? (
-          <p className="text-center text-muted-foreground py-4">It's Sunday! Enjoy your day off.</p>
-        ) : (
-          <div className="space-y-2">
-            {todaysSchedule.map((period, index) => (
-              <div
-                key={index}
-                className={cn(
-                  "flex items-center justify-between p-3 rounded-md transition-all border-2",
-                  index === currentPeriodIndex 
-                    ? 'animate-blinking-colors shadow-lg scale-105' 
-                    : 'bg-muted/50 border-transparent'
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <Badge variant={period.subject === 'RECESS' ? 'destructive' : 'secondary'} className="w-24 justify-center text-sm">{period.from}</Badge>
-                  <p className="font-semibold text-lg">{period.subject}</p>
-                </div>
-                {index === currentPeriodIndex && (
-                  <Badge variant="highlight" className="text-sm">Ongoing</Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-primary/10">
+                <th className="border border-gray-300 p-2 font-semibold text-primary">Period</th>
+                {days.map(day => (
+                  <th key={day} className={cn("border border-gray-300 p-2 font-semibold text-primary", day === dayOfWeek && 'bg-primary/20')}>{day}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {periods.map(periodNum => (
+                <tr key={periodNum} className="text-center">
+                  <td className="border border-gray-300 p-2 font-medium bg-muted/50">{periodNum}</td>
+                  {days.map(day => {
+                    const periodData = schedule[day]?.find(p => p.period === periodNum);
+                    const isCurrent = day === dayOfWeek && periodData?.period === currentPeriod?.period;
+                    
+                    return (
+                      <td 
+                        key={`${day}-${periodNum}`} 
+                        className={cn(
+                          "border border-gray-300 p-2",
+                          periodData?.subject === 'RECESS' ? 'bg-red-100/50 font-semibold' : 'bg-white',
+                          isCurrent && 'animate-blinking-colors shadow-inner scale-105 z-10 relative'
+                        )}
+                      >
+                        {periodData ? (
+                          <div className="flex flex-col text-xs sm:text-sm">
+                            <span className="font-bold">{periodData.subject}</span>
+                            <span className="text-muted-foreground">{periodData.from}</span>
+                          </div>
+                        ) : (
+                          <span>-</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </CardContent>
     </Card>
   );
