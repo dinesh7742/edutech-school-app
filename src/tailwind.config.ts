@@ -110,7 +110,7 @@ export default {
         },
         'blinking-colors': {
           '0%, 100%': { 'background-color': 'hsl(var(--primary) / 0.2)', 'border-color': 'hsl(var(--primary))' },
-          '50%': { 'background-color': 'hsl(var(--accent))', 'border-color': 'hsl(var(--accent-foreground))' },
+          '50%': { 'background-color': '#E9D5FF', 'border-color': '#A855F7' },
         },
   		},
   		animation: {
