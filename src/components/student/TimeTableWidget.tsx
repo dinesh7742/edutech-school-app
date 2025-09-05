@@ -121,7 +121,7 @@ const AnalogClock = () => {
       {Array.from({ length: 12 }, (_, i) => (
         <div
           key={i}
-          className="absolute w-full h-full text-center text-primary font-bold text-xs"
+          className="absolute w-full h-full text-center text-primary font-bold text-xs flex items-center justify-center"
           style={{ transform: `rotate(${(i + 1) * 30}deg)` }}
         >
           <span style={{ display: 'inline-block', transform: `rotate(-${(i + 1) * 30}deg)` }}>
@@ -136,23 +136,32 @@ const AnalogClock = () => {
       {/* Hands Container */}
       <div className="absolute top-0 left-0 w-full h-full">
         {/* Hour Hand */}
-        <div className="absolute bottom-1/2 left-1/2 w-1 h-8 bg-primary rounded-t-full" style={{ ...hoursStyle, transformOrigin: 'bottom' }} />
+        <div className="absolute bottom-1/2 left-1/2 w-1 h-8 bg-primary rounded-t-full origin-bottom" style={hoursStyle} />
         {/* Minute Hand */}
-        <div className="absolute bottom-1/2 left-1/2 w-0.5 h-10 bg-gray-700 rounded-t-full" style={{ ...minutesStyle, transformOrigin: 'bottom' }} />
+        <div className="absolute bottom-1/2 left-1/2 w-0.5 h-10 bg-gray-700 rounded-t-full origin-bottom" style={minutesStyle} />
         {/* Second Hand */}
-        <div className="absolute bottom-1/2 left-1/2 w-px h-10 bg-red-600" style={{ ...secondsStyle, transformOrigin: 'bottom' }} />
+        <div className="absolute bottom-1/2 left-1/2 w-px h-10 bg-red-600 origin-bottom" style={secondsStyle} />
       </div>
     </div>
   );
 };
 
+
 export function TimeTableWidget() {
   const { user } = useAuth();
   const [now, setNow] = useState(new Date());
+  const [visiblePeriod, setVisiblePeriod] = useState<'now' | 'next'>('now');
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
     return () => clearInterval(timer);
+  }, []);
+  
+  useEffect(() => {
+    const periodToggle = setInterval(() => {
+        setVisiblePeriod(prev => prev === 'now' ? 'next' : 'now');
+    }, 3000); // Toggle every 3 seconds
+    return () => clearInterval(periodToggle);
   }, []);
 
   const dayOfWeek = now.toLocaleString('en-US', { weekday: 'short' }) as Day;
@@ -202,8 +211,10 @@ export function TimeTableWidget() {
         <AnalogClock />
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div className="p-4 rounded-lg bg-green-100 dark:bg-green-900/50 border border-green-500/30">
+        <div className="mb-6 h-28 relative">
+          <div className={cn("p-4 rounded-lg border w-full h-full absolute top-0 left-0 transition-opacity duration-500",
+            visiblePeriod === 'now' ? "opacity-100 bg-green-100 dark:bg-green-900/50 border-green-500/30" : "opacity-0"
+          )}>
             <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Book /> Now</h3>
             {currentPeriod ? (
               <>
@@ -214,7 +225,9 @@ export function TimeTableWidget() {
               <p className="text-muted-foreground mt-2">No lecture currently in session.</p>
             )}
           </div>
-          <div className="p-4 rounded-lg bg-blue-100 dark:bg-blue-900/50 border border-blue-500/30">
+          <div className={cn("p-4 rounded-lg border w-full h-full absolute top-0 left-0 transition-opacity duration-500",
+            visiblePeriod === 'next' ? "opacity-100 bg-blue-100 dark:bg-blue-900/50 border-blue-500/30" : "opacity-0"
+          )}>
             <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2"><Forward /> Next</h3>
             {nextPeriod ? (
                <>
