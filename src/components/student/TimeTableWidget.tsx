@@ -249,7 +249,7 @@ export function TimeTableWidget() {
         </div>
 
         <div className="text-center mb-4">
-            <Button onClick={() => setIsExpanded(!isExpanded)} variant="outline" className="bg-white/50 hover:bg-white/80 border-primary/20">
+            <Button onClick={() => setIsExpanded(!isExpanded)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
                 {isExpanded ? 'Hide Timetable' : 'View Timetable'}
                 <ChevronDown className={cn("h-4 w-4 ml-2 transition-transform", isExpanded && "rotate-180")} />
             </Button>
@@ -304,4 +304,3 @@ export function TimeTableWidget() {
     </Card>
   );
 }
-
