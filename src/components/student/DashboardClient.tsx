@@ -401,6 +401,8 @@ export function StudentDashboardClient() {
         <WelcomeMessage />
         <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
         
+        <StudentAttendanceDetails />
+        
         <TimeTableWidget />
         <TodaySpecial />
 
