@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -7,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { School, User, Hash, Phone, ArrowRightCircle } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface StudentIdCardWidgetProps {
   profile: StudentProfile | null;
@@ -47,20 +49,20 @@ export function StudentIdCardWidget({ profile, loading }: StudentIdCardWidgetPro
   const fullName = `${profile?.firstName || ''} ${profile?.lastName || ''}`.trim();
 
   return (
-    <Card className="shadow-2xl rounded-2xl overflow-hidden bg-gradient-to-tr from-background to-muted/30 border-primary/10 transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-1">
+    <Card className="shadow-2xl rounded-2xl overflow-hidden bg-gradient-to-br from-yellow-300 to-orange-400 border-primary/10 transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-1">
         <CardContent className="p-4 flex items-center gap-4 justify-between">
             <div className="flex items-center gap-4">
-                 <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-sm">
+                 <Avatar className="h-16 w-16 border-2 border-primary/20 shadow-sm bg-white">
                     <AvatarImage src={profile?.photoUrl} alt={fullName} />
                     <AvatarFallback className="text-2xl bg-muted">
                         {getInitials(profile?.firstName, profile?.lastName)}
                     </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
-                    <h2 className="text-xl font-bold text-primary">{fullName}</h2>
+                    <h2 className="text-xl font-bold text-blue-800">{fullName}</h2>
                     <div className="flex items-center text-sm space-x-4">
-                        <span className="flex items-center gap-1.5 text-muted-foreground font-medium"><School className="h-4 w-4"/> Grade {profile.grade}-{profile.division}</span>
-                        <span className="flex items-center gap-1.5 text-muted-foreground font-medium"><Hash className="h-4 w-4"/> GR No: {profile.grNumber || 'N/A'}</span>
+                        <span className="flex items-center gap-1.5 text-black font-medium"><School className="h-4 w-4"/> Grade {profile.grade}-{profile.division}</span>
+                        <span className="flex items-center gap-1.5 text-black font-medium"><Hash className="h-4 w-4"/> GR No: {profile.grNumber || 'N/A'}</span>
                     </div>
                 </div>
             </div>
