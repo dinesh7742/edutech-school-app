@@ -223,7 +223,7 @@ export function TimeTableWidget() {
             visiblePeriod === 'now' ? "opacity-100 bg-green-100 dark:bg-green-900/50 border-green-500/30" : "opacity-0"
           )}>
             <RadioTower className="absolute top-2 right-2 text-green-700 dark:text-green-300 opacity-30 h-8 w-8" />
-            <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Book /> Now</h3>
+            <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Book /> In the Hall</h3>
             {currentPeriod ? (
               <>
                 <p className="text-2xl font-bold text-green-900 dark:text-green-100">{currentPeriod.subject}</p>
@@ -237,7 +237,7 @@ export function TimeTableWidget() {
             visiblePeriod === 'next' ? "opacity-100 bg-blue-100 dark:bg-blue-900/50 border-blue-500/30" : "opacity-0"
           )}>
             <SkipForward className="absolute top-2 right-2 text-blue-700 dark:text-blue-300 opacity-30 h-8 w-8" />
-            <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2"><Forward /> Next</h3>
+            <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2"><Forward /> Upcoming Lecture</h3>
             {nextPeriod ? (
                <>
                 <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{nextPeriod.subject}</p>
