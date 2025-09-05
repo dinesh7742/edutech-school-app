@@ -171,7 +171,7 @@ export function WelcomeBoardAttendanceCalendar() {
                 Class Attendance
             </CardTitle>
         </div>
-        <Button variant="outline" className="text-primary" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+        <Button aria-label={isExpanded ? 'Collapse' : 'Expand'}>
             {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
             {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
         </Button>
