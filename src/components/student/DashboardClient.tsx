@@ -451,7 +451,8 @@ export function StudentDashboardClient() {
                           ) : (
                              <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
                           )}
-                          {card.contentData.description && card.id !== 'homework' && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
+                          {card.contentData.description && card.id !== 'homework' && card.id !== 'notices' && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
+                          {card.id === 'notices' && (card.contentData as Notice).content && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{(card.contentData as Notice).content}</p>}
                           {(card.id === "homework") && (
                           <div className="pt-2">
                               {!isLatestHomeworkCompleted ? (
