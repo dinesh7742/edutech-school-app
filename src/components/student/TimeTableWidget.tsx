@@ -249,8 +249,8 @@ export function TimeTableWidget() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300">
+        <div className="overflow-x-auto rounded-md">
+          <table className="w-full border-collapse border border-gray-300 bg-white">
             <thead>
               <tr className="bg-primary/10">
                 <th className="border border-gray-300 p-2 font-semibold text-primary">Period</th>
