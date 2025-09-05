@@ -109,10 +109,12 @@ export function TodaySpecial() {
       </CardHeader>
       <CardContent className="p-6 relative">
         <div className="mb-4 text-center">
-            <h3 className="inline-flex items-center gap-2 rounded-full bg-secondary text-secondary-foreground px-4 py-2 text-lg font-semibold">
-                <Pin className="h-5 w-5"/>
-                Special Event of the Day
-            </h3>
+            <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
+                <h3 className="flex items-center gap-2 text-lg font-semibold text-primary">
+                    <Pin className="h-5 w-5"/>
+                    Special Event of the Day
+                </h3>
+            </div>
         </div>
         {isLoading ? (
           <div className="flex flex-col items-center justify-center min-h-[120px] text-center">

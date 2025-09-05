@@ -162,12 +162,14 @@ export function WelcomeBoardAttendanceCalendar() {
   return (
     <div className="w-full flex flex-col items-center">
       <Card className="w-full max-w-4xl shadow-2xl rounded-2xl bg-card/80 backdrop-blur-sm border-primary/20">
-        <CardHeader>
-          <CardTitle className="text-4xl font-bold text-primary flex items-center gap-3 justify-center">
-              <CalendarDays className="h-10 w-10" />
-              Class Attendance
-          </CardTitle>
-          <CardDescription className="text-center text-lg">
+        <CardHeader className="text-center">
+            <div className="inline-block border-2 border-primary rounded-lg px-4 py-2 mx-auto">
+                <CardTitle className="text-4xl font-bold text-primary flex items-center gap-3 justify-center">
+                    <CalendarDays className="h-10 w-10" />
+                    Class Attendance
+                </CardTitle>
+            </div>
+          <CardDescription className="text-center text-lg pt-2">
               {format(month, "MMMM yyyy")}
           </CardDescription>
         </CardHeader>

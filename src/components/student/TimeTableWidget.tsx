@@ -192,15 +192,14 @@ export function TimeTableWidget() {
   
   if (dayOfWeek === 'Sun') {
       return (
-        <Card className="shadow-2xl rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-card to-muted/20">
-          <CardHeader className="flex flex-row justify-between items-center pb-4 border-b-2 border-primary/10">
-            <div>
-              <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-                <Clock className="h-6 w-6" /> Class Timetable
-              </CardTitle>
-              <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
-            </div>
-          </CardHeader>
+        <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-muted/20">
+            <CardHeader className="flex flex-row items-center justify-between border-b-2 border-primary/10 p-4">
+                <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
+                    <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+                        <Clock className="h-6 w-6" /> Class Timetable
+                    </CardTitle>
+                </div>
+            </CardHeader>
           <CardContent>
              <p className="text-center text-muted-foreground py-10 font-semibold">It's Sunday! Enjoy your day off.</p>
           </CardContent>
@@ -210,12 +209,14 @@ export function TimeTableWidget() {
 
   return (
     <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-muted/20">
-      <CardHeader className="flex flex-row justify-between items-center pb-4 border-b-2 border-primary/10">
-        <div>
-          <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-            <Clock className="h-6 w-6" /> Class Timetable
-          </CardTitle>
-          <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between border-b-2 border-primary/10 p-4">
+        <div className="space-y-1">
+            <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
+                <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+                    <Clock className="h-6 w-6" /> Class Timetable
+                </CardTitle>
+            </div>
+            <CardDescription className="pl-2">Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
         </div>
         <AnalogClock />
       </CardHeader>
