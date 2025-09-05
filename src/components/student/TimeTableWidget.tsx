@@ -3,9 +3,10 @@
 
 import { useState, useEffect, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Clock, Book, Forward, RadioTower, SkipForward } from 'lucide-react';
+import { Clock, Book, Forward, RadioTower, SkipForward, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
+import { Button } from '../ui/button';
 
 const schedule = {
   Mon: [
@@ -117,7 +118,6 @@ const AnalogClock = memo(function AnalogClock() {
 
   return (
     <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
-      {/* Numbers */}
       {Array.from({ length: 12 }, (_, i) => {
         const angle = (i + 1) * 30;
         const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
@@ -137,10 +137,8 @@ const AnalogClock = memo(function AnalogClock() {
         );
       })}
       
-      {/* Center dot */}
       <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
 
-      {/* Hands */}
       <div className="absolute w-full h-full">
         <div className="absolute bottom-1/2 left-1/2 w-1 h-8 bg-primary rounded-t-full origin-bottom" style={hoursStyle} />
       </div>
@@ -158,16 +156,17 @@ export function TimeTableWidget() {
   const { user } = useAuth();
   const [now, setNow] = useState(new Date());
   const [visiblePeriod, setVisiblePeriod] = useState<'now' | 'next'>('now');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute for period change
+    const timer = setInterval(() => setNow(new Date()), 60000); 
     return () => clearInterval(timer);
   }, []);
   
   useEffect(() => {
     const periodToggle = setInterval(() => {
         setVisiblePeriod(prev => prev === 'now' ? 'next' : 'now');
-    }, 3000); // Toggle every 3 seconds
+    }, 3000);
     return () => clearInterval(periodToggle);
   }, []);
 
@@ -187,7 +186,7 @@ export function TimeTableWidget() {
   });
 
   if (user?.grade !== '4' || user?.division !== 'A') {
-    return null; // Only show for Grade 4A
+    return null; 
   }
   
   if (dayOfWeek === 'Sun') {
@@ -249,50 +248,60 @@ export function TimeTableWidget() {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-md">
-          <table className="w-full border-collapse border border-gray-300 bg-white">
-            <thead>
-              <tr className="bg-primary/10">
-                <th className="border border-gray-300 p-2 font-semibold text-primary">Period</th>
-                {days.map(day => (
-                  <th key={day} className={cn("border border-gray-300 p-2 font-semibold text-primary", day === dayOfWeek && 'bg-primary/20')}>{day}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {periods.map(periodNum => (
-                <tr key={periodNum} className="text-center">
-                  <td className="border border-gray-300 p-2 font-medium bg-muted/50">{periodNum}</td>
-                  {days.map(day => {
-                    const periodData = schedule[day]?.find(p => p.period === periodNum);
-                    const isCurrent = day === dayOfWeek && periodData?.period === currentPeriod?.period;
-                    
-                    return (
-                      <td 
-                        key={`${day}-${periodNum}`} 
-                        className={cn(
-                          "border border-gray-300 p-2",
-                          periodData?.subject === 'RECESS' ? 'bg-red-100/50 font-semibold' : 'bg-white',
-                          isCurrent && 'animate-blinking-colors shadow-inner scale-105 z-10 relative'
-                        )}
-                      >
-                        {periodData ? (
-                          <div className="flex flex-col text-xs sm:text-sm">
-                            <span className="font-bold">{periodData.subject}</span>
-                            <span className="text-muted-foreground">{periodData.from}</span>
-                          </div>
-                        ) : (
-                          <span>-</span>
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="text-center mb-4">
+            <Button onClick={() => setIsExpanded(!isExpanded)} variant="outline" className="bg-white/50 hover:bg-white/80 border-primary/20">
+                {isExpanded ? 'Hide Timetable' : 'View Timetable'}
+                <ChevronDown className={cn("h-4 w-4 ml-2 transition-transform", isExpanded && "rotate-180")} />
+            </Button>
+        </div>
+
+        <div className={cn("overflow-hidden transition-[max-height] duration-700 ease-in-out", isExpanded ? "max-h-[1000px]" : "max-h-0")}>
+            <div className="overflow-x-auto rounded-md">
+              <table className="w-full border-collapse border border-gray-300 bg-white">
+                <thead>
+                  <tr className="bg-primary/10">
+                    <th className="border border-gray-300 p-2 font-semibold text-primary">Period</th>
+                    {days.map(day => (
+                      <th key={day} className={cn("border border-gray-300 p-2 font-semibold text-primary", day === dayOfWeek && 'bg-primary/20')}>{day}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {periods.map(periodNum => (
+                    <tr key={periodNum} className="text-center">
+                      <td className="border border-gray-300 p-2 font-medium bg-muted/50">{periodNum}</td>
+                      {days.map(day => {
+                        const periodData = schedule[day]?.find(p => p.period === periodNum);
+                        const isCurrent = day === dayOfWeek && periodData?.period === currentPeriod?.period;
+                        
+                        return (
+                          <td 
+                            key={`${day}-${periodNum}`} 
+                            className={cn(
+                              "border border-gray-300 p-2 bg-white",
+                              periodData?.subject === 'RECESS' && 'bg-red-100/50 font-semibold',
+                              isCurrent && 'animate-blinking-colors shadow-inner scale-105 z-10 relative'
+                            )}
+                          >
+                            {periodData ? (
+                              <div className="flex flex-col text-xs sm:text-sm">
+                                <span className="font-bold">{periodData.subject}</span>
+                                <span className="text-muted-foreground">{periodData.from}</span>
+                              </div>
+                            ) : (
+                              <span>-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
