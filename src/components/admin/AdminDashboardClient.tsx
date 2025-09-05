@@ -256,7 +256,7 @@ export function AdminDashboardClient() {
         </div>
       </div>
 
-      <Card className="overflow-hidden bg-gradient-to-r from-blue-500 to-yellow-400 text-white border border-border">
+      <Card className="overflow-hidden bg-blue-600 text-white border-0">
         <CardContent className="p-6 flex flex-col sm:flex-row justify-between items-center gap-6">
             <div className="space-y-2">
                 <h2 className="text-3xl font-bold">{schoolInfo.name} (Estd: {schoolInfo.estd})</h2>
@@ -349,3 +349,5 @@ export function AdminDashboardClient() {
     </div>
   );
 }
+
+    
