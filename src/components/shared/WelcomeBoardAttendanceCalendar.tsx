@@ -176,7 +176,7 @@ export function WelcomeBoardAttendanceCalendar() {
             {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
         </Button>
       </CardHeader>
-      <CardDescription className="text-center text-lg pt-2 pb-4">
+      <CardDescription className="text-center text-lg pt-2 pb-4 font-bold text-black">
           {format(month, "MMMM yyyy")}
       </CardDescription>
       <div className={cn("overflow-hidden transition-[max-height] duration-700 ease-in-out", isExpanded ? "max-h-[2000px]" : "max-h-0")}>
