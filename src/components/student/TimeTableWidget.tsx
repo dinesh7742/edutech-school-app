@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -102,56 +103,44 @@ const AnalogClock = () => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
-    const timerId = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
+    const timerId = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timerId);
   }, []);
 
-  const secondsStyle = { transform: `rotate(${time.getSeconds() * 6}deg)` };
-  const minutesStyle = { transform: `rotate(${time.getMinutes() * 6 + time.getSeconds() * 0.1}deg)` };
-  const hoursStyle = { transform: `rotate(${time.getHours() * 30 + time.getMinutes() * 0.5}deg)` };
+  const seconds = time.getSeconds();
+  const minutes = time.getMinutes();
+  const hours = time.getHours();
+
+  const secondsStyle = { transform: `rotate(${seconds * 6}deg)` };
+  const minutesStyle = { transform: `rotate(${minutes * 6 + seconds * 0.1}deg)` };
+  const hoursStyle = { transform: `rotate(${hours * 30 + minutes * 0.5}deg)` };
 
   return (
     <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
-      {/* Clock Face */}
-      {Array.from({ length: 12 }, (_, i) => {
-        const angle = (i + 1) * 30;
-        const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
-        const y = 50 - 40 * Math.cos(angle * Math.PI / 180);
-        return (
-          <div
-            key={i}
-            className="absolute text-primary font-bold text-xs"
-            style={{
-              left: `${x}%`,
-              top: `${y}%`,
-              transform: 'translate(-50%, -50%)',
-            }}
-          >
+      {/* Numbers */}
+      {Array.from({ length: 12 }, (_, i) => (
+        <div
+          key={i}
+          className="absolute w-full h-full text-center text-primary font-bold text-xs"
+          style={{ transform: `rotate(${(i + 1) * 30}deg)` }}
+        >
+          <span style={{ display: 'inline-block', transform: `rotate(-${(i + 1) * 30}deg)` }}>
             {i + 1}
-          </div>
-        );
-      })}
-
-      {/* Center dot */}
-      <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10"></div>
+          </span>
+        </div>
+      ))}
       
-      {/* Hands */}
-      <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
-        <div className="w-1 h-1/2 absolute top-0">
-            <div className="bg-primary w-full h-[60%] rounded-full" style={hoursStyle}></div>
-        </div>
-      </div>
-      <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
-        <div className="w-0.5 h-1/2 absolute top-0">
-            <div className="bg-gray-700 w-full h-[80%] rounded-full" style={minutesStyle}></div>
-        </div>
-      </div>
-       <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
-        <div className="w-0.5 h-1/2 absolute top-0">
-            <div className="bg-red-600 w-full h-[90%] rounded-full" style={secondsStyle}></div>
-        </div>
+      {/* Center dot */}
+      <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
+
+      {/* Hands Container */}
+      <div className="absolute top-0 left-0 w-full h-full">
+        {/* Hour Hand */}
+        <div className="absolute bottom-1/2 left-1/2 w-1 h-8 bg-primary rounded-t-full" style={{ ...hoursStyle, transformOrigin: 'bottom' }} />
+        {/* Minute Hand */}
+        <div className="absolute bottom-1/2 left-1/2 w-0.5 h-10 bg-gray-700 rounded-t-full" style={{ ...minutesStyle, transformOrigin: 'bottom' }} />
+        {/* Second Hand */}
+        <div className="absolute bottom-1/2 left-1/2 w-px h-10 bg-red-600" style={{ ...secondsStyle, transformOrigin: 'bottom' }} />
       </div>
     </div>
   );
