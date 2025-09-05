@@ -296,17 +296,17 @@ export function StudentDashboardClient() {
   ];
 
   const quickActionLinks = [
-    { id: "results", title: "Results", link: "/student/results", icon: Award },
-    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
-    { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
-    { id: "attendance", title: "Attendance", link: "/student/attendance", icon: ListChecks },
-    { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
-    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
-    { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact },
-    { id: "profile", title: "My Profile", link: "/student/profile", icon: Users },
-    { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages },
-    { id: "conduct", title: "Parent Notifications", link: "/student/conduct-record", icon: MessageSquareWarning, hasNotification: pendingNotificationCount > 0 },
-    { id: "school", title: "About School", link: "/student/about-school", icon: School },
+    { id: "results", title: "Results", link: "/student/results", icon: Award, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "attendance", title: "Attendance", link: "/student/attendance", icon: ListChecks, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "profile", title: "My Profile", link: "/student/profile", icon: Users, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "chat", title: "Chat", link: "/student/chat", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "conduct", title: "Parent Notifications", link: "/student/conduct-record", icon: MessageSquareWarning, hasNotification: pendingNotificationCount > 0, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "school", title: "About School", link: "/student/about-school", icon: School, className: "bg-blue-600 hover:bg-blue-700" },
   ];
 
   const getHindiMessage = (notification: AppNotification) => {
