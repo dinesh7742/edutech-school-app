@@ -192,7 +192,7 @@ export function TimeTableWidget() {
   
   if (dayOfWeek === 'Sun') {
       return (
-        <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-muted/20">
+        <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-yellow-400 to-orange-500">
             <CardHeader className="flex flex-row items-center justify-between border-b-2 border-primary/10 p-4">
                 <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
                     <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
@@ -208,7 +208,7 @@ export function TimeTableWidget() {
   }
 
   return (
-    <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-muted/20">
+    <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-yellow-400 to-orange-500">
       <CardHeader className="flex flex-row items-center justify-between border-b-2 border-primary/10 p-4">
         <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
