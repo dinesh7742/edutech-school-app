@@ -163,15 +163,15 @@ export function WelcomeBoardAttendanceCalendar() {
   };
 
   return (
-    <Card className="w-full max-w-4xl shadow-2xl rounded-2xl bg-card/80 backdrop-blur-sm border-primary/20">
+    <Card className="w-full max-w-4xl shadow-2xl rounded-2xl border-primary/20 bg-gradient-to-br from-yellow-400 to-orange-500">
       <CardHeader className="text-center cursor-pointer flex-row justify-between items-center" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
-            <CardTitle className="text-4xl font-bold text-primary flex items-center gap-3 justify-center">
+            <CardTitle className="text-2xl font-bold text-primary flex items-center gap-3 justify-center">
                 <CalendarDays className="h-10 w-10" />
                 Class Attendance
             </CardTitle>
         </div>
-        <Button aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+        <Button onClick={() => setIsExpanded(!isExpanded)} className="bg-blue-600 hover:bg-blue-700 text-white">
             {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
             {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
         </Button>
@@ -273,10 +273,10 @@ export function WelcomeBoardAttendanceCalendar() {
 
             {currentMonthHolidays.length > 0 && !isLoading && (
               <div className="mt-6 w-full max-w-4xl border-t pt-6">
-                <CardHeader className="p-0 mb-4">
+                <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
                   <CardTitle className="text-2xl font-bold text-primary text-center">Special Days in {format(month, 'MMMM')}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
+                </div>
+                <CardContent className="p-0 mt-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
                       {currentMonthHolidays.map((holiday) => (
                         <div key={holiday.name + holiday.date.toISOString()} className="flex items-center">
