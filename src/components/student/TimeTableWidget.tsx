@@ -118,17 +118,24 @@ const AnalogClock = () => {
   return (
     <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
       {/* Numbers */}
-      {Array.from({ length: 12 }, (_, i) => (
-        <div
-          key={i}
-          className="absolute w-full h-full text-center text-primary font-bold text-xs flex items-center justify-center"
-          style={{ transform: `rotate(${(i + 1) * 30}deg)` }}
-        >
-          <span style={{ display: 'inline-block', transform: `rotate(-${(i + 1) * 30}deg)` }}>
-            {i + 1}
-          </span>
-        </div>
-      ))}
+      {Array.from({ length: 12 }, (_, i) => {
+          const angle = (i + 1) * 30;
+          const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
+          const y = 50 - 40 * Math.cos(angle * Math.PI / 180);
+          return (
+            <div
+              key={i}
+              className="absolute text-center text-primary font-bold text-xs"
+              style={{
+                top: `${y}%`,
+                left: `${x}%`,
+                transform: 'translate(-50%, -50%)',
+              }}
+            >
+              {i + 1}
+            </div>
+          );
+      })}
       
       {/* Center dot */}
       <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
