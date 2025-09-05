@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/dialog";
 import { StudentIdCardWidget } from "./StudentIdCardWidget";
 import { TimeTableWidget } from "@/components/student/TimeTableWidget";
+import { WelcomeBoardAttendanceCalendar } from "../shared/WelcomeBoardAttendanceCalendar";
 
 interface LatestContent {
   notice: Notice | null;
@@ -401,7 +403,7 @@ export function StudentDashboardClient() {
         <WelcomeMessage />
         <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
         
-        <StudentAttendanceDetails />
+        <WelcomeBoardAttendanceCalendar />
         
         <TimeTableWidget />
         <TodaySpecial />

@@ -1,10 +1,10 @@
 
 "use client";
 
-import { StudentAttendanceCalendar } from "./StudentAttendanceCalendar";
+import { WelcomeBoardAttendanceCalendar } from "../shared/WelcomeBoardAttendanceCalendar";
 
 export function StudentAttendanceDetails() {
   return (
-    <StudentAttendanceCalendar />
+    <WelcomeBoardAttendanceCalendar />
   );
 }
