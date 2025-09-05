@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning, Edit, Megaphone, Link as LinkIcon
+  Loader2, CheckCircle, ArrowRight, FileText, ClipboardList, BookOpen, Video, FileSignature, Users, Contact, Award, ImageIcon, School, MessageSquare, MessageSquareWarning, Edit, Megaphone, Link as LinkIcon, ListChecks
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -31,6 +31,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { StudentIdCardWidget } from "./StudentIdCardWidget";
 import { TimeTableWidget } from "@/components/student/TimeTableWidget";
 
@@ -392,8 +400,36 @@ export function StudentDashboardClient() {
       <div className="space-y-8">
         <WelcomeMessage />
         <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
+
+        <Dialog>
+          <Card className="shadow-lg rounded-2xl overflow-hidden bg-gradient-to-tr from-background to-muted/30 border-primary/10 transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-1">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ListChecks className="h-6 w-6 text-primary" />
+                View Your Attendance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">Click the button to see your monthly attendance summary and full calendar.</p>
+              <DialogTrigger asChild>
+                <Button>
+                  View Attendance Details <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </DialogTrigger>
+            </CardContent>
+          </Card>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Your Attendance</DialogTitle>
+              <DialogDescription>
+                Here is your monthly attendance summary. You can also view the full calendar.
+              </DialogDescription>
+            </DialogHeader>
+            <StudentAttendanceDetails />
+          </DialogContent>
+        </Dialog>
+        
         <TimeTableWidget />
-        <StudentAttendanceDetails />
         <TodaySpecial />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

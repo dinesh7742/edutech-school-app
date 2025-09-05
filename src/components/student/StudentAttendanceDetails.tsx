@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -80,14 +81,14 @@ export function StudentAttendanceDetails() {
   }, [user, currentMonth]);
 
   return (
-    <Card className="shadow-lg rounded-2xl overflow-hidden bg-gradient-to-tr from-background to-muted/30 border-primary/10 transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-1">
-        <CardHeader>
-             <CardTitle className="flex items-center gap-2">
-                <ListChecks className="h-6 w-6 text-primary"/>
-                Attendance Summary - {format(currentMonth, 'MMMM yyyy')}
-            </CardTitle>
-        </CardHeader>
-      <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="shadow-lg rounded-2xl overflow-hidden bg-gradient-to-tr from-background to-muted/30 border-primary/10 w-full">
+      <div className="p-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+              <ListChecks className="h-6 w-6 text-primary"/>
+              Attendance Summary - {format(currentMonth, 'MMMM yyyy')}
+          </CardTitle>
+      </div>
+      <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         {loading ? (
           <div className="flex justify-center items-center w-full h-24">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -130,7 +131,7 @@ export function StudentAttendanceDetails() {
             </div>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
