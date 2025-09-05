@@ -3,7 +3,7 @@
 
 import { useState, useEffect, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Clock, Book, Forward, RadioTower, SkipForward, ChevronDown } from 'lucide-react';
+import { Clock, Book, Forward, RadioTower, SkipForward, ChevronDown, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '../ui/button';
@@ -222,7 +222,7 @@ export function TimeTableWidget() {
             visiblePeriod === 'now' ? "opacity-100 bg-green-100 dark:bg-green-900/50 border-green-500/30" : "opacity-0"
           )}>
             <RadioTower className="absolute top-2 right-2 text-green-700 dark:text-green-300 opacity-30 h-8 w-8" />
-            <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Book /> In the Hall</h3>
+            <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Users /> In the Classroom</h3>
             {currentPeriod ? (
               <>
                 <p className="text-2xl font-bold text-green-900 dark:text-green-100">{currentPeriod.subject}</p>
