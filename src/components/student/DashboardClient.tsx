@@ -403,7 +403,7 @@ export function StudentDashboardClient() {
         <WelcomeMessage />
         <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
         
-        <WelcomeBoardAttendanceCalendar />
+        <StudentAttendanceDetails />
         
         <TimeTableWidget />
         <TodaySpecial />
