@@ -52,6 +52,7 @@ const getDailySpecialFlow = ai.defineFlow(
     name: 'getDailySpecialFlow',
     inputSchema: DailySpecialInputSchema,
     outputSchema: DailySpecialOutputSchema,
+    retries: 3, // Automatically retry up to 3 times on failure
   },
   async (input) => {
     const { output } = await dailySpecialPrompt(input);
