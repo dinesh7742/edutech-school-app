@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Clock, Book, Forward } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -99,7 +99,7 @@ const timeToNumber = (timeStr: string): number => {
   return hours * 100 + minutes;
 };
 
-const AnalogClock = () => {
+const AnalogClock = memo(function AnalogClock() {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -152,7 +152,7 @@ const AnalogClock = () => {
       </div>
     </div>
   );
-};
+});
 
 export function TimeTableWidget() {
   const { user } = useAuth();
@@ -160,7 +160,7 @@ export function TimeTableWidget() {
   const [visiblePeriod, setVisiblePeriod] = useState<'now' | 'next'>('now');
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
+    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute for period change
     return () => clearInterval(timer);
   }, []);
   
