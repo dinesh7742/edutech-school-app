@@ -330,9 +330,9 @@ export function StudentDashboardClient() {
 
   const isRecent = (timestamp: Timestamp | any) => {
     if (!(timestamp instanceof Timestamp)) return false;
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-    return timestamp.toDate() > oneDayAgo;
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2); // Check for the last 48 hours
+    return timestamp.toDate() > twoDaysAgo;
   };
   
   const dismissSpecialAlert = () => {
