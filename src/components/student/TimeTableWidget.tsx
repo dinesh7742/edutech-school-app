@@ -117,36 +117,34 @@ const AnalogClock = () => {
 
   return (
     <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
-      {/* Numbers */}
       {Array.from({ length: 12 }, (_, i) => {
-          const angle = (i + 1) * 30;
-          const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
-          const y = 50 - 40 * Math.cos(angle * Math.PI / 180);
-          return (
-            <div
-              key={i}
-              className="absolute text-center text-primary font-bold text-xs"
-              style={{
-                top: `${y}%`,
-                left: `${x}%`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              {i + 1}
-            </div>
-          );
+        const angle = (i + 1) * 30;
+        const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
+        const y = 50 - 40 * Math.cos(angle * Math.PI / 180);
+        return (
+          <div
+            key={i}
+            className="absolute text-center text-primary font-bold text-xs"
+            style={{
+              top: `${y}%`,
+              left: `${x}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            {i + 1}
+          </div>
+        );
       })}
       
-      {/* Center dot */}
       <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
 
-      {/* Hands Container */}
-      <div className="absolute top-0 left-0 w-full h-full">
-        {/* Hour Hand */}
+      <div className="absolute w-full h-full">
         <div className="absolute bottom-1/2 left-1/2 w-1 h-8 bg-primary rounded-t-full origin-bottom" style={hoursStyle} />
-        {/* Minute Hand */}
+      </div>
+      <div className="absolute w-full h-full">
         <div className="absolute bottom-1/2 left-1/2 w-0.5 h-10 bg-gray-700 rounded-t-full origin-bottom" style={minutesStyle} />
-        {/* Second Hand */}
+      </div>
+       <div className="absolute w-full h-full">
         <div className="absolute bottom-1/2 left-1/2 w-px h-10 bg-red-600 origin-bottom" style={secondsStyle} />
       </div>
     </div>
@@ -192,12 +190,14 @@ export function TimeTableWidget() {
   
   if (dayOfWeek === 'Sun') {
       return (
-        <Card className="shadow-lg rounded-2xl">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-              <Clock className="h-6 w-6" /> Class Timetable
-            </CardTitle>
-            <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+        <Card className="shadow-2xl rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-card to-muted/20">
+          <CardHeader className="flex flex-row justify-between items-center pb-4 border-b-2 border-primary/10">
+            <div>
+              <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+                <Clock className="h-6 w-6" /> Class Timetable
+              </CardTitle>
+              <CardDescription>Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
              <p className="text-center text-muted-foreground py-10 font-semibold">It's Sunday! Enjoy your day off.</p>
@@ -207,8 +207,8 @@ export function TimeTableWidget() {
   }
 
   return (
-    <Card className="shadow-lg rounded-2xl">
-      <CardHeader className="flex flex-row justify-between items-center">
+    <Card className="shadow-2xl rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-card to-muted/20">
+      <CardHeader className="flex flex-row justify-between items-center pb-4 border-b-2 border-primary/10">
         <div>
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <Clock className="h-6 w-6" /> Class Timetable
@@ -217,7 +217,7 @@ export function TimeTableWidget() {
         </div>
         <AnalogClock />
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="mb-6 h-28 relative">
           <div className={cn("p-4 rounded-lg border w-full h-full absolute top-0 left-0 transition-opacity duration-500",
             visiblePeriod === 'now' ? "opacity-100 bg-green-100 dark:bg-green-900/50 border-green-500/30" : "opacity-0"
