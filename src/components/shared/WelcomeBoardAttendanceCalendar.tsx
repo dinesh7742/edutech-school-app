@@ -163,138 +163,134 @@ export function WelcomeBoardAttendanceCalendar() {
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <Card className="w-full max-w-4xl shadow-2xl rounded-2xl bg-card/80 backdrop-blur-sm border-primary/20">
-        <CardHeader className="text-center cursor-pointer flex-row justify-between items-center" onClick={() => setIsExpanded(!isExpanded)}>
-            <div>
-                <div className="inline-block border-2 border-primary rounded-lg px-4 py-2 mx-auto">
-                    <CardTitle className="text-4xl font-bold text-primary flex items-center gap-3 justify-center">
-                        <CalendarDays className="h-10 w-10" />
-                        Class Attendance
-                    </CardTitle>
-                </div>
-              <CardDescription className="text-center text-lg pt-2">
-                  {format(month, "MMMM yyyy")}
-              </CardDescription>
-            </div>
-             <Button variant="outline" className="text-primary" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
-                {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
-                {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
-             </Button>
-        </CardHeader>
-        <div className={cn("overflow-hidden transition-[max-height] duration-500 ease-in-out", isExpanded ? "max-h-[1000px]" : "max-h-0")}>
-            <CardContent className="flex flex-col items-center p-2 sm:p-4 md:p-6">
-              {isLoading ? (
-                <div className="flex justify-center items-center h-[50vh]">
-                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                </div>
-              ) : error ? (
-                <p className="text-center text-destructive py-10">{error}</p>
-              ) : (
-                <Calendar
-                  mode="single"
-                  month={month}
-                  onMonthChange={setMonth}
-                  modifiers={modifiers}
-                  modifiersStyles={modifierStyles}
-                  className="p-0 w-full"
-                  components={{ DayContent }}
-                  styles={{
-                      root: { width: '100%' },
-                      months: { width: '100%' },
-                      month: { width: '100%', spaceY: '1rem' },
-                      table: { width: '100%', maxWidth: '100%', borderCollapse: 'collapse'},
-                      head_row: {
-                          display: 'flex',
-                          width: '100%',
-                      },
-                      head_cell: { 
-                          flex: 1,
-                          textAlign: 'center',
-                          fontSize: '1rem',
-                          fontWeight: 'bold',
-                          textTransform: 'uppercase',
-                          color: 'hsl(var(--muted-foreground))'
-                      },
-                      row: {
-                          display: 'flex',
-                          width: '100%',
-                      },
-                      cell: {
-                          flex: 1,
-                          position: 'relative',
-                          height: 'auto',
-                          paddingBottom: 'calc(100% / 7 - 1rem)',
-                          overflow: 'hidden',
-                          border: '1px solid hsl(var(--border))'
-                      },
-                      day: {
-                          position: 'absolute',
-                          top: '0',
-                          left: '0',
-                          right: '0',
-                          bottom: '0',
-                          height: 'auto',
-                          width: 'auto',
-                          borderRadius: '0', // No radius for the day itself
-                          fontSize: '1.5rem',
-                          fontWeight: '500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                      },
-                      day_selected: {
-                        backgroundColor: 'hsl(var(--primary))',
-                        color: 'hsl(var(--primary-foreground))',
-                      },
-                      day_today: {
-                        fontWeight: 'bold',
-                        color: 'hsl(var(--primary))',
-                        border: '2px solid hsl(var(--primary))'
-                      },
-                      day_outside: {
-                        color: "hsl(var(--muted-foreground))",
-                        opacity: 0.5,
-                      }
-                  }}
-                />
-              )}
-              <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-md w-full border-t pt-4">
-                  <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-present-bg))]" />
-                      <span>Present</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-sunday-bg))]" />
-                      <span>Sunday</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-holiday-bg))]" />
-                      <span>Holiday</span>
-                  </div>
-              </div>
-            </CardContent>
+    <Card className="w-full max-w-4xl shadow-2xl rounded-2xl bg-card/80 backdrop-blur-sm border-primary/20">
+      <CardHeader className="text-center cursor-pointer flex-row justify-between items-center" onClick={() => setIsExpanded(!isExpanded)}>
+        <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
+            <CardTitle className="text-4xl font-bold text-primary flex items-center gap-3 justify-center">
+                <CalendarDays className="h-10 w-10" />
+                Class Attendance
+            </CardTitle>
         </div>
-      </Card>
-      
-      {currentMonthHolidays.length > 0 && !isLoading && (
-        <Card className="mt-6 w-full max-w-4xl shadow-xl rounded-2xl bg-card/80 backdrop-blur-sm border-primary/20">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-primary text-center">Special Days in {format(month, 'MMMM')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
-                {currentMonthHolidays.map((holiday) => (
-                  <div key={holiday.name + holiday.date.toISOString()} className="flex items-center">
-                    <Dot className="h-5 w-5 text-muted-foreground mr-1 flex-shrink-0" />
-                    <span className="font-medium">{format(holiday.date, 'do:')}</span>
-                    <span className="text-muted-foreground ml-2 truncate">{holiday.name}</span>
-                  </div>
-                ))}
+        <Button variant="outline" className="text-primary" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+            {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+            {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
+        </Button>
+      </CardHeader>
+      <CardDescription className="text-center text-lg pt-2 pb-4">
+          {format(month, "MMMM yyyy")}
+      </CardDescription>
+      <div className={cn("overflow-hidden transition-[max-height] duration-700 ease-in-out", isExpanded ? "max-h-[2000px]" : "max-h-0")}>
+          <CardContent className="flex flex-col items-center p-2 sm:p-4 md:p-6">
+            {isLoading ? (
+              <div className="flex justify-center items-center h-[50vh]">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+              </div>
+            ) : error ? (
+              <p className="text-center text-destructive py-10">{error}</p>
+            ) : (
+              <Calendar
+                mode="single"
+                month={month}
+                onMonthChange={setMonth}
+                modifiers={modifiers}
+                modifiersStyles={modifierStyles}
+                className="p-0 w-full"
+                components={{ DayContent }}
+                styles={{
+                    root: { width: '100%' },
+                    months: { width: '100%' },
+                    month: { width: '100%', spaceY: '1rem' },
+                    table: { width: '100%', maxWidth: '100%', borderCollapse: 'collapse'},
+                    head_row: {
+                        display: 'flex',
+                        width: '100%',
+                    },
+                    head_cell: { 
+                        flex: 1,
+                        textAlign: 'center',
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                        textTransform: 'uppercase',
+                        color: 'hsl(var(--muted-foreground))'
+                    },
+                    row: {
+                        display: 'flex',
+                        width: '100%',
+                    },
+                    cell: {
+                        flex: 1,
+                        position: 'relative',
+                        height: 'auto',
+                        paddingBottom: 'calc(100% / 7 - 1rem)',
+                        overflow: 'hidden',
+                        border: '1px solid hsl(var(--border))'
+                    },
+                    day: {
+                        position: 'absolute',
+                        top: '0',
+                        left: '0',
+                        right: '0',
+                        bottom: '0',
+                        height: 'auto',
+                        width: 'auto',
+                        borderRadius: '0', // No radius for the day itself
+                        fontSize: '1.5rem',
+                        fontWeight: '500',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    },
+                    day_selected: {
+                      backgroundColor: 'hsl(var(--primary))',
+                      color: 'hsl(var(--primary-foreground))',
+                    },
+                    day_today: {
+                      fontWeight: 'bold',
+                      color: 'hsl(var(--primary))',
+                      border: '2px solid hsl(var(--primary))'
+                    },
+                    day_outside: {
+                      color: "hsl(var(--muted-foreground))",
+                      opacity: 0.5,
+                    }
+                }}
+              />
+            )}
+            <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-md w-full border-t pt-4">
+                <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-present-bg))]" />
+                    <span>Present</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-sunday-bg))]" />
+                    <span>Sunday</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-holiday-bg))]" />
+                    <span>Holiday</span>
+                </div>
             </div>
+
+            {currentMonthHolidays.length > 0 && !isLoading && (
+              <div className="mt-6 w-full max-w-4xl border-t pt-6">
+                <CardHeader className="p-0 mb-4">
+                  <CardTitle className="text-2xl font-bold text-primary text-center">Special Days in {format(month, 'MMMM')}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm">
+                      {currentMonthHolidays.map((holiday) => (
+                        <div key={holiday.name + holiday.date.toISOString()} className="flex items-center">
+                          <Dot className="h-5 w-5 text-muted-foreground mr-1 flex-shrink-0" />
+                          <span className="font-medium">{format(holiday.date, 'do:')}</span>
+                          <span className="text-muted-foreground ml-2 truncate">{holiday.name}</span>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </div>
+            )}
           </CardContent>
-        </Card>
-      )}
-    </div>
+      </div>
+    </Card>
   );
 }
