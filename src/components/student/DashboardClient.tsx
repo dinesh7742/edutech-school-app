@@ -410,33 +410,50 @@ export function StudentDashboardClient() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {dashboardCards.map(card => (
-            <Card key={card.id} className="shadow-lg rounded-2xl overflow-hidden group bg-gradient-to-br from-yellow-400 to-orange-500">
+            <Card 
+              key={card.id} 
+              className={cn(
+                "shadow-lg rounded-2xl overflow-hidden group", 
+                card.id === 'notices' 
+                  ? "bg-white" 
+                  : "bg-gradient-to-br from-yellow-400 to-orange-500"
+              )}
+            >
               <CardHeader className="p-4">
                 <CardTitle className="flex justify-between items-center text-xl">
                   <div className={cn(
-                      "flex items-center gap-2 font-bold text-black",
-                      "border-2 border-black rounded-md px-3 py-1 bg-white/20"
+                      "flex items-center gap-2 font-bold",
+                      card.id === 'notices'
+                        ? "text-blue-800 border-2 border-blue-800 rounded-md px-3 py-1 bg-blue-100/20"
+                        : "text-black border-2 border-black rounded-md px-3 py-1 bg-white/20"
                   )}>
                      <span>{card.title}</span>
                      {card.contentData && isRecent(card.contentData.timestamp) && (
                        <Image src="https://i.postimg.cc/L8yC5XJ8/new-blinking-gif.gif" alt="New" width={40} height={20} unoptimized />
                      )}
                   </div>
-                  <Button asChild variant="outline" size="sm" className="border-black text-black bg-white/30 hover:bg-white/50">
+                  <Button asChild variant="outline" size="sm" className={cn(
+                    card.id === 'notices' 
+                      ? "border-blue-800 text-blue-800 bg-blue-100/30 hover:bg-blue-100/50" 
+                      : "border-black text-black bg-white/30 hover:bg-white/50"
+                  )}>
                     <Link href={card.link}>{card.buttonText} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4">
                 <Link href={card.link} className="w-full h-full flex flex-col sm:flex-row items-center gap-4 min-h-[150px]">
-                  <div className="flex-shrink-0 w-24 h-24 flex items-center justify-center bg-white/20 rounded-full p-2 group-hover:scale-105 transition-transform duration-300">
-                      <card.icon className="h-12 w-12 text-blue-800" />
+                  <div className={cn(
+                    "flex-shrink-0 w-24 h-24 flex items-center justify-center rounded-full p-2 group-hover:scale-105 transition-transform duration-300",
+                    card.id === 'notices' ? "bg-blue-100/20" : "bg-white/20"
+                  )}>
+                      <card.icon className={cn("h-12 w-12", card.id === 'notices' ? "text-blue-800" : "text-blue-800")} />
                   </div>
                   <div className="flex-grow text-center sm:text-left w-full">
-                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className="opacity-80 text-center font-semibold text-black">No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
+                      {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className={cn("opacity-80 text-center font-semibold", card.id === 'notices' ? "text-blue-900" : "text-black")}>No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
                       <div className="space-y-1">
                           {card.id === 'homework' ? (
-                              <div className="border-2 border-black rounded-md p-3 bg-white/20 text-black">
+                              <div className={cn("border-2 rounded-md p-3", card.id === 'notices' ? "border-blue-800 bg-blue-100/20 text-blue-900" : "border-black bg-white/20 text-black")}>
                                 <div className="flex items-center gap-2 mb-1">
                                   <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
                                    {(card.contentData as Homework).documentLink && (
@@ -449,10 +466,21 @@ export function StudentDashboardClient() {
                                 <p className="text-sm opacity-90 font-semibold">Subject: {card.contentData.subject}</p>
                               </div>
                           ) : (
-                             <h3 className="font-bold text-lg line-clamp-2 text-black">{card.contentData.title || card.contentData.subject}</h3>
+                             <h3 className={cn("font-bold text-lg line-clamp-2", card.id === 'notices' ? 'text-blue-900' : 'text-black')}>{card.contentData.title || card.contentData.subject}</h3>
                           )}
-                          {card.contentData.description && card.id !== 'homework' && card.id !== 'notices' && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{card.contentData.description}</p>}
-                          {card.id === 'notices' && (card.contentData as Notice).content && <p className="text-sm opacity-90 line-clamp-2 font-semibold text-black">{(card.contentData as Notice).content}</p>}
+                          
+                          {(card.id === 'notices' && (card.contentData as Notice).content) && (
+                            <p className={cn("text-sm opacity-90 line-clamp-2 font-semibold", card.id === 'notices' ? 'text-blue-800' : 'text-black')}>
+                              {(card.contentData as Notice).content}
+                            </p>
+                          )}
+                          
+                          {card.id !== 'homework' && card.id !== 'notices' && card.contentData.description && (
+                            <p className={cn("text-sm opacity-90 line-clamp-2 font-semibold", card.id === 'notices' ? 'text-blue-800' : 'text-black')}>
+                                {card.contentData.description}
+                            </p>
+                          )}
+
                           {(card.id === "homework") && (
                           <div className="pt-2">
                               {!isLatestHomeworkCompleted ? (
