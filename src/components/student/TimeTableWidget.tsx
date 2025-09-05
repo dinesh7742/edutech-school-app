@@ -108,32 +108,54 @@ const AnalogClock = () => {
     return () => clearInterval(timerId);
   }, []);
 
-  const secondsStyle = {
-    transform: `rotate(${time.getSeconds() * 6}deg)`
-  };
-  const minutesStyle = {
-    transform: `rotate(${time.getMinutes() * 6 + time.getSeconds() * 0.1}deg)`
-  };
-  const hoursStyle = {
-    transform: `rotate(${time.getHours() * 30 + time.getMinutes() * 0.5}deg)`
-  };
+  const secondsStyle = { transform: `rotate(${time.getSeconds() * 6}deg)` };
+  const minutesStyle = { transform: `rotate(${time.getMinutes() * 6 + time.getSeconds() * 0.1}deg)` };
+  const hoursStyle = { transform: `rotate(${time.getHours() * 30 + time.getMinutes() * 0.5}deg)` };
 
   return (
     <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
+      {/* Clock Face */}
+      {Array.from({ length: 12 }, (_, i) => {
+        const angle = (i + 1) * 30;
+        const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
+        const y = 50 - 40 * Math.cos(angle * Math.PI / 180);
+        return (
+          <div
+            key={i}
+            className="absolute text-primary font-bold text-xs"
+            style={{
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            {i + 1}
+          </div>
+        );
+      })}
+
+      {/* Center dot */}
       <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10"></div>
-      <div className="absolute top-1/2 left-1/2 w-full h-full">
-        <div className="absolute left-1/2 bottom-1/2 w-1 h-1/2 bg-primary origin-bottom" style={hoursStyle}></div>
+      
+      {/* Hands */}
+      <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
+        <div className="w-1 h-1/2 absolute top-0">
+            <div className="bg-primary w-full h-[60%] rounded-full" style={hoursStyle}></div>
+        </div>
       </div>
-      <div className="absolute top-1/2 left-1/2 w-full h-full">
-        <div className="absolute left-1/2 bottom-1/2 w-0.5 h-1/2 bg-gray-700 origin-bottom" style={minutesStyle}></div>
+      <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
+        <div className="w-0.5 h-1/2 absolute top-0">
+            <div className="bg-gray-700 w-full h-[80%] rounded-full" style={minutesStyle}></div>
+        </div>
       </div>
-      <div className="absolute top-1/2 left-1/2 w-full h-full">
-        <div className="absolute left-1/2 bottom-1/2 w-0.5 h-1/2 bg-red-600 origin-bottom" style={secondsStyle}></div>
+       <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center">
+        <div className="w-0.5 h-1/2 absolute top-0">
+            <div className="bg-red-600 w-full h-[90%] rounded-full" style={secondsStyle}></div>
+        </div>
       </div>
     </div>
   );
 };
-
 
 export function TimeTableWidget() {
   const { user } = useAuth();
