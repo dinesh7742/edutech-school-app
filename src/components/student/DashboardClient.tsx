@@ -15,7 +15,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile, SpecialAlert, NotificationMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
-import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
+import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
@@ -410,22 +410,22 @@ export function StudentDashboardClient() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">Click the button to see your monthly attendance summary and full calendar.</p>
+              <p className="text-sm text-muted-foreground mb-4">Click the button to see your detailed attendance calendar for any month.</p>
               <DialogTrigger asChild>
                 <Button>
-                  View Attendance Details <ArrowRight className="ml-2 h-4 w-4" />
+                  View Full Calendar <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </DialogTrigger>
             </CardContent>
           </Card>
-          <DialogContent className="sm:max-w-2xl">
+          <DialogContent className="sm:max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Your Attendance</DialogTitle>
+              <DialogTitle>Your Attendance Calendar</DialogTitle>
               <DialogDescription>
-                Here is your monthly attendance summary. You can also view the full calendar.
+                View your complete attendance record. Select a month and year to view.
               </DialogDescription>
             </DialogHeader>
-            <StudentAttendanceDetails />
+            <StudentAttendanceCalendar />
           </DialogContent>
         </Dialog>
         
