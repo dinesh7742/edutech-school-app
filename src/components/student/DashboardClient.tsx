@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -15,7 +14,7 @@ import { db } from "@/lib/firebase";
 import { collection, query, where, getDocs, Timestamp, doc, getDoc, setDoc, serverTimestamp, getCountFromServer, onSnapshot, writeBatch } from "firebase/firestore";
 import type { Notice, Homework, Circular, LiveClass, HomeworkSubmission, ChatMessage, AppNotification, StudentProfile, SpecialAlert, NotificationMessage } from "@/types";
 import { TodaySpecial } from "@/components/shared/TodaySpecial";
-import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
+import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
 import { useToast } from "@/hooks/use-toast";
 import { FileViewer, type FileInfo } from "@/components/shared/FileViewer";
 import { BirthdayPopup } from "@/components/shared/BirthdayPopup";
@@ -298,6 +297,7 @@ export function StudentDashboardClient() {
     { id: "results", title: "Results", link: "/student/results", icon: Award },
     { id: "exams", title: "Online Exams", link: "/student/exams", icon: Edit },
     { id: "applications", title: "Applications", link: "/student/my-applications", icon: FileSignature },
+    { id: "attendance", title: "Attendance", link: "/student/attendance", icon: ListChecks },
     { id: "textbooks", title: "Textbooks", link: "/student/textbooks", icon: BookOpen },
     { id: "gallery", title: "Gallery", link: "/student/gallery", icon: ImageIcon },
     { id: "icard", title: "I-Card", link: "/student/icard", icon: Contact },
@@ -400,34 +400,6 @@ export function StudentDashboardClient() {
       <div className="space-y-8">
         <WelcomeMessage />
         <StudentIdCardWidget profile={studentProfile} loading={loadingProfile} />
-
-        <Dialog>
-          <Card className="shadow-lg rounded-2xl overflow-hidden bg-gradient-to-tr from-background to-muted/30 border-primary/10 transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-1">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ListChecks className="h-6 w-6 text-primary" />
-                View Your Attendance
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">Click the button to see your detailed attendance calendar for any month.</p>
-              <DialogTrigger asChild>
-                <Button>
-                  View Full Calendar <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-            </CardContent>
-          </Card>
-          <DialogContent className="sm:max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Your Attendance Calendar</DialogTitle>
-              <DialogDescription>
-                View your complete attendance record. Select a month and year to view.
-              </DialogDescription>
-            </DialogHeader>
-            <StudentAttendanceCalendar />
-          </DialogContent>
-        </Dialog>
         
         <TimeTableWidget />
         <TodaySpecial />
