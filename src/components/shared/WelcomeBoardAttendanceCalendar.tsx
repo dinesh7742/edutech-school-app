@@ -29,7 +29,7 @@ const DayContent = memo(({ date }: { date: Date }) => {
         <div className="relative flex flex-col items-center justify-center h-full w-full">
             {isSunday && !holiday && (
                  <svg
-                    className="absolute top-0 right-0 w-full h-full text-destructive/30"
+                    className="absolute top-0 right-0 w-full h-full text-[hsl(var(--wb-sunday-bg))]"
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                   >
@@ -52,7 +52,7 @@ const DayContent = memo(({ date }: { date: Date }) => {
                 </span>
             )}
              {isSunday && !holiday && (
-                <span className="absolute bottom-1 z-10 text-[8px] font-bold text-destructive-foreground leading-none truncate px-1">
+                <span className="absolute bottom-1 z-10 text-[8px] font-bold text-wb-sunday-text leading-none truncate px-1">
                     Sunday
                 </span>
             )}
@@ -253,7 +253,7 @@ export function WelcomeBoardAttendanceCalendar() {
                   <span>Present</span>
               </div>
               <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 rounded-full bg-destructive/30" />
+                  <div className="h-4 w-4 rounded-full bg-[hsl(var(--wb-sunday-bg))]" />
                   <span>Sunday</span>
               </div>
               <div className="flex items-center gap-2">

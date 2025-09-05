@@ -49,10 +49,12 @@ body {
     --chart-5: 262 84% 59%;
     
     /* Custom colors for Welcome Board Calendar */
-    --wb-present-bg: 144 60% 90%; /* Soft Mint Green */
-    --wb-present-text: 144 80% 15%;
-    --wb-holiday-bg: 200 100% 90%; /* Soft Sky Blue */
-    --wb-holiday-text: 200 80% 20%;
+    --wb-present-bg: 120 70% 35%; /* Dark Green */
+    --wb-present-text: 120 80% 95%;
+    --wb-holiday-bg: 0 70% 45%;   /* Dark Red */
+    --wb-holiday-text: 0 80% 95%;
+    --wb-sunday-bg: 30 80% 50%; /* Dark Orange */
+    --wb-sunday-text: 30 80% 95%;
   }
 
   .dark {
@@ -92,10 +94,12 @@ body {
     --chart-5: 262 84% 69%;
     
     /* Custom colors for Welcome Board Calendar */
-    --wb-present-bg: 144 40% 20%; /* Dark Mint Green */
-    --wb-present-text: 144 80% 90%;
-    --wb-holiday-bg: 200 40% 25%; /* Dark Sky Blue */
-    --wb-holiday-text: 200 80% 90%;
+    --wb-present-bg: 120 70% 30%; /* Darker Green */
+    --wb-present-text: 120 80% 90%;
+    --wb-holiday-bg: 0 70% 40%; /* Darker Red */
+    --wb-holiday-text: 0 80% 90%;
+    --wb-sunday-bg: 30 80% 45%; /* Darker Orange */
+    --wb-sunday-text: 30 80% 90%;
   }
 }
 
