@@ -69,7 +69,7 @@ export function WelcomeBoardAttendanceCalendar() {
   const [error, setError] = useState<string | null>(null);
   const [month, setMonth] = useState(new Date());
   const [holidayNotes, setHolidayNotes] = useState<{ date: Date; note: string }[]>([]);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const currentMonthHolidays = useMemo(() => {
     const dynamicHolidays = holidayNotes.map(hn => ({
