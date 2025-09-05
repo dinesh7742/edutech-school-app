@@ -111,12 +111,13 @@ const AnalogClock = () => {
   const minutes = time.getMinutes();
   const hours = time.getHours();
 
-  const secondsStyle = { transform: `rotate(${seconds * 6}deg)` };
-  const minutesStyle = { transform: `rotate(${minutes * 6 + seconds * 0.1}deg)` };
-  const hoursStyle = { transform: `rotate(${hours * 30 + minutes * 0.5}deg)` };
+  const secondsStyle = { transform: `translateX(-50%) rotate(${seconds * 6}deg)` };
+  const minutesStyle = { transform: `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)` };
+  const hoursStyle = { transform: `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)` };
 
   return (
     <div className="relative w-24 h-24 rounded-full border-4 border-primary bg-white shadow-lg flex-shrink-0">
+      {/* Numbers */}
       {Array.from({ length: 12 }, (_, i) => {
         const angle = (i + 1) * 30;
         const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
@@ -136,8 +137,10 @@ const AnalogClock = () => {
         );
       })}
       
+      {/* Center dot */}
       <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
 
+      {/* Hands */}
       <div className="absolute w-full h-full">
         <div className="absolute bottom-1/2 left-1/2 w-1 h-8 bg-primary rounded-t-full origin-bottom" style={hoursStyle} />
       </div>
@@ -150,7 +153,6 @@ const AnalogClock = () => {
     </div>
   );
 };
-
 
 export function TimeTableWidget() {
   const { user } = useAuth();
@@ -207,7 +209,7 @@ export function TimeTableWidget() {
   }
 
   return (
-    <Card className="shadow-2xl rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-card to-muted/20">
+    <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-muted/20">
       <CardHeader className="flex flex-row justify-between items-center pb-4 border-b-2 border-primary/10">
         <div>
           <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
