@@ -3,7 +3,7 @@
 
 import { useState, useEffect, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Clock, Book, Forward } from 'lucide-react';
+import { Clock, Book, Forward, RadioTower, SkipForward } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 
@@ -210,13 +210,10 @@ export function TimeTableWidget() {
   return (
     <Card className="shadow-2xl rounded-2xl border-4 border-primary/20 bg-gradient-to-br from-card to-muted/20">
       <CardHeader className="flex flex-row items-center justify-between border-b-2 border-primary/10 p-4">
-        <div className="space-y-1">
-            <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
-                <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
-                    <Clock className="h-6 w-6" /> Class Timetable
-                </CardTitle>
-            </div>
-            <CardDescription className="pl-2">Weekly schedule for Grade {user.grade}-{user.division}</CardDescription>
+        <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
+          <CardTitle className="text-2xl font-bold text-primary flex items-center gap-2">
+              <Clock className="h-6 w-6" /> Class Timetable
+          </CardTitle>
         </div>
         <AnalogClock />
       </CardHeader>
@@ -225,6 +222,7 @@ export function TimeTableWidget() {
           <div className={cn("p-4 rounded-lg border w-full h-full absolute top-0 left-0 transition-opacity duration-500",
             visiblePeriod === 'now' ? "opacity-100 bg-green-100 dark:bg-green-900/50 border-green-500/30" : "opacity-0"
           )}>
+            <RadioTower className="absolute top-2 right-2 text-green-700 dark:text-green-300 opacity-30 h-8 w-8" />
             <h3 className="font-bold text-lg text-green-800 dark:text-green-200 flex items-center gap-2"><Book /> Now</h3>
             {currentPeriod ? (
               <>
@@ -238,6 +236,7 @@ export function TimeTableWidget() {
           <div className={cn("p-4 rounded-lg border w-full h-full absolute top-0 left-0 transition-opacity duration-500",
             visiblePeriod === 'next' ? "opacity-100 bg-blue-100 dark:bg-blue-900/50 border-blue-500/30" : "opacity-0"
           )}>
+            <SkipForward className="absolute top-2 right-2 text-blue-700 dark:text-blue-300 opacity-30 h-8 w-8" />
             <h3 className="font-bold text-lg text-blue-800 dark:text-blue-200 flex items-center gap-2"><Forward /> Next</h3>
             {nextPeriod ? (
                <>
