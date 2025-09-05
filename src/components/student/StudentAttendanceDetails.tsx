@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,50 +5,29 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import type { DailyAttendanceLog, AttendanceStatus } from "@/types";
-import { format, startOfMonth, endOfMonth, getDaysInMonth, getDay, addMonths, subMonths, parseISO, isWithinInterval, isAfter } from "date-fns";
-import { Card } from "@/components/ui/card";
+import { format, startOfMonth, endOfMonth, parseISO, isWithinInterval } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowRight, ListChecks, CheckCircle, XCircle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-interface AttendanceRecord {
-  date: Date;
-  status: AttendanceStatus;
-  note?: string;
+const MINIMUM_ATTENDANCE_THRESHOLD = 75;
+
+interface AttendanceStats {
+  present: number;
+  absent: number;
+  totalMarked: number;
+  percentage: number | null;
 }
-
-const DayOfWeek = ({ day }: { day: string }) => (
-  <div className="text-center font-medium text-muted-foreground">{day}</div>
-);
-
-const DayCell = ({ day, status }: { day: number; status: 'Present' | 'Absent' | 'holiday' | 'future' | 'empty' }) => {
-  const baseClasses = "flex items-center justify-center h-10 w-10 rounded-full text-sm";
-  const statusClasses = {
-    'Present': 'bg-green-500 text-white',
-    'Absent': 'bg-red-500 text-white',
-    'holiday': 'bg-red-500 text-white',
-    'future': 'text-foreground',
-    'empty': '',
-  };
-  return (
-    <div className={cn(baseClasses, statusClasses[status])}>
-      {day > 0 && day}
-    </div>
-  );
-};
-
-const StatCard = ({ label, value, colorClass }: { label: string; value: number | string; colorClass: string }) => (
-  <div className="flex-1 text-center">
-    <p className={cn("text-sm font-semibold", colorClass)}>{label}</p>
-    <p className="text-2xl font-bold">{value}</p>
-  </div>
-);
 
 export function StudentAttendanceDetails() {
   const { user } = useAuth();
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [records, setRecords] = useState<Map<string, AttendanceRecord>>(new Map());
+  const [stats, setStats] = useState<AttendanceStats>({ present: 0, absent: 0, totalMarked: 0, percentage: null });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const currentMonth = new Date();
 
   useEffect(() => {
     if (!user || !user.grade || !user.division) {
@@ -57,12 +35,11 @@ export function StudentAttendanceDetails() {
       return;
     }
     setLoading(true);
+    setError(null);
 
-    const firstDay = startOfMonth(currentDate);
-    const lastDay = endOfMonth(currentDate);
+    const firstDay = startOfMonth(currentMonth);
+    const lastDay = endOfMonth(currentMonth);
     
-    // Modified query to prevent missing index error.
-    // We fetch all records for the class and then filter by date on the client.
     const attendanceQuery = query(
       collection(db, "dailyAttendance"),
       where("grade", "==", user.grade),
@@ -70,124 +47,90 @@ export function StudentAttendanceDetails() {
     );
     
     const unsubscribe = onSnapshot(attendanceQuery, (snapshot) => {
-      const newRecords = new Map<string, AttendanceRecord>();
+      let presentDays = 0;
+      let totalMarkedDays = 0;
+
       snapshot.forEach(doc => {
         const data = doc.data() as DailyAttendanceLog;
         const logDate = parseISO(data.date);
 
-        // Client-side date filtering
         if (isWithinInterval(logDate, { start: firstDay, end: lastDay })) {
             const studentStatus = data.studentRecords[user.uid!];
             if (studentStatus) {
-                newRecords.set(data.date, {
-                    date: logDate,
-                    status: studentStatus,
-                    note: data.note
-                });
-            } else if (data.note && (data.note.toLowerCase().includes('holiday') || data.note.toLowerCase().includes('sunday'))) {
-                newRecords.set(data.date, {
-                    date: logDate,
-                    status: 'Absent', // Treat as absent for coloring
-                    note: data.note
-                });
+                totalMarkedDays++;
+                if (studentStatus === 'Present') {
+                    presentDays++;
+                }
             }
         }
       });
-      setRecords(newRecords);
+      
+      const absentDays = totalMarkedDays - presentDays;
+      const percentage = totalMarkedDays > 0 ? Math.round((presentDays / totalMarkedDays) * 100) : null;
+      
+      setStats({ present: presentDays, absent: absentDays, totalMarked: totalMarkedDays, percentage });
       setLoading(false);
-    }, (error) => {
-      console.error("Error fetching attendance: ", error);
+    }, (err) => {
+      console.error("Error fetching attendance: ", err);
+      setError("Could not load attendance summary.");
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, currentDate]);
+  }, [user, currentMonth]);
 
-  const daysInMonth = getDaysInMonth(currentDate);
-  const startDayOfWeek = getDay(startOfMonth(currentDate)); // Sunday is 0, Monday is 1
-  const firstDayIndex = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // Adjust to have Monday as the first day (index 0)
-
-  const presentDays = Array.from(records.values()).filter(r => r.status === 'Present').length;
-  const holidays = Array.from(records.values()).filter(r => r.note?.toLowerCase().includes('holiday') || r.date.getDay() === 0).length;
-  
-  // Calculate working days only from marked attendance days to avoid counting future days
-  const markedDays = new Set(Array.from(records.values()).map(r => format(r.date, 'yyyy-MM-dd')));
-  const workingDays = Array.from(markedDays).filter(d => {
-      const date = parseISO(d);
-      return date.getDay() !== 0 && !records.get(d)?.note?.toLowerCase().includes('holiday');
-  }).length;
-  
-  const absentDays = workingDays > presentDays ? workingDays - presentDays : 0;
-  
   return (
-    <Card className="w-full max-w-md shadow-2xl rounded-2xl overflow-hidden bg-background">
-      <div className="bg-cyan-500 text-white p-4 text-center relative">
-        <h2 className="text-xl font-bold">{user?.displayName}, your attendance is here!</h2>
-        <p className="text-sm opacity-90">{format(currentDate, "MMMM yyyy")}</p>
-        <div className="absolute bottom-0 left-0 right-0 h-4 bg-background" style={{ borderTopLeftRadius: '100%', borderTopRightRadius: '100%' }}></div>
-      </div>
-
-      <div className="p-4">
+    <Card className="shadow-lg rounded-2xl overflow-hidden bg-gradient-to-tr from-background to-muted/30 border-primary/10 transition-all duration-300 hover:shadow-primary/20 hover:-translate-y-1">
+        <CardHeader>
+             <CardTitle className="flex items-center gap-2">
+                <ListChecks className="h-6 w-6 text-primary"/>
+                Attendance Summary - {format(currentMonth, 'MMMM yyyy')}
+            </CardTitle>
+        </CardHeader>
+      <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4">
         {loading ? (
-            <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin"/></div>
+          <div className="flex justify-center items-center w-full h-24">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+           <p className="text-destructive text-center w-full">{error}</p>
         ) : (
-          <div className="grid grid-cols-7 gap-2">
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <DayOfWeek key={i} day={d} />)}
-            {Array.from({ length: firstDayIndex }).map((_, i) => <div key={`empty-${i}`} />)}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1;
-              const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-              const dateKey = format(date, 'yyyy-MM-dd');
-              const record = records.get(dateKey);
-              
-              let status: 'Present' | 'Absent' | 'holiday' | 'future' | 'empty' = 'future';
-              
-              if (record) {
-                if (record.note?.toLowerCase().includes('holiday') || date.getDay() === 0) {
-                  status = 'holiday';
-                } else if (record.status) {
-                  status = record.status as 'Present' | 'Absent';
-                }
-              } else if (isAfter(date, new Date())) {
-                 status = 'future';
-              } else if (date.getDay() === 0) { // Mark sundays even if no record
-                 status = 'holiday';
-              } else if (date < new Date()){
-                 // If it's a past weekday with no record, mark as absent.
-                 status = 'Absent';
-              }
-
-              return <DayCell key={day} day={day} status={status} />;
-            })}
-          </div>
+          <>
+            <div className="w-full sm:w-auto flex-grow space-y-3">
+              <div className="flex justify-around items-center text-center">
+                  <div className="px-2">
+                      <p className="text-2xl font-bold text-green-600">{stats.present}</p>
+                      <p className="text-xs font-medium text-muted-foreground">PRESENT</p>
+                  </div>
+                   <div className="px-2">
+                      <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
+                      <p className="text-xs font-medium text-muted-foreground">ABSENT</p>
+                  </div>
+                   <div className="px-2">
+                      <p className="text-2xl font-bold text-primary">{stats.totalMarked}</p>
+                      <p className="text-xs font-medium text-muted-foreground">TOTAL DAYS</p>
+                  </div>
+              </div>
+              {stats.percentage !== null && (
+                <div>
+                   <Progress value={stats.percentage} className="h-3" />
+                   <p className="text-sm font-bold text-center mt-1.5"
+                      style={{ color: stats.percentage >= MINIMUM_ATTENDANCE_THRESHOLD ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
+                        {stats.percentage.toFixed(1)}% Attendance
+                   </p>
+                </div>
+              )}
+            </div>
+            <div className="w-full sm:w-auto">
+               <Button asChild className="w-full sm:w-auto">
+                    <Link href="/student/attendance">
+                        View Full Calendar <ArrowRight className="ml-2 h-4 w-4"/>
+                    </Link>
+                </Button>
+            </div>
+          </>
         )}
-      </div>
-
-      <div className="p-4 space-y-3">
-        <Card className="p-4 bg-muted/50">
-          <div className="flex justify-around">
-            <StatCard label="HOLIDAY" value={holidays} colorClass="text-gray-500" />
-            <div className="border-l mx-2"></div>
-            <StatCard label="WORKING DAY" value={workingDays} colorClass="text-orange-500" />
-          </div>
-        </Card>
-        <Card className="p-4 bg-muted/50">
-          <div className="flex justify-around">
-            <StatCard label="PRESENT" value={presentDays} colorClass="text-green-500" />
-            <div className="border-l mx-2"></div>
-            <StatCard label="ABSENT" value={absentDays} colorClass="text-red-500" />
-          </div>
-        </Card>
-      </div>
-
-      <div className="p-4 flex justify-between">
-        <Button onClick={() => setCurrentDate(c => subMonths(c, 1))} className="bg-red-500 hover:bg-red-600 rounded-full px-6 text-white">
-             Previous
-        </Button>
-        <Button onClick={() => setCurrentDate(c => addMonths(c, 1))} className="bg-cyan-600 hover:bg-cyan-700 rounded-full px-6 text-white">
-            Next Month
-        </Button>
-      </div>
+      </CardContent>
     </Card>
   );
 }
