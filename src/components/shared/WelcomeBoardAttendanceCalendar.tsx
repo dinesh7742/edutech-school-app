@@ -177,8 +177,9 @@ export function WelcomeBoardAttendanceCalendar() {
                   {format(month, "MMMM yyyy")}
               </CardDescription>
             </div>
-             <Button variant="ghost" size="icon" className="text-primary" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
-                {isExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+             <Button variant="outline" className="text-primary" aria-label={isExpanded ? 'Collapse' : 'Expand'}>
+                {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+                {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
              </Button>
         </CardHeader>
         <div className={cn("overflow-hidden transition-[max-height] duration-500 ease-in-out", isExpanded ? "max-h-[1000px]" : "max-h-0")}>
