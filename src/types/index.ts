@@ -345,6 +345,8 @@ export interface Chat {
   messages: ChatMessage[];
   lastMessageTimestamp: Timestamp | FieldValue;
   lastMessageText?: string;
+  isGroupChat?: boolean;
+  groupName?: string;
 }
 
 export interface Exam {
