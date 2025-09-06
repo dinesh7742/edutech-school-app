@@ -103,13 +103,20 @@ export function StudentAttendanceCalendar() {
     return () => unsubscribe();
   }, [user, month]);
 
-  const presentDays = attendanceRecords
-    .filter(r => r.status === "Present")
-    .map(r => r.date);
+  const absentDays = useMemo(() =>
+    attendanceRecords
+      .filter(r => r.status === "Absent")
+      .map(r => r.date),
+    [attendanceRecords]
+  );
+  
+  const presentDays = useMemo(() =>
+    attendanceRecords
+      .filter(r => r.status === "Present" && !absentDays.some(ad => ad.getTime() === r.date.getTime()))
+      .map(r => r.date),
+    [attendanceRecords, absentDays]
+  );
 
-  const absentDays = attendanceRecords
-    .filter(r => r.status === "Absent")
-    .map(r => r.date);
 
   const modifiers = {
     present: presentDays,
