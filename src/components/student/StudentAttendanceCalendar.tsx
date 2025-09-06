@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -149,24 +148,24 @@ export function StudentAttendanceCalendar() {
   };
 
   return (
-    <Card className="shadow-lg rounded-lg">
+    <Card className="shadow-lg rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-6 w-6 text-primary" />
+        <CardTitle className="flex items-center gap-2 text-primary">
+            <CalendarDays className="h-6 w-6" />
             My Attendance Calendar
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="text-primary/80">
             View your monthly attendance at a glance for {format(month, "MMMM yyyy")}.
         </CardDescription>
         <div className="pt-2">
-            <Button onClick={() => setIsExpanded(!isExpanded)} variant="outline" size="sm">
+            <Button onClick={() => setIsExpanded(!isExpanded)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
                 {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
                 {isExpanded ? 'Hide Calendar' : 'Show Calendar'}
             </Button>
         </div>
       </CardHeader>
       <div className={cn("overflow-hidden transition-all duration-500 ease-in-out", isExpanded ? "max-h-[1000px] visible" : "max-h-0 invisible")}>
-        <CardContent className="flex flex-col items-center pt-2">
+        <CardContent className="flex flex-col items-center pt-2 bg-white/50 m-2 rounded-lg">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
