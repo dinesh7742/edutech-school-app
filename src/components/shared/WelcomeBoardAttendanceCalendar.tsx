@@ -164,21 +164,24 @@ export function WelcomeBoardAttendanceCalendar() {
 
   return (
     <Card className="w-full max-w-4xl shadow-2xl rounded-2xl border-primary/20 bg-gradient-to-br from-yellow-400 to-orange-500">
-      <CardHeader className="text-center cursor-pointer flex-row justify-between items-center" onClick={() => setIsExpanded(!isExpanded)}>
-        <div className="inline-block border-2 border-primary rounded-lg px-4 py-2">
+      <CardHeader className="text-center p-4 md:p-6">
+        <div className="inline-block border-2 border-primary rounded-lg px-4 py-2 mx-auto">
             <CardTitle className="text-2xl font-bold text-primary flex items-center gap-3 justify-center">
                 <CalendarDays className="h-10 w-10" />
                 Class Attendance
             </CardTitle>
         </div>
-        <Button onClick={() => setIsExpanded(!isExpanded)} className="bg-blue-600 hover:bg-blue-700 text-white">
+      </CardHeader>
+      <div className="text-center space-y-3 pb-4 px-4">
+        <CardDescription className="text-lg font-bold text-black">
+          {format(month, "MMMM yyyy")}
+        </CardDescription>
+        <Button onClick={() => setIsExpanded(!isExpanded)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
             {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
             {isExpanded ? 'Hide Attendance' : 'View More Attendance'}
         </Button>
-      </CardHeader>
-      <CardDescription className="text-center text-lg pt-2 pb-4 font-bold text-black">
-          {format(month, "MMMM yyyy")}
-      </CardDescription>
+      </div>
+
       <div className={cn("overflow-hidden transition-[max-height] duration-700 ease-in-out", isExpanded ? "max-h-[2000px]" : "max-h-0")}>
           <CardContent className="flex flex-col items-center p-2 sm:p-4 md:p-6">
             {isLoading ? (
