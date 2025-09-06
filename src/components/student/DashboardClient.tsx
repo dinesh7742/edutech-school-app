@@ -445,9 +445,9 @@ export function StudentDashboardClient() {
                       {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className={cn("opacity-80 text-center font-semibold", "text-black")}>No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
                       <div className="space-y-1">
                           {card.id === 'homework' ? (
-                              <div className={cn("border-2 rounded-md p-3", "border-black bg-white/20 text-black")}>
+                              <div className="border-2 border-blue-900 bg-white text-blue-900 rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-bold text-lg line-clamp-2">{card.contentData.title || card.contentData.subject}</h3>
+                                  <h3 className="font-bold text-lg line-clamp-2 text-blue-900">{card.contentData.title || card.contentData.subject}</h3>
                                    {(card.contentData as Homework).documentLink && (
                                     <LinkIcon className="h-4 w-4 text-blue-800 shrink-0" />
                                   )}
@@ -455,13 +455,11 @@ export function StudentDashboardClient() {
                                     <FileText className="h-4 w-4 text-blue-800 shrink-0" />
                                   )}
                                 </div>
-                                <p className="text-sm opacity-90 font-semibold">Subject: {card.contentData.subject}</p>
+                                <p className="text-sm opacity-90 font-semibold text-blue-800">Subject: {card.contentData.subject}</p>
                               </div>
                           ) : (
-                            <div className={cn(
-                              card.id === 'notices' ? "border-2 border-blue-900 bg-white text-blue-900 rounded-lg p-3" : ""
-                            )}>
-                               <h3 className={cn("font-bold text-lg line-clamp-2", card.id === 'notices' ? 'text-blue-900' : 'text-black')}>{card.contentData.title || card.contentData.subject}</h3>
+                            <div className={cn(card.id === 'notices' ? "border-2 border-blue-900 bg-white text-blue-900 rounded-lg p-3" : "")}>
+                               <h3 className={cn("font-bold text-lg line-clamp-2", 'text-black', card.id === 'notices' && 'text-blue-900')}>{card.contentData.title || card.contentData.subject}</h3>
                             </div>
                           )}
                           
