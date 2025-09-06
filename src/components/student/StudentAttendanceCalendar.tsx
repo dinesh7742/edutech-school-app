@@ -55,8 +55,6 @@ export function StudentAttendanceCalendar() {
 
     const attendanceQuery = query(
       collection(db, "dailyAttendance"),
-      where("grade", "==", user.grade),
-      where("division", "==", user.division),
       where("date", ">=", format(firstDayOfMonth, "yyyy-MM-dd")),
       where("date", "<=", format(lastDayOfMonth, "yyyy-MM-dd"))
     );
@@ -67,17 +65,21 @@ export function StudentAttendanceCalendar() {
 
       querySnapshot.forEach((doc) => {
         const log = doc.data() as DailyAttendanceLog;
-        const logDate = parseISO(log.date);
+        
+        // Client-side filtering for grade and division
+        if (log.grade === user.grade && log.division === user.division) {
+            const logDate = parseISO(log.date);
 
-        const studentStatus = log.studentRecords[user.uid!];
-        if (studentStatus) {
-            studentRecords.push({
-            date: logDate,
-            status: studentStatus,
-            });
-        }
-        if (log.note) {
-            specialDays.push({ date: logDate, note: log.note });
+            const studentStatus = log.studentRecords[user.uid!];
+            if (studentStatus) {
+                studentRecords.push({
+                date: logDate,
+                status: studentStatus,
+                });
+            }
+            if (log.note) {
+                specialDays.push({ date: logDate, note: log.note });
+            }
         }
       });
       

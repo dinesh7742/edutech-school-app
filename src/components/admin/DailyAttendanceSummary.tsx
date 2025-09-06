@@ -96,7 +96,7 @@ export function DailyAttendanceSummary() {
         setMonthlyChartData(chartData);
 
 
-        // Processing for Today's Summary Table (remains the same)
+        // Processing for Today's Summary Table
         const todayStr = format(new Date(), "yyyy-MM-dd");
         const todaysLogs = attendanceSnapshot.docs
             .map(doc => doc.data() as DailyAttendanceLog)
