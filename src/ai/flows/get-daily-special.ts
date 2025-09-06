@@ -1,4 +1,5 @@
 
+
 /**
  * @fileOverview A flow to get a list of special events for a given day.
  */
@@ -23,6 +24,7 @@ const DailySpecialOutputSchema = z.object({
 });
 export type DailySpecialOutput = z.infer<typeof DailySpecialOutputSchema>;
 
+// This flow is no longer used by the TodaySpecial component but is kept for potential future use.
 export async function getDailySpecial(input: DailySpecialInput): Promise<DailySpecialOutput> {
   return getDailySpecialFlow(input);
 }

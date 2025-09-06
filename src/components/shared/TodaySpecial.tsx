@@ -5,10 +5,11 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, Sparkles, BookOpen, FlaskConical, Landmark, Cake, Loader2, ChevronLeft, ChevronRight, Pin } from 'lucide-react';
-import { getDailySpecial, type DailySpecialOutput } from '@/ai/flows/get-daily-special';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
+import type { DailySpecialOutput } from '@/ai/flows/get-daily-special';
+import { specialDays } from '@/lib/special-days';
 
 type DailyEvent = DailySpecialOutput['events'][0];
 
@@ -52,29 +53,18 @@ export function TodaySpecial() {
   }, [dailyEvents.length, nextEvent]);
 
   useEffect(() => {
+    setIsLoading(true);
     const now = new Date();
     setCurrentDate(now);
     
-    const todayString = format(now, "yyyy-MM-dd");
-
-    const fetchEvent = async () => {
-      setIsLoading(true);
-      try {
-        const result = await getDailySpecial({ date: todayString });
-        if (result && result.events && result.events.length > 0) {
-            setDailyEvents(result.events);
-        } else {
-            setDailyEvents([]);
-        }
-      } catch (error) {
-        console.error("Error fetching daily special event:", error);
-        setDailyEvents([]); // Set to empty array on error
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvent();
+    // Get today's date in MM-DD format
+    const todayString = format(now, "MM-dd");
+    
+    // Look up the event in our static list
+    const eventsForToday = specialDays[todayString] || [];
+    setDailyEvents(eventsForToday);
+    
+    setIsLoading(false);
 
   }, []);
 
@@ -134,7 +124,7 @@ export function TodaySpecial() {
           </div>
         ) : (
           <div className="text-center text-muted-foreground min-h-[120px] flex items-center justify-center">
-            <p>No special event could be loaded for today. It's a great day to make your own history!</p>
+            <p>No special events listed for today. It's a great day to make your own history!</p>
           </div>
         )}
 
