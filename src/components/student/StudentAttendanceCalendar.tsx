@@ -50,33 +50,34 @@ export function StudentAttendanceCalendar() {
     setIsLoading(true);
     setError(null);
 
+    const firstDayOfMonth = startOfMonth(month);
+    const lastDayOfMonth = endOfMonth(month);
+
     const attendanceQuery = query(
       collection(db, "dailyAttendance"),
       where("grade", "==", user.grade),
-      where("division", "==", user.division)
+      where("division", "==", user.division),
+      where("date", ">=", format(firstDayOfMonth, "yyyy-MM-dd")),
+      where("date", "<=", format(lastDayOfMonth, "yyyy-MM-dd"))
     );
 
     const unsubscribe = onSnapshot(attendanceQuery, (querySnapshot) => {
       const studentRecords: AttendanceRecord[] = [];
       const specialDays: HolidayOrSunday[] = [];
-      const firstDayOfMonth = startOfMonth(month);
-      const lastDayOfMonth = endOfMonth(month);
 
       querySnapshot.forEach((doc) => {
         const log = doc.data() as DailyAttendanceLog;
         const logDate = parseISO(log.date);
 
-        if (isWithinInterval(logDate, { start: firstDayOfMonth, end: lastDayOfMonth })) {
-          const studentStatus = log.studentRecords[user.uid!];
-          if (studentStatus) {
+        const studentStatus = log.studentRecords[user.uid!];
+        if (studentStatus) {
             studentRecords.push({
-              date: logDate,
-              status: studentStatus,
+            date: logDate,
+            status: studentStatus,
             });
-          }
-          if (log.note) {
-              specialDays.push({ date: logDate, note: log.note });
-          }
+        }
+        if (log.note) {
+            specialDays.push({ date: logDate, note: log.note });
         }
       });
       
@@ -107,7 +108,7 @@ export function StudentAttendanceCalendar() {
     .map(r => r.date);
 
   const absentDays = attendanceRecords
-    .filter(r => r.status !== "Present")
+    .filter(r => r.status === "Absent")
     .map(r => r.date);
 
   const modifiers = {
@@ -119,20 +120,20 @@ export function StudentAttendanceCalendar() {
 
   const modifierStyles = {
     present: {
-      color: "hsl(var(--primary-foreground))",
-      backgroundColor: "hsl(var(--accent))",
+      color: "hsl(var(--wb-present-text))",
+      backgroundColor: "hsl(var(--wb-present-bg))",
     },
     absent: {
-      color: "hsl(var(--destructive-foreground))",
-      backgroundColor: "hsl(var(--destructive))",
+      color: "hsl(var(--wb-holiday-text))",
+      backgroundColor: "hsl(var(--wb-holiday-bg))",
     },
     holiday: {
-      color: "hsl(var(--destructive-foreground))",
-      backgroundColor: "hsl(var(--destructive))",
+      color: "hsl(var(--wb-holiday-text))",
+      backgroundColor: "hsl(var(--wb-holiday-bg))",
     },
     sunday: {
-      color: "hsl(var(--destructive-foreground))",
-      backgroundColor: "hsl(var(--destructive) / 0.5)",
+      color: "hsl(var(--wb-sunday-text))",
+      backgroundColor: "hsl(var(--wb-sunday-bg))",
     },
   };
 
@@ -166,12 +167,16 @@ export function StudentAttendanceCalendar() {
         )}
          <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-2 text-sm">
             <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-accent" />
+                <div className="h-3 w-3 rounded-full bg-[hsl(var(--wb-present-bg))]" />
                 <span>Present</span>
             </div>
             <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-destructive" />
-                <span>Absent / Holiday</span>
+                <div className="h-3 w-3 rounded-full bg-[hsl(var(--wb-holiday-bg))]" />
+                <span>Absent</span>
+            </div>
+             <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-[hsl(var(--wb-sunday-bg))]" />
+                <span>Sunday / Holiday</span>
             </div>
         </div>
         {holidaysAndSundays.length > 0 && (

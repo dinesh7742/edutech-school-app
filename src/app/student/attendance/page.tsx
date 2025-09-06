@@ -1,10 +1,10 @@
 
-import { StudentAttendanceDetails } from "@/components/student/StudentAttendanceDetails";
+import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 
 export default function StudentAttendancePage() {
   return (
     <div className="py-4 flex justify-center">
-      <StudentAttendanceDetails />
+      <StudentAttendanceCalendar />
     </div>
   );
 }
