@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { School, User, Calendar, MapPin, Phone, Download, Loader2, Hash } from "lucide-react";
 import html2canvas from "html2canvas";
 import Image from "next/image";
+import { format } from "date-fns";
 
 const schoolInfo = {
   nameLine1: "PM SHRI MPS",
