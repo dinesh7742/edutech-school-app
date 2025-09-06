@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -41,7 +42,7 @@ export function StudentAttendanceCalendar() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
-    if (!user || !user.uid || !user.grade || !user.division) {
+    if (!user || !user.uid) {
       setIsLoading(false);
       setError("User details incomplete for fetching attendance.");
       return;
@@ -53,6 +54,7 @@ export function StudentAttendanceCalendar() {
     const firstDayOfMonth = startOfMonth(month);
     const lastDayOfMonth = endOfMonth(month);
 
+    // Fetch all attendance for the month to avoid complex queries
     const attendanceQuery = query(
       collection(db, "dailyAttendance"),
       where("date", ">=", format(firstDayOfMonth, "yyyy-MM-dd")),
@@ -150,14 +152,16 @@ export function StudentAttendanceCalendar() {
   return (
     <Card className="shadow-lg rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-primary">
-            <CalendarDays className="h-6 w-6" />
-            My Attendance Calendar
-        </CardTitle>
-        <CardDescription className="text-primary/80">
+        <div className="inline-block border-2 border-primary rounded-lg px-4 py-2 mx-auto">
+            <CardTitle className="text-2xl font-bold text-primary flex items-center gap-3 justify-center">
+                <CalendarDays className="h-6 w-6" />
+                My Attendance Calendar
+            </CardTitle>
+        </div>
+        <CardDescription className="text-primary/80 text-center">
             View your monthly attendance at a glance for {format(month, "MMMM yyyy")}.
         </CardDescription>
-        <div className="pt-2">
+        <div className="pt-2 text-center">
             <Button onClick={() => setIsExpanded(!isExpanded)} className="bg-blue-600 hover:bg-blue-700 text-white font-bold">
                 {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
                 {isExpanded ? 'Hide Calendar' : 'Show Calendar'}
