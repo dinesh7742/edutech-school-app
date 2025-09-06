@@ -444,39 +444,33 @@ export function StudentDashboardClient() {
                   <div className="flex-grow text-center sm:text-left w-full">
                       {loadingContent ? <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div> : !card.contentData ? <p className={cn("opacity-80 text-center font-semibold", "text-black")}>No new {card.id.toLowerCase().replace(/s$/, '')} found.</p> :
                       <div className="space-y-1">
-                          {card.id === 'homework' ? (
+                          {['notices', 'homework', 'circulars', 'liveClasses'].includes(card.id) ? (
                               <div className="border-2 border-blue-900 bg-white text-blue-900 rounded-lg p-3">
                                 <div className="flex items-center gap-2 mb-1">
                                   <h3 className="font-bold text-lg line-clamp-2 text-blue-900">{card.contentData.title || card.contentData.subject}</h3>
-                                   {(card.contentData as Homework).documentLink && (
+                                   {card.id === 'homework' && (card.contentData as Homework).documentLink && (
                                     <LinkIcon className="h-4 w-4 text-blue-800 shrink-0" />
                                   )}
-                                  {(card.contentData as Homework).attachments && (card.contentData as Homework).attachments!.length > 0 && (
+                                  {card.id === 'homework' && (card.contentData as Homework).attachments && (card.contentData as Homework).attachments!.length > 0 && (
                                     <FileText className="h-4 w-4 text-blue-800 shrink-0" />
                                   )}
                                 </div>
-                                <p className="text-sm opacity-90 font-semibold text-blue-800">Subject: {card.contentData.subject}</p>
-                              </div>
-                          ) : (
-                            <div className={cn(card.id === 'notices' ? "border-2 border-blue-900 bg-white text-blue-900 rounded-lg p-3" : "")}>
-                               <h3 className={cn("font-bold text-lg line-clamp-2", 'text-black', card.id === 'notices' && 'text-blue-900')}>{card.contentData.title || card.contentData.subject}</h3>
-                            </div>
-                          )}
-                          
-                          {(card.id === 'notices' && (card.contentData as Notice).content) && (
-                            <div className="border-2 border-blue-900 bg-white text-blue-900 rounded-lg p-3 mt-1">
-                              <p className="text-sm opacity-90 line-clamp-2 font-semibold text-blue-800">
-                                {(card.contentData as Notice).content}
-                              </p>
-                            </div>
-                          )}
-                          
-                          {card.id !== 'homework' && card.id !== 'notices' && card.contentData.description && (
-                            <p className={cn("text-sm opacity-90 line-clamp-2 font-semibold", 'text-black')}>
-                                {card.contentData.description}
-                            </p>
-                          )}
+                                {card.id === 'homework' && <p className="text-sm opacity-90 font-semibold text-blue-800">Subject: {card.contentData.subject}</p>}
+                                
+                                {card.id === 'notices' && (card.contentData as Notice).content && (
+                                    <p className="text-sm opacity-90 line-clamp-2 font-semibold text-blue-800">
+                                        {(card.contentData as Notice).content}
+                                    </p>
+                                )}
 
+                                {(card.id === 'circulars' || card.id === 'liveClasses') && card.contentData.description && (
+                                    <p className="text-sm opacity-90 line-clamp-2 font-semibold text-blue-800">
+                                        {card.contentData.description}
+                                    </p>
+                                )}
+                              </div>
+                          ) : null}
+                          
                           {(card.id === "homework") && (
                           <div className="pt-2">
                               {!isLatestHomeworkCompleted ? (
