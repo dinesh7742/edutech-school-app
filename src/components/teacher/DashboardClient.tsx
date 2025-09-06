@@ -22,7 +22,8 @@ import {
     Phone,
     BookOpen,
     Megaphone,
-    ClipboardCheck
+    ClipboardCheck,
+    Hourglass
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -41,6 +42,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 import { cn } from "@/lib/utils";
 import { TeacherLeaveForm } from "./TeacherLeaveForm";
 
@@ -247,16 +254,16 @@ export function TeacherDashboardClient() {
   const totalPendingSubmissions = pendingLeaveCount + pendingLateArrivalCount + pendingOtherAppsCount;
   
   const mainActionItems = [
-    { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "postContent", title: "Manage Content", description: "Create notices, homework, circulars, and more.", link: "/teacher/post-content", buttonText: "Post Content", icon: ClipboardList, className: "bg-pink-500 hover:bg-pink-600" },
+    { id: "studentData", title: "Student Data", description: "View and manage student profiles for your assigned classes.", link: "/teacher/student-data", buttonText: "View Student List", icon: Users, className: "bg-green-600 hover:bg-green-700" },
     { id: "markAttendance", title: "Mark Attendance", description: getAttendanceCardDescription(), link: "/teacher/mark-attendance", buttonText: "Mark Attendance", icon: ListChecks, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "manageSubmissions", title: "Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "studentChats", title: "Student Chats", description: "Communicate directly with students and parents.", link: "/teacher/chat", buttonText: "Open Chats", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "dropoutBox", title: "Dropout Box", description: "View and manage students removed from active lists.", link: "/teacher/dropout-list", buttonText: "Manage Dropouts", icon: Archive, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "specialAlert", title: "Special Alert", description: "Post a temporary, site-wide alert pop-up for all students.", link: "/teacher/special-alert", buttonText: "Manage Alert", icon: Megaphone, className: "bg-blue-600 hover:bg-blue-700" },
-    { id: "downloadData", title: "Download Class Data", description: "Download an Excel sheet of student data for your class.", action: handleDownloadStudentData, buttonText: "Download Excel", loading: isDownloadingStudentData, disabled: !teacherUser?.grade || !teacherUser?.division, disabledText: "Update profile with grade/division to enable.", icon: Download, className: "bg-blue-600 hover:bg-blue-700" },
+    { id: "manageSubmissions", title: "Student Submissions", description: loadingPendingCounts ? <div className="flex items-center justify-center space-x-2 h-full"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : `Review leave, late arrivals, and other applications. ${totalPendingSubmissions} pending.`, link: "/teacher/leave-applications", buttonText: "Review Submissions", icon: ClipboardCheck, className: "bg-purple-600 hover:bg-purple-700" },
+    { id: "studentChats", title: "Student Chats", description: "Communicate directly with students and parents.", link: "/teacher/chat", buttonText: "Open Chats", icon: MessageSquare, hasNotification: hasUnreadMessages, className: "bg-teal-600 hover:bg-teal-700" },
+    { id: "studentConduct", title: "Student Conduct", description: "File or view student conduct reports and complaints.", link: "/teacher/conduct-record", buttonText: "Manage Complaints", icon: MessageSquareWarning, className: "bg-red-600 hover:bg-red-700" },
+    { id: "progressReports", title: "Progress Reports", description: "Download templates and upload completed reports.", link: "/teacher/progress-reports", buttonText: "Manage Reports", icon: BarChart3, className: "bg-orange-500 hover:bg-orange-600" },
+    { id: "dropoutBox", title: "Dropout Box", description: "View and manage students removed from active lists.", link: "/teacher/dropout-list", buttonText: "Manage Dropouts", icon: Archive, className: "bg-slate-600 hover:bg-slate-700" },
+    { id: "specialAlert", title: "Special Alert", description: "Post a temporary, site-wide alert pop-up for all students.", link: "/teacher/special-alert", buttonText: "Manage Alert", icon: Megaphone, className: "bg-yellow-500 hover:bg-yellow-600" },
+    { id: "downloadData", title: "Download Class Data", description: "Download an Excel sheet of student data for your class.", action: handleDownloadStudentData, buttonText: "Download Excel", loading: isDownloadingStudentData, disabled: !teacherUser?.grade || !teacherUser?.division, disabledText: "Update profile with grade/division to enable.", icon: Download, className: "bg-indigo-600 hover:bg-indigo-700" },
   ];
 
   return (
@@ -287,7 +294,23 @@ export function TeacherDashboardClient() {
         <WelcomeMessage />
         
         <Card className="shadow-lg rounded-lg transition-all duration-300 ease-in-out hover:shadow-2xl hover:-translate-y-2 overflow-hidden bg-gradient-to-br from-indigo-200 to-purple-200">
-            <TeacherLeaveForm />
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="leave-form" className="border-b-0">
+              <AccordionTrigger className="p-6 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <CardTitle className="text-2xl font-bold text-primary flex items-center gap-3">
+                    <Hourglass /> Leave Application
+                  </CardTitle>
+                  <CardDescription className="text-primary/80 mt-1">
+                    Click here to expand and submit your leave request for admin approval.
+                  </CardDescription>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <TeacherLeaveForm />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Card>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
