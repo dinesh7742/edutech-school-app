@@ -1,10 +1,9 @@
-
 "use client";
 
-import { WelcomeBoardAttendanceCalendar } from "../shared/WelcomeBoardAttendanceCalendar";
+import { StudentAttendanceCalendar } from "@/components/student/StudentAttendanceCalendar";
 
 export function StudentAttendanceDetails() {
   return (
-    <WelcomeBoardAttendanceCalendar />
+    <StudentAttendanceCalendar />
   );
 }
